@@ -1,14 +1,13 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method !== "POST") return res.status(405).end(); // Only POST requests
-  
-    const body = req.body;
-  
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
     // If an inline query is received
     if (body.inline_query) {
       const queryId = body.inline_query.id;
-  
+      
       const results = [
         {
           type: "article",
@@ -22,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         }
       ];
-  
+      
       // Send inline response to Telegram API
       await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerInlineQuery`, {
         method: "POST",
@@ -33,9 +32,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           cache_time: 0
         })
       });
-  
-      return res.status(200).end();
+      
+      return NextResponse.json({ ok: true });
     }
-  
-    res.status(200).json({ message: "OK" });
+    
+    return NextResponse.json({ message: "OK" });
+  } catch (error) {
+    console.error('Error processing request:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+}
+
+// This prevents requests with methods other than POST
+export async function GET() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+}
+
+export async function PUT() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+}
+
+export async function DELETE() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+}
+
+export async function PATCH() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+}
