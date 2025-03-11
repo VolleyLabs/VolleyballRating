@@ -8,9 +8,14 @@
     "start": "next start",
     "lint": "next lint",
     "tunnel": "devtunnel host -p 3000 --allow-anonymous",
-    "tunnel2": "ngrok http 3000"
+    "tunnel2": "ngrok http 3000",
+    "download-openapi": "curl https://ufejocelbvrvgmoewhaw.supabase.co/rest/v1/?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmZWpvY2VsYnZydmdtb2V3aGF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE2NTU4NDksImV4cCI6MjA1NzIzMTg0OX0.HoZLb6kO9m3Mt23VCTkdLUTJZM-5HJG3jiRajDcufDM -o openapi.json",
+    "generate-client": "kiota generate -l typescript -d ./openapi.json -c ApiClient -o ./src/app/utils/supabase/api-client --clean-output && node fix-generated-api-client.js",
+    "update-client": "npm run download-openapi && npm run generate-client"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.49.1",
     "@telegram-apps/sdk": "^3.5.1",
     "next": "15.2.1",
     "react": "^19.0.0",

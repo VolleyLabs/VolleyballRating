@@ -1,23 +1,34 @@
-'use client';
+import Hello from './components/hello';
+import { createClient } from '@/app/utils/supabase/server'
+import { cookies } from 'next/headers'
+import { Players, Votes } from './utils/supabase/api-client/models';
 
-import { useEffect, useState } from 'react';
-import { retrieveLaunchParams } from '@telegram-apps/sdk';
-import { isTMA, RetrieveLPResult } from '@telegram-apps/bridge';
 
-export default function Home() {
-  const [launchParams, setLaunchParams] = useState<RetrieveLPResult | null>(null);
+export default async function Home() {
+  const cookieStore = await cookies()
+  const supabase = createClient(cookieStore)
 
-  useEffect(() => {
-    if (isTMA()) {
-      const launchParams = retrieveLaunchParams();
-
-      setLaunchParams(launchParams);
-    }
-  }, []);
+  const { data: players } = await supabase.from('players').select()
+  // Fetch votes and join with players
+  const { data: votes } = await supabase
+    .from('votes')
+    .select('id, playerA, playerB, winnerId, createdAt, playerAData:playerA(*), playerBData:playerB(*), winnerData:winnerId(*)')
 
   return (
-    <div className="">
-      <h1>Hello, {launchParams?.tgWebAppData?.user?.first_name}</h1>
-    </div>
-  );
+    <ul>
+      <Hello />
+      <br />
+      <br />
+      {"Players:"}
+      {players?.map((player: Players) => (
+        <li key={player.id}>{player.name}</li>
+      ))}
+      <br />
+      <br />
+      {"Votes:"}
+      {votes?.map((vote: Votes) => (
+        <li key={vote.id}>{vote.playerA} {vote.playerB} {vote.winnerId}</li>
+      ))}
+    </ul>
+  )
 }
