@@ -14,7 +14,7 @@ export default function Home() {
   const styles = tv(commonVariants, colorScheme);
 
   return (
-    <div className={`max-w-full w-full mx-auto px-4 py-2 flex flex-col items-center ${styles.bg} min-h-screen`}>
+    <div className={`w-full mx-auto px-2 sm:px-4 py-2 flex flex-col items-center ${styles.bg} min-h-screen overflow-hidden`}>
       <Hello />
       <Vote voterId={launchParams?.tgWebAppData?.user?.id ?? 482553595} />
       <PlayerRating />

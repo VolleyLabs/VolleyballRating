@@ -20,7 +20,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isTMA()) {
-      // Получаем текущую цветовую схему из Telegram WebApp
+      // Get current color scheme from Telegram WebApp
       const colorScheme = window.Telegram?.WebApp?.colorScheme as 'light' | 'dark';
       const themeParams = window.Telegram?.WebApp?.themeParams || null;
 
@@ -29,7 +29,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         themeParams,
       });
 
-      // Слушаем изменения темы
+      // Listen for theme changes
       const handleThemeChange = () => {
         setTheme({
           colorScheme: window.Telegram?.WebApp?.colorScheme as 'light' | 'dark',
@@ -43,7 +43,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         window.Telegram?.WebApp?.offEvent('themeChanged', handleThemeChange);
       };
     } else {
-      // Для локальной разработки используем системную тему
+      // For local development, use system theme
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = () => {
         setTheme({

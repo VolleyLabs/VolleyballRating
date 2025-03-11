@@ -6,14 +6,14 @@ type ThemeVariant = {
 type ThemeVariants = Record<string, ThemeVariant>;
 
 /**
- * Создает объект с вариантами стилей для светлой и темной темы
+ * Creates an object with style variants for light and dark themes
  */
 export function createThemeVariants<T extends string>(variants: Record<T, ThemeVariant>): Record<T, ThemeVariant> {
   return variants;
 }
 
 /**
- * Выбирает соответствующий вариант стиля на основе текущей темы
+ * Selects the appropriate style variant based on the current theme
  */
 export function tv(variants: ThemeVariants, colorScheme: 'light' | 'dark'): Record<string, string> {
   const result: Record<string, string> = {};
@@ -26,10 +26,10 @@ export function tv(variants: ThemeVariants, colorScheme: 'light' | 'dark'): Reco
 }
 
 /**
- * Предопределенные варианты для общих компонентов
+ * Predefined variants for common components
  */
 export const commonVariants = createThemeVariants({
-  // Фоны
+  // Backgrounds
   bg: {
     light: 'bg-gray-50',
     dark: 'bg-gray-900',
@@ -47,7 +47,7 @@ export const commonVariants = createThemeVariants({
     dark: 'bg-gray-900',
   },
   
-  // Тексты
+  // Texts
   text: {
     light: 'text-gray-900',
     dark: 'text-white',
@@ -61,7 +61,7 @@ export const commonVariants = createThemeVariants({
     dark: 'text-gray-300',
   },
   
-  // Границы
+  // Borders
   border: {
     light: 'border-gray-200',
     dark: 'border-gray-700',
@@ -71,7 +71,7 @@ export const commonVariants = createThemeVariants({
     dark: 'border-gray-700',
   },
   
-  // Кнопки
+  // Buttons
   primaryButton: {
     light: 'bg-blue-500',
     dark: 'bg-blue-600',
@@ -89,7 +89,7 @@ export const commonVariants = createThemeVariants({
     dark: 'hover:bg-gray-800',
   },
   
-  // Выделение
+  // Selection
   selectedBg: {
     light: 'bg-blue-50',
     dark: 'bg-blue-900',
@@ -99,7 +99,7 @@ export const commonVariants = createThemeVariants({
     dark: 'border-blue-600',
   },
   
-  // Ховеры
+  // Hovers
   tableRowHover: {
     light: 'hover:bg-gray-50',
     dark: 'hover:bg-gray-700',

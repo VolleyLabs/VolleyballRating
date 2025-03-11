@@ -58,15 +58,15 @@ export default function RatingTable() {
         Player Ratings
       </h2>
       
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="overflow-x-auto w-full">
+        <table className="w-full min-w-full table-auto">
           <thead>
             <tr className={`${styles.tableHeaderBg} text-sm`}>
-              <th className={`py-2 px-3 text-left font-medium ${styles.tableHeaderText}`}>Rank</th>
-              <th className={`py-2 px-3 text-left font-medium ${styles.tableHeaderText}`}>Avatar</th>
-              <th className={`py-2 px-3 text-left font-medium ${styles.tableHeaderText}`}>Name</th>
-              <th className={`py-2 px-3 text-left font-medium ${styles.tableHeaderText}`}>Username</th>
-              <th className={`py-2 px-3 text-right font-medium ${styles.tableHeaderText}`}>Rating</th>
+              <th className={`py-2 px-2 sm:px-3 text-left font-medium ${styles.tableHeaderText}`}>Rank</th>
+              <th className={`py-2 px-2 sm:px-3 text-left font-medium ${styles.tableHeaderText}`}>Avatar</th>
+              <th className={`py-2 px-2 sm:px-3 text-left font-medium ${styles.tableHeaderText}`}>Name</th>
+              <th className={`py-2 px-2 sm:px-3 text-left font-medium ${styles.tableHeaderText} hidden sm:table-cell`}>Username</th>
+              <th className={`py-2 px-2 sm:px-3 text-right font-medium ${styles.tableHeaderText}`}>Rating</th>
             </tr>
           </thead>
           <tbody>
@@ -74,19 +74,19 @@ export default function RatingTable() {
               // Table row skeleton
               Array.from({ length: 5 }).map((_, index) => (
                 <tr key={`skeleton-${index}`} className={`border-t ${styles.tableBorder} animate-pulse`}>
-                  <td className={`py-3 px-3 text-sm`}>
+                  <td className={`py-3 px-2 sm:px-3 text-sm`}>
                     <div className="h-4 w-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </td>
-                  <td className="py-3 px-3">
+                  <td className="py-3 px-2 sm:px-3">
                     <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
                   </td>
-                  <td className={`py-3 px-3 text-sm`}>
-                    <div className="h-4 w-24 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                  <td className={`py-3 px-2 sm:px-3 text-sm`}>
+                    <div className="h-4 w-16 sm:w-24 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </td>
-                  <td className={`py-3 px-3 text-xs`}>
+                  <td className={`py-3 px-2 sm:px-3 text-xs hidden sm:table-cell`}>
                     <div className="h-3 w-16 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </td>
-                  <td className={`py-3 px-3 text-right`}>
+                  <td className={`py-3 px-2 sm:px-3 text-right`}>
                     <div className="h-4 w-8 bg-gray-300 dark:bg-gray-700 rounded ml-auto"></div>
                   </td>
                 </tr>
@@ -94,8 +94,8 @@ export default function RatingTable() {
             ) : (
               ratings.map((player, index) => (
                 <tr key={player.id} className={`border-t ${styles.tableBorder} ${styles.tableRowHover}`}>
-                  <td className={`py-3 px-3 text-sm ${styles.text}`}>{index + 1}</td>
-                  <td className="py-3 px-3">
+                  <td className={`py-3 px-2 sm:px-3 text-sm ${styles.text}`}>{index + 1}</td>
+                  <td className="py-3 px-2 sm:px-3">
                     <div className="w-8 h-8 relative">
                       <Image
                         src={player.photo_url || "/default-avatar.svg"}
@@ -105,13 +105,13 @@ export default function RatingTable() {
                       />
                     </div>
                   </td>
-                  <td className={`py-3 px-3 text-sm ${styles.text}`}>
+                  <td className={`py-3 px-2 sm:px-3 text-sm ${styles.text}`}>
                     {player.first_name} {player.last_name || ""}
                   </td>
-                  <td className={`py-3 px-3 text-xs ${styles.secondaryText}`}>
+                  <td className={`py-3 px-2 sm:px-3 text-xs ${styles.secondaryText} hidden sm:table-cell`}>
                     {player.username ? "@" + player.username : "No username"}
                   </td>
-                  <td className={`py-3 px-3 text-right font-medium ${styles.text}`}>{player.rating.toFixed(0)}</td>
+                  <td className={`py-3 px-2 sm:px-3 text-right font-medium ${styles.text}`}>{player.rating.toFixed(0)}</td>
                 </tr>
               ))
             )}

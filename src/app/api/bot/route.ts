@@ -15,10 +15,10 @@ export async function POST(request: NextRequest) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chatId,
-          text: "Добро пожаловать! Нажмите кнопку ниже, чтобы запустить Mini App.",
+          text: "Welcome! Click the button below to launch the Mini App.",
           reply_markup: {
             inline_keyboard: [[
-              { text: "🚀 Открыть Mini App", web_app: { url: process.env.NEXT_PUBLIC_APP_URL || "https://volleyball-rating.vercel.app" } }
+              { text: "🚀 Open Mini App", web_app: { url: process.env.NEXT_PUBLIC_APP_URL || "https://volleyball-rating.vercel.app" } }
             ]]
           }
         })
