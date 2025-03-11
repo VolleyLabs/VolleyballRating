@@ -13,7 +13,7 @@ export default function Hello() {
   const styles = tv(commonVariants, colorScheme);
 
   // Common classes for user profile to avoid layout shifts
-  const profileClasses = `w-full max-w-md flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6 p-3 sm:p-4 ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`;
+  const profileClasses = `w-full max-w-md flex items-center gap-3 sm:gap-4 mt-4 p-3 sm:p-4 ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`;
 
   return (
       <div className={isLoading ? `${profileClasses} animate-pulse` : profileClasses}>

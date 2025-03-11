@@ -102,12 +102,12 @@ export default function Vote({ voterId }: { voterId: number }) {
   }
 
   // Common container classes to avoid layout shifts
-  const containerClasses = `w-full max-w-md mx-auto p-3 sm:p-4 ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`;
+  const containerClasses = `w-full max-w-md mx-auto p-3 sm:p-4 mt-4 ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`;
 
-  if (error) return <p className={`text-center text-base p-3 sm:p-4 ${styles.text}`}>Error loading pairs: {error.message}</p>;
+  if (error) return <p className={`text-center text-base p-3 sm:p-4 mt-4 ${styles.text}`}>Error loading pairs: {error.message}</p>;
   
   if (pairs.length == 0 && !isLoading) return (
-    <div className={`w-full max-w-md mx-auto p-4 sm:p-6 ${styles.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}>
+    <div className={`w-full max-w-md mx-auto p-4 sm:p-6 mt-4 ${styles.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}>
       <p className={`text-lg mb-2 ${styles.text}`}>You already voted for all players</p>
       <p className={`text-sm ${styles.secondaryText}`}>Thank you for participating!</p>
     </div>
@@ -247,7 +247,7 @@ function PlayerCard({
         </div>
       </div>
       <h3 className={`mt-1 text-sm font-medium text-center ${styles.text}`}>{player?.firstName} {player?.lastName}</h3>
-      <p className={`text-xs ${styles.secondaryText} mb-2 text-center`}>@{player?.username ?? "No username"}</p>
+      <p className={`text-xs ${styles.secondaryText} mb-2 text-center`}>{player?.username ? '@' + player.username : "No username"}</p>
       <button 
         onClick={onVote} 
         className={`w-full py-2 ${styles.primaryButton} text-white rounded-md shadow-sm transition-all duration-200 text-xs ${
