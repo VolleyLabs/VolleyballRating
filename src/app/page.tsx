@@ -2,13 +2,13 @@ import Hello from './components/hello';
 //import { createClient } from '@/app/utils/supabase/server'
 //import { cookies } from 'next/headers'
 
-interface User {
-  id: number;
-  first_name: string;
-  last_name: string | null;
-  username: string | null;
-  photo_url: string | null;
-}
+// interface User {
+//   id: number;
+//   first_name: string;
+//   last_name: string | null;
+//   username: string | null;
+//   photo_url: string | null;
+// }
 
 // interface Vote {
 //   id: number;
