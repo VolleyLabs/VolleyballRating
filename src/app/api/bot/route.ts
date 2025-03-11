@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
           input_message_content: { message_text: "Click the button below to launch the Mini App!" },
           reply_markup: {
             inline_keyboard: [[
-              { text: "🔵 Open Mini App", web_app: { url: "https://your-app.vercel.app" } }
+              { text: "🔵 Open Mini App", web_app: { url: "https://volleyball-rating.vercel.app" } }
             ]]
           }
         }
