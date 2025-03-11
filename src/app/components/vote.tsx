@@ -64,18 +64,23 @@ export default function Vote({ voterId }: { voterId: number }) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
+      <div className="flex justify-center items-center min-h-[200px] w-full">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+          className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full"
         />
       </div>
     );
   }
 
-  if (error) return <p className="text-center text-lg">Error loading pairs: {error.message}</p>;
-  if (pairs.length == 0) return <p className="text-center text-lg">You already voted for all players</p>;
+  if (error) return <p className="text-center text-base p-4">Error loading pairs: {error.message}</p>;
+  if (pairs.length == 0) return (
+    <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-sm text-center">
+      <p className="text-lg mb-2">You already voted for all players</p>
+      <p className="text-sm text-gray-500">Thank you for participating!</p>
+    </div>
+  );
 
   return (
     <AnimatePresence mode="wait">
@@ -85,38 +90,24 @@ export default function Vote({ voterId }: { voterId: number }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
-        className="flex flex-col items-center gap-4 p-4"
+        className="w-full max-w-md mx-auto p-4 bg-white rounded-lg shadow-sm"
       >
-        <motion.h1 
-          className="text-2xl font-bold text-center mb-6"
+        <motion.h2 
+          className="text-lg font-medium text-center mb-4"
           initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.3 }}
         >
           Who plays better?
-        </motion.h1>
+        </motion.h2>
 
-        <div className="flex flex-col md:flex-row gap-8 w-full justify-center">
+        <div className="grid grid-cols-2 gap-3 w-full">
           <PlayerCard 
             player={pairs[0].playerA} 
             onVote={() => handleVote(pairs[0].playerA.id)} 
             isSelected={selectedPlayer === pairs[0].playerA.id}
             isDisabled={isVoting}
           />
-          <div className="flex items-center justify-center">
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0.5 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ 
-                repeat: Infinity, 
-                repeatType: "reverse", 
-                duration: 1.5 
-              }}
-              className="text-2xl hidden md:block"
-            >
-              VS
-            </motion.div>
-          </div>
           <PlayerCard 
             player={pairs[0].playerB} 
             onVote={() => handleVote(pairs[0].playerB.id)} 
@@ -127,9 +118,9 @@ export default function Vote({ voterId }: { voterId: number }) {
 
         <motion.button 
           onClick={() => handleVote(null)} 
-          className="mt-6 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg shadow-md transition-all duration-200 ease-in-out"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          className="w-full mt-4 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           disabled={isVoting}
         >
           ❓ Don&apos;t know
@@ -152,33 +143,34 @@ function PlayerCard({
 }) {
   return (
     <motion.div 
-      className={`flex flex-col items-center p-6 border rounded-xl shadow-lg transition-all duration-300 ${
-        isSelected ? "border-blue-500 bg-blue-50" : "hover:shadow-xl"
+      className={`flex flex-col items-center p-3 border rounded-lg shadow-sm transition-all duration-300 ${
+        isSelected ? "border-blue-500 bg-blue-50" : "hover:shadow-md"
       }`}
-      whileHover={{ y: -5 }}
+      whileHover={{ y: -2 }}
       initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="relative mb-4 overflow-hidden rounded-full">
+      <div className="relative mb-2 overflow-hidden rounded-full">
         <motion.div
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.3 }}
         >
           <Image 
             src={player?.photoUrl ?? "/default-avatar.svg"} 
             alt={player?.firstName ?? "Player"} 
-            width={120} 
-            height={120}  priority
-            className="rounded-full object-cover border-4 border-white shadow-md" 
+            width={80} 
+            height={80}
+            priority
+            className="rounded-full object-cover border-2 border-white shadow-sm" 
           />
         </motion.div>
       </div>
-      <h2 className="mt-2 text-xl font-bold">{player?.firstName} {player?.lastName}</h2>
-      <p className="text-sm text-gray-500 mb-4">@{player?.username ?? "No username"}</p>
+      <h3 className="mt-1 text-sm font-medium text-center">{player?.firstName} {player?.lastName}</h3>
+      <p className="text-xs text-gray-500 mb-2 text-center">@{player?.username ?? "No username"}</p>
       <motion.button 
         onClick={onVote} 
-        className={`mt-2 px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md transition-all duration-200 ${
+        className={`w-full py-2 bg-blue-500 text-white rounded-md shadow-sm transition-all duration-200 text-xs ${
           isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
         }`}
         whileHover={!isDisabled ? { scale: 1.05 } : {}}

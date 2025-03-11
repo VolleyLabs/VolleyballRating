@@ -38,9 +38,19 @@ export default function Hello() {
   }
 
   return (
-    <div className="">
-      <h1>Hello, {launchParams?.tgWebAppData?.user?.first_name}</h1>
-      <Image src={launchParams?.tgWebAppData?.user?.photo_url ?? "/default-avatar.svg"} alt="User Photo" width={100} height={100} />
+    <div className="max-w-full w-full mx-auto px-4 py-2 flex flex-col items-center bg-gray-50 min-h-screen">
+      <div className="w-full max-w-md flex items-center gap-4 mb-6 p-4 bg-white rounded-lg shadow-sm">
+        <Image 
+          src={launchParams?.tgWebAppData?.user?.photo_url ?? "/default-avatar.svg"} 
+          alt="User Photo" 
+          width={60} 
+          height={60} 
+          className="rounded-full border-2 border-gray-200"
+        />
+        <h1 className="text-xl font-medium">
+          Hello, {launchParams?.tgWebAppData?.user?.first_name || 'Player'}!
+        </h1>
+      </div>
       <Vote voterId={launchParams?.tgWebAppData?.user?.id ?? 482553595} />
       <PlayerRating />
     </div>
