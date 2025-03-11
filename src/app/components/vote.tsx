@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PostgrestError } from "@supabase/supabase-js";
 import { useTheme } from "../context/theme-context";
 import { tv, commonVariants } from "../utils/theme-variants";
+import { isTMA } from '@telegram-apps/bridge';
 
 // Player card skeleton component
 function PlayerCardSkeleton({ colorScheme }: { colorScheme: 'light' | 'dark' }) {
@@ -36,6 +37,7 @@ export default function Vote({ voterId }: { voterId: number }) {
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const { colorScheme } = useTheme();
+  const isTelegramMiniApp = isTMA();
   
   // Get styles based on current theme
   const styles = tv(commonVariants, colorScheme);
@@ -68,19 +70,21 @@ export default function Vote({ voterId }: { voterId: number }) {
     // Optimistically update UI
     const currentPair = pairs[0];
     
-    // Use the prefetched pair immediately
-    setPairs(pairs.slice(1));
-    setSelectedPlayer(null);
-
-    // Submit vote in background
     try {
+      // Submit vote
       const success = await submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId);
       if (!success) {
         console.error("Failed to submit vote");
       }
       
-      if (pairs.length == 0) {
-        loadNewPairs();
+      // Update state only after voting is complete
+      // This helps avoid issues with animations in Telegram Mini App
+      setPairs(prevPairs => prevPairs.slice(1));
+      setSelectedPlayer(null);
+      
+      // Load new pairs if current list is empty
+      if (pairs.length <= 1) {
+        await loadNewPairs();
       }
     } catch (error) {
       console.error("Error submitting vote:", error);
@@ -101,14 +105,26 @@ export default function Vote({ voterId }: { voterId: number }) {
     </div>
   );
 
+  // Animation settings for Telegram Mini App
+  const animationSettings = isTelegramMiniApp 
+    ? { 
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.2 }
+      }
+    : {
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -20 },
+        transition: { duration: 0.3 }
+      };
+
   return (
     <AnimatePresence mode="wait">
       <motion.div 
         key={isLoading ? 'loading' : pairs[0] ? `${pairs[0].playerA.id}-${pairs[0].playerB.id}` : 'empty'}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
+        {...animationSettings}
         className={containerClasses}
       >
         {isLoading ? (
@@ -128,7 +144,7 @@ export default function Vote({ voterId }: { voterId: number }) {
               className={`text-lg font-medium text-center mb-4 ${styles.text}`}
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: isTelegramMiniApp ? 0.2 : 0.3 }}
             >
               Who plays better?
             </motion.h2>
@@ -140,6 +156,7 @@ export default function Vote({ voterId }: { voterId: number }) {
                 isSelected={selectedPlayer === pairs[0].playerA.id}
                 isDisabled={isVoting}
                 colorScheme={colorScheme}
+                isTelegramMiniApp={isTelegramMiniApp}
               />
               <PlayerCard 
                 player={pairs[0].playerB} 
@@ -147,14 +164,15 @@ export default function Vote({ voterId }: { voterId: number }) {
                 isSelected={selectedPlayer === pairs[0].playerB.id}
                 isDisabled={isVoting}
                 colorScheme={colorScheme}
+                isTelegramMiniApp={isTelegramMiniApp}
               />
             </div>
 
             <motion.button 
               onClick={() => handleVote(null)} 
               className={`w-full mt-4 py-2.5 ${styles.secondaryButton} ${styles.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={!isTelegramMiniApp ? { scale: 1.02 } : undefined}
+              whileTap={!isTelegramMiniApp ? { scale: 0.98 } : undefined}
               disabled={isVoting}
             >
               ❓ Don&apos;t know
@@ -171,30 +189,43 @@ function PlayerCard({
   onVote, 
   isSelected = false,
   isDisabled = false,
-  colorScheme
+  colorScheme,
+  isTelegramMiniApp = false
 }: { 
   player: User | null; 
   onVote: () => void; 
   isSelected?: boolean;
   isDisabled?: boolean;
   colorScheme: 'light' | 'dark';
+  isTelegramMiniApp?: boolean;
 }) {
   // Get styles based on current theme
   const styles = tv(commonVariants, colorScheme);
+
+  // Animation settings for Telegram Mini App
+  const cardAnimationProps = isTelegramMiniApp
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        transition: { duration: 0.2 }
+      }
+    : {
+        whileHover: { y: -2 },
+        initial: { scale: 0.95, opacity: 0 },
+        animate: { scale: 1, opacity: 1 },
+        transition: { duration: 0.3 }
+      };
 
   return (
     <motion.div 
       className={`flex flex-col items-center p-3 border rounded-lg shadow-sm transition-all duration-300 ${
         isSelected ? `${styles.selectedBorder} ${styles.selectedBg}` : `${styles.border} hover:shadow-md`
       }`}
-      whileHover={{ y: -2 }}
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      {...cardAnimationProps}
     >
       <div className="relative mb-2 overflow-hidden rounded-full">
         <motion.div
-          whileHover={{ scale: 1.05 }}
+          whileHover={!isTelegramMiniApp ? { scale: 1.05 } : undefined}
           transition={{ duration: 0.3 }}
         >
           <Image 
@@ -214,8 +245,8 @@ function PlayerCard({
         className={`w-full py-2 ${styles.primaryButton} text-white rounded-md shadow-sm transition-all duration-200 text-xs ${
           isDisabled ? "opacity-50 cursor-not-allowed" : styles.primaryButtonHover
         }`}
-        whileHover={!isDisabled ? { scale: 1.05 } : {}}
-        whileTap={!isDisabled ? { scale: 0.95 } : {}}
+        whileHover={!isDisabled && !isTelegramMiniApp ? { scale: 1.05 } : undefined}
+        whileTap={!isDisabled && !isTelegramMiniApp ? { scale: 0.95 } : undefined}
         disabled={isDisabled}
       >
         {isSelected ? "✓ Selected" : "👍 Vote"}
