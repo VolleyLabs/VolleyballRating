@@ -2,25 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { retrieveLaunchParams } from '@telegram-apps/sdk';
-import { isTMA } from '@telegram-apps/bridge';
+import { isTMA, RetrieveLPResult } from '@telegram-apps/bridge';
 
 export default function Home() {
-  const [initData, setInitData] = useState<unknown>({});
-  const [initDataRaw, setInitDataRaw] = useState<unknown>({});
+  const [launchParams, setLaunchParams] = useState<RetrieveLPResult | null>(null);
+
   useEffect(() => {
     if (isTMA()) {
-      const { initDataRaw, initData } = retrieveLaunchParams();
-      setInitData(initData);
-      setInitDataRaw(initDataRaw);
+      const launchParams = retrieveLaunchParams();
+
+      setLaunchParams(launchParams);
     }
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      Hello, Telegram Mini App! <br />
-      {JSON.stringify(initData)}
-      <br />
-      {JSON.stringify(initDataRaw)}
+    <div className="">
+      <h1>Hello, {launchParams?.tgWebAppData?.user?.first_name}</h1>
     </div>
   );
 }

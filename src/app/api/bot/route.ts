@@ -3,7 +3,31 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
+    console.log(body);
+
+    if (body.message && body.message.text.startsWith("/start")) {
+      console.log("Received /start command");
+      const chatId = body.message.chat.id;
+
+      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: "Добро пожаловать! Нажмите кнопку ниже, чтобы запустить Mini App.",
+          reply_markup: {
+            inline_keyboard: [[
+              { text: "🚀 Открыть Mini App", web_app: { url: process.env.NEXT_PUBLIC_APP_URL || "https://volleyball-rating.vercel.app" } }
+            ]]
+          }
+        })
+      });
+
+      return NextResponse.json({ message: "WebApp button sent" });
+    }
+
+    console.log("Received inline query");
     // If an inline query is received
     if (body.inline_query) {
       const queryId = body.inline_query.id;
@@ -11,12 +35,12 @@ export async function POST(request: NextRequest) {
       const results = [
         {
           type: "article",
-          id: "1",
+          id: new Date().getTime().toString(),
           title: "Launch Mini App",
           input_message_content: { message_text: "Click the button below to launch the Mini App!" },
           reply_markup: {
             inline_keyboard: [[
-              { text: "🔵 Open Mini App", web_app: { url: "https://volleyball-rating.vercel.app" } }
+              { text: "🔵 Open Mini App", url: "https://t.me/volleyball_rating_bot?start=miniapp" }
             ]]
           }
         }

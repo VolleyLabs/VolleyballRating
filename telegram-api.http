@@ -1,0 +1,7 @@
+@TELEGRAM_BOT_TOKEN={{$dotenv TELEGRAM_BOT_TOKEN}}
+
+### Set Webhook
+GET https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/setWebhook?url=https://sbp9zrvh-3000.inc1.devtunnels.ms/api/bot
+
+### Get Webhook Info
+GET https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/getWebhookInfo

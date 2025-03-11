@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "tunnel": "devtunnel host -p 3000 --allow-anonymous",
+    "tunnel2": "ngrok http 3000"
   },
   "dependencies": {
     "@telegram-apps/sdk": "^3.5.1",
