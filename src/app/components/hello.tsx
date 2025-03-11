@@ -27,7 +27,7 @@ export default function Hello() {
 
   async function updateUserInSupabase(id: number, first_name: string, last_name: string | undefined, username: string | undefined, photo_url: string | undefined) {
     const { error } = await supabase
-      .from('players')
+      .from('users')
       .upsert([{ id, first_name, last_name, username, photo_url }], { onConflict: 'id' });
 
     if (error) {
