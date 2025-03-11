@@ -1,55 +1,192 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getRandomVotePair, submitVote, VotePair, User } from "@/app/lib/supabaseQueries";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { PostgrestError } from "@supabase/supabase-js";
 
 export default function Vote({ voterId }: { voterId: number }) {
-  const [pair, setPair] = useState<VotePair | null>(null);
+  const [pairs, setPairs] = useState<VotePair[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<PostgrestError | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
+  const [isVoting, setIsVoting] = useState(false);
 
-  useEffect(() => {
-    async function fetchPair() {
+  const loadNewPairs = useCallback(async function loadNewPairs() {
+    try {
+      setError(null);
+      setIsLoading(true);
       const data = await getRandomVotePair(voterId);
-      console.log(data);
-      setPair(data);
+      setPairs(data);
+    } catch (error) {
+      console.error("Error prefetching next pair:", error);
+      setError(error as PostgrestError);
+    } finally {
+      setIsLoading(false);
     }
-    fetchPair();
   }, [voterId]);
 
-  async function handleVote(winnerId: number | null) {
-    if (!pair) return;
+  // Initial fetch
+  useEffect(() => {
+    loadNewPairs();
+  }, [loadNewPairs]);
 
-    const success = await submitVote(voterId, pair.playerA.id, pair.playerB.id, winnerId);
-    if (success) setPair(await getRandomVotePair(voterId));
+  async function handleVote(winnerId: number | null) {
+    if (!pairs[0] || isVoting) return;
+
+    setIsVoting(true);
+    setSelectedPlayer(winnerId);
+
+    // Optimistically update UI
+    const currentPair = pairs[0];
+    
+    // Use the prefetched pair immediately
+    setPairs(pairs.slice(1));
+    setSelectedPlayer(null);
+
+    // Submit vote in background
+    try {
+      const success = await submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId);
+      if (!success) {
+        console.error("Failed to submit vote");
+      }
+      
+      if (pairs.length == 0) {
+        loadNewPairs();
+      }
+    } catch (error) {
+      console.error("Error submitting vote:", error);
+    } finally {
+      setIsVoting(false);
+    }
   }
 
-  if (!pair) return <p>Loading vote pair...</p>;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[300px]">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
+
+  if (error) return <p className="text-center text-lg">Error loading pairs: {error.message}</p>;
+  if (pairs.length == 0) return <p className="text-center text-lg">You already voted for all players</p>;
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4">
-      <h1 className="text-xl font-bold">Who plays better?</h1>
+    <AnimatePresence mode="wait">
+      <motion.div 
+        key={`${pairs[0].playerA.id}-${pairs[0].playerB.id}`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        className="flex flex-col items-center gap-4 p-4"
+      >
+        <motion.h1 
+          className="text-2xl font-bold text-center mb-6"
+          initial={{ scale: 0.9 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          Who plays better?
+        </motion.h1>
 
-      <div className="flex gap-8">
-        <PlayerCard player={pair.playerA} onVote={() => handleVote(pair.playerA.id)} />
-        <PlayerCard player={pair.playerB} onVote={() => handleVote(pair.playerB.id)} />
-      </div>
+        <div className="flex flex-col md:flex-row gap-8 w-full justify-center">
+          <PlayerCard 
+            player={pairs[0].playerA} 
+            onVote={() => handleVote(pairs[0].playerA.id)} 
+            isSelected={selectedPlayer === pairs[0].playerA.id}
+            isDisabled={isVoting}
+          />
+          <div className="flex items-center justify-center">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0.5 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ 
+                repeat: Infinity, 
+                repeatType: "reverse", 
+                duration: 1.5 
+              }}
+              className="text-2xl hidden md:block"
+            >
+              VS
+            </motion.div>
+          </div>
+          <PlayerCard 
+            player={pairs[0].playerB} 
+            onVote={() => handleVote(pairs[0].playerB.id)} 
+            isSelected={selectedPlayer === pairs[0].playerB.id}
+            isDisabled={isVoting}
+          />
+        </div>
 
-      <button onClick={() => handleVote(null)} className="mt-4 px-4 py-2 bg-gray-500 text-white rounded">
-        ❓ I don&apos;t know
-      </button>
-    </div>
+        <motion.button 
+          onClick={() => handleVote(null)} 
+          className="mt-6 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg shadow-md transition-all duration-200 ease-in-out"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          disabled={isVoting}
+        >
+          ❓ Don&apos;t know
+        </motion.button>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
-function PlayerCard({ player, onVote }: { player: User | null; onVote: () => void }) {
+function PlayerCard({ 
+  player, 
+  onVote, 
+  isSelected = false,
+  isDisabled = false
+}: { 
+  player: User | null; 
+  onVote: () => void; 
+  isSelected?: boolean;
+  isDisabled?: boolean;
+}) {
   return (
-    <div className="flex flex-col items-center p-4 border rounded shadow-lg">
-      <Image src={player?.photoUrl ?? "/default-avatar.svg"} alt={player?.firstName ?? "Player"} width={96} height={96} className="rounded-full" />
-      <h2 className="mt-2 font-bold">{player?.firstName} {player?.lastName}</h2>
-      <p className="text-sm text-gray-500">@{player?.username ?? "No username"}</p>
-      <button onClick={onVote} className="mt-2 px-4 py-2 bg-blue-500 text-white rounded">
-        👍 Vote
-      </button>
-    </div>
+    <motion.div 
+      className={`flex flex-col items-center p-6 border rounded-xl shadow-lg transition-all duration-300 ${
+        isSelected ? "border-blue-500 bg-blue-50" : "hover:shadow-xl"
+      }`}
+      whileHover={{ y: -5 }}
+      initial={{ scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="relative mb-4 overflow-hidden rounded-full">
+        <motion.div
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Image 
+            src={player?.photoUrl ?? "/default-avatar.svg"} 
+            alt={player?.firstName ?? "Player"} 
+            width={120} 
+            height={120}  priority
+            className="rounded-full object-cover border-4 border-white shadow-md" 
+          />
+        </motion.div>
+      </div>
+      <h2 className="mt-2 text-xl font-bold">{player?.firstName} {player?.lastName}</h2>
+      <p className="text-sm text-gray-500 mb-4">@{player?.username ?? "No username"}</p>
+      <motion.button 
+        onClick={onVote} 
+        className={`mt-2 px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md transition-all duration-200 ${
+          isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
+        }`}
+        whileHover={!isDisabled ? { scale: 1.05 } : {}}
+        whileTap={!isDisabled ? { scale: 0.95 } : {}}
+        disabled={isDisabled}
+      >
+        {isSelected ? "✓ Selected" : "👍 Vote"}
+      </motion.button>
+    </motion.div>
   );
 }

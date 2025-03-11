@@ -10,36 +10,49 @@ export type User = {
   photoUrl?: string;
 };
 
+export type DB_RandomVotePair = {
+  player_a_id: number;
+  player_a_first_name: string;
+  player_a_last_name: string | null;
+  player_a_photo_url: string | null;
+  player_a_username: string | null;
+  player_b_id: number;
+  player_b_first_name: string;
+  player_b_last_name: string | null;
+  player_b_photo_url: string | null;
+  player_b_username: string | null;
+};
+
 export type VotePair = {
   playerA: User;
   playerB: User;
 };
 
-export async function getRandomVotePair(voterId: number): Promise<VotePair | null> {
+export async function getRandomVotePair(voterId: number): Promise<VotePair[]> {
   const { data, error } = await supabase
     .rpc("get_random_vote_pair", { voter_id_param: voterId });
 
   if (error) {
     console.error("Error fetching vote pair:", error);
-    return null;
+    throw error;
   }
 
-  return data ? {
+  return data?.map((pair: DB_RandomVotePair) => ({
     playerA: {
-      id: data[0].player_a_id,
-      firstName: data[0].player_a_first_name,
-      lastName: data[0].player_a_last_name,
-      photoUrl: data[0].player_a_photo_url,
-      username: data[0].player_a_username,
+      id: pair.player_a_id,
+      firstName: pair.player_a_first_name,
+      lastName: pair.player_a_last_name,
+      photoUrl: pair.player_a_photo_url,
+      username: pair.player_a_username,
     },
     playerB: {
-      id: data[0].player_b_id,
-      firstName: data[0].player_b_first_name,
-      lastName: data[0].player_b_last_name,
-      photoUrl: data[0].player_b_photo_url,
-      username: data[0].player_b_username,
+      id: pair.player_b_id,
+      firstName: pair.player_b_first_name,
+      lastName: pair.player_b_last_name,
+      photoUrl: pair.player_b_photo_url,
+      username: pair.player_b_username,
     }
-  } : null;
+  })) ?? [];
 }
 
 export async function submitVote(voterId: number, playerA: number, playerB: number, winnerId: number | null) {
