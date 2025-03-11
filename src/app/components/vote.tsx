@@ -96,7 +96,7 @@ export default function Vote({ voterId }: { voterId: number }) {
   if (error) return <p className={`text-center text-base p-3 sm:p-4 mt-4 ${styles.text}`}>Error loading pairs: {error.message}</p>;
   
   if (pairs.length == 0 && !isLoading) return (
-    <div className={`w-full max-w-md mx-auto p-4 sm:p-6 mt-4${styles.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}>
+    <div className={`w-full max-w-md mx-auto p-4 sm:p-6 mt-4 ${styles.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}>
       <p className={`text-lg mb-2 ${styles.text}`}>You already voted for all players</p>
       <p className={`text-sm ${styles.secondaryText}`}>Thank you for participating!</p>
     </div>
