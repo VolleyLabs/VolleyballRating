@@ -5,6 +5,8 @@ import { getRandomVotePair, submitVote, VotePair, User } from "@/app/lib/supabas
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostgrestError } from "@supabase/supabase-js";
+import { useTheme } from "../context/theme-context";
+import { tv, commonVariants } from "../utils/theme-variants";
 
 export default function Vote({ voterId }: { voterId: number }) {
   const [pairs, setPairs] = useState<VotePair[]>([]);
@@ -12,6 +14,10 @@ export default function Vote({ voterId }: { voterId: number }) {
   const [error, setError] = useState<PostgrestError | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
+  const { colorScheme } = useTheme();
+  
+  // Получаем стили на основе текущей темы
+  const styles = tv(commonVariants, colorScheme);
 
   const loadNewPairs = useCallback(async function loadNewPairs() {
     try {
@@ -74,11 +80,11 @@ export default function Vote({ voterId }: { voterId: number }) {
     );
   }
 
-  if (error) return <p className="text-center text-base p-4">Error loading pairs: {error.message}</p>;
+  if (error) return <p className={`text-center text-base p-4 ${styles.text}`}>Error loading pairs: {error.message}</p>;
   if (pairs.length == 0) return (
-    <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-sm text-center">
-      <p className="text-lg mb-2">You already voted for all players</p>
-      <p className="text-sm text-gray-500">Thank you for participating!</p>
+    <div className={`w-full max-w-md mx-auto p-6 ${styles.cardBg} rounded-lg shadow-sm text-center`}>
+      <p className={`text-lg mb-2 ${styles.text}`}>You already voted for all players</p>
+      <p className={`text-sm ${styles.secondaryText}`}>Thank you for participating!</p>
     </div>
   );
 
@@ -90,10 +96,10 @@ export default function Vote({ voterId }: { voterId: number }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
-        className="w-full max-w-md mx-auto p-4 bg-white rounded-lg shadow-sm"
+        className={`w-full max-w-md mx-auto p-4 ${styles.cardBg} rounded-lg shadow-sm`}
       >
         <motion.h2 
-          className="text-lg font-medium text-center mb-4"
+          className={`text-lg font-medium text-center mb-4 ${styles.text}`}
           initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.3 }}
@@ -107,18 +113,20 @@ export default function Vote({ voterId }: { voterId: number }) {
             onVote={() => handleVote(pairs[0].playerA.id)} 
             isSelected={selectedPlayer === pairs[0].playerA.id}
             isDisabled={isVoting}
+            colorScheme={colorScheme}
           />
           <PlayerCard 
             player={pairs[0].playerB} 
             onVote={() => handleVote(pairs[0].playerB.id)} 
             isSelected={selectedPlayer === pairs[0].playerB.id}
             isDisabled={isVoting}
+            colorScheme={colorScheme}
           />
         </div>
 
         <motion.button 
           onClick={() => handleVote(null)} 
-          className="w-full mt-4 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm"
+          className={`w-full mt-4 py-2.5 ${styles.secondaryButton} ${styles.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm`}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           disabled={isVoting}
@@ -134,17 +142,22 @@ function PlayerCard({
   player, 
   onVote, 
   isSelected = false,
-  isDisabled = false
+  isDisabled = false,
+  colorScheme
 }: { 
   player: User | null; 
   onVote: () => void; 
   isSelected?: boolean;
   isDisabled?: boolean;
+  colorScheme: 'light' | 'dark';
 }) {
+  // Получаем стили на основе текущей темы
+  const styles = tv(commonVariants, colorScheme);
+
   return (
     <motion.div 
       className={`flex flex-col items-center p-3 border rounded-lg shadow-sm transition-all duration-300 ${
-        isSelected ? "border-blue-500 bg-blue-50" : "hover:shadow-md"
+        isSelected ? `${styles.selectedBorder} ${styles.selectedBg}` : `${styles.border} hover:shadow-md`
       }`}
       whileHover={{ y: -2 }}
       initial={{ scale: 0.95, opacity: 0 }}
@@ -162,16 +175,16 @@ function PlayerCard({
             width={80} 
             height={80}
             priority
-            className="rounded-full object-cover border-2 border-white shadow-sm" 
+            className={`rounded-full object-cover border-2 ${colorScheme === 'dark' ? 'border-gray-700' : 'border-white'} shadow-sm`} 
           />
         </motion.div>
       </div>
-      <h3 className="mt-1 text-sm font-medium text-center">{player?.firstName} {player?.lastName}</h3>
-      <p className="text-xs text-gray-500 mb-2 text-center">@{player?.username ?? "No username"}</p>
+      <h3 className={`mt-1 text-sm font-medium text-center ${styles.text}`}>{player?.firstName} {player?.lastName}</h3>
+      <p className={`text-xs ${styles.secondaryText} mb-2 text-center`}>@{player?.username ?? "No username"}</p>
       <motion.button 
         onClick={onVote} 
-        className={`w-full py-2 bg-blue-500 text-white rounded-md shadow-sm transition-all duration-200 text-xs ${
-          isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
+        className={`w-full py-2 ${styles.primaryButton} text-white rounded-md shadow-sm transition-all duration-200 text-xs ${
+          isDisabled ? "opacity-50 cursor-not-allowed" : styles.primaryButtonHover
         }`}
         whileHover={!isDisabled ? { scale: 1.05 } : {}}
         whileTap={!isDisabled ? { scale: 0.95 } : {}}

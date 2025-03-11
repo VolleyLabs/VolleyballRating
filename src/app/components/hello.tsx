@@ -7,11 +7,17 @@ import Image from 'next/image';
 import { createClient } from '@/app/utils/supabase/client';
 import Vote from './vote';
 import PlayerRating from './player-rating';
+import { useTheme } from '../context/theme-context';
+import { tv, commonVariants } from '../utils/theme-variants';
 
 const supabase = createClient();
 
 export default function Hello() {
   const [launchParams, setLaunchParams] = useState<RetrieveLPResult | null>(null);
+  const { colorScheme } = useTheme();
+  
+  // Получаем стили на основе текущей темы
+  const styles = tv(commonVariants, colorScheme);
 
   useEffect(() => {
     if (isTMA()) {
@@ -38,16 +44,16 @@ export default function Hello() {
   }
 
   return (
-    <div className="max-w-full w-full mx-auto px-4 py-2 flex flex-col items-center bg-gray-50 min-h-screen">
-      <div className="w-full max-w-md flex items-center gap-4 mb-6 p-4 bg-white rounded-lg shadow-sm">
+    <div className={`max-w-full w-full mx-auto px-4 py-2 flex flex-col items-center ${styles.bg} min-h-screen`}>
+      <div className={`w-full max-w-md flex items-center gap-4 mb-6 p-4 ${styles.cardBg} rounded-lg shadow-sm`}>
         <Image 
           src={launchParams?.tgWebAppData?.user?.photo_url ?? "/default-avatar.svg"} 
           alt="User Photo" 
           width={60} 
           height={60} 
-          className="rounded-full border-2 border-gray-200"
+          className={`rounded-full border-2 ${styles.border}`}
         />
-        <h1 className="text-xl font-medium">
+        <h1 className={`text-xl font-medium ${styles.text}`}>
           Hello, {launchParams?.tgWebAppData?.user?.first_name || 'Player'}!
         </h1>
       </div>

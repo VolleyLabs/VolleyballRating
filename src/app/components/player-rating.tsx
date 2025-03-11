@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/app/utils/supabase/client";
+import { useTheme } from "../context/theme-context";
+import { tv, commonVariants } from "../utils/theme-variants";
 
 // Type for a player's rating info returned by the stored procedure
 export type PlayerRating = {
@@ -18,6 +20,10 @@ export default function RatingTable() {
   const [ratings, setRatings] = useState<PlayerRating[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { colorScheme } = useTheme();
+  
+  // Получаем стили на основе текущей темы
+  const styles = tv(commonVariants, colorScheme);
 
   // Create Supabase client instance
   const supabase = createClient();
@@ -48,30 +54,30 @@ export default function RatingTable() {
   }
 
   if (error) {
-    return <p className="text-center text-base text-red-600 p-4">Error: {error}</p>;
+    return <p className={`text-center text-base ${styles.text} p-4`}>Error: {error}</p>;
   }
 
   return (
-    <div className="w-full max-w-md mx-auto mt-8 bg-white rounded-lg shadow-sm overflow-hidden">
-      <h2 className="text-xl font-bold p-4 bg-gray-100 text-center border-b">
+    <div className={`w-full max-w-md mx-auto mt-8 ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`}>
+      <h2 className={`text-xl font-bold p-4 ${styles.headerBg} ${styles.text} text-center border-b ${styles.border}`}>
         Player Ratings
       </h2>
       
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-50 text-sm">
-              <th className="py-2 px-3 text-left font-medium text-gray-600">Rank</th>
-              <th className="py-2 px-3 text-left font-medium text-gray-600">Avatar</th>
-              <th className="py-2 px-3 text-left font-medium text-gray-600">Name</th>
-              <th className="py-2 px-3 text-left font-medium text-gray-600">Username</th>
-              <th className="py-2 px-3 text-right font-medium text-gray-600">Rating</th>
+            <tr className={`${styles.tableHeaderBg} text-sm`}>
+              <th className={`py-2 px-3 text-left font-medium ${styles.tableHeaderText}`}>Rank</th>
+              <th className={`py-2 px-3 text-left font-medium ${styles.tableHeaderText}`}>Avatar</th>
+              <th className={`py-2 px-3 text-left font-medium ${styles.tableHeaderText}`}>Name</th>
+              <th className={`py-2 px-3 text-left font-medium ${styles.tableHeaderText}`}>Username</th>
+              <th className={`py-2 px-3 text-right font-medium ${styles.tableHeaderText}`}>Rating</th>
             </tr>
           </thead>
           <tbody>
             {ratings.map((player, index) => (
-              <tr key={player.id} className="border-t border-gray-100 hover:bg-gray-50">
-                <td className="py-3 px-3 text-sm">{index + 1}</td>
+              <tr key={player.id} className={`border-t ${styles.tableBorder} ${styles.tableRowHover}`}>
+                <td className={`py-3 px-3 text-sm ${styles.text}`}>{index + 1}</td>
                 <td className="py-3 px-3">
                   <div className="w-8 h-8 relative">
                     <Image
@@ -82,13 +88,13 @@ export default function RatingTable() {
                     />
                   </div>
                 </td>
-                <td className="py-3 px-3 text-sm">
+                <td className={`py-3 px-3 text-sm ${styles.text}`}>
                   {player.first_name} {player.last_name || ""}
                 </td>
-                <td className="py-3 px-3 text-xs text-gray-500">
+                <td className={`py-3 px-3 text-xs ${styles.secondaryText}`}>
                   {player.username ? "@" + player.username : "No username"}
                 </td>
-                <td className="py-3 px-3 text-right font-medium">{player.rating.toFixed(0)}</td>
+                <td className={`py-3 px-3 text-right font-medium ${styles.text}`}>{player.rating.toFixed(0)}</td>
               </tr>
             ))}
           </tbody>
