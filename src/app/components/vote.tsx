@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getRandomVotePair, submitVote, VotePair, User } from "@/app/lib/supabaseQueries";
+import { getRandomVotePair, submitVote, VotePair, User } from "@/app/lib/supabase-queries";
 import Image from "next/image";
 import { PostgrestError } from "@supabase/supabase-js";
-import { useTheme } from "../context/theme-context";
 import { tv, commonVariants } from "../utils/theme-variants";
 import { isTMA } from '@telegram-apps/bridge';
+import { useTelegram } from "../context/telegram-context";
 
 // Player card skeleton component
 function PlayerCardSkeleton({ colorScheme }: { colorScheme: 'light' | 'dark' }) {
@@ -33,8 +33,8 @@ export default function Vote({ voterId }: { voterId: number }) {
   const [error, setError] = useState<PostgrestError | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
-  const { colorScheme } = useTheme();
   const isTelegramMiniApp = isTMA();
+  const { colorScheme } = useTelegram();
   
   // States for the "Me" button
   const [showMeButton, setShowMeButton] = useState(false);

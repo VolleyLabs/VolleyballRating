@@ -1,13 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { useTheme } from '../context/theme-context';
 import { tv, commonVariants } from '../utils/theme-variants';
 import { useTelegram } from '../context/telegram-context';
 
 export default function Hello() {
   const { launchParams, isLoading } = useTelegram();
-  const { colorScheme } = useTheme();
+  const { colorScheme } = useTelegram();
   
   // Get styles based on current theme
   const styles = tv(commonVariants, colorScheme);

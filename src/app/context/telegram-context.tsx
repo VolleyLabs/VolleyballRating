@@ -1,15 +1,17 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { retrieveLaunchParams } from '@telegram-apps/sdk';
+import { retrieveLaunchParams, ThemeParams } from '@telegram-apps/sdk';
 import { isTMA, RetrieveLPResult } from '@telegram-apps/bridge';
-import { createClient } from '@/app/utils/supabase/client';
+import { upsertUser } from '../lib/supabase-queries';
+import { on } from '@telegram-apps/sdk';
 
-const supabase = createClient();
 
 interface TelegramContextType {
   launchParams: RetrieveLPResult | null;
   isLoading: boolean;
+  colorScheme: 'light' | 'dark';
+  themeParams: ThemeParams | null;
 }
 
 const TelegramContext = createContext<TelegramContextType | undefined>(undefined);
@@ -17,6 +19,8 @@ const TelegramContext = createContext<TelegramContextType | undefined>(undefined
 export function TelegramProvider({ children }: { children: ReactNode }) {
   const [launchParams, setLaunchParams] = useState<RetrieveLPResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('dark');
+  const [themeParams, setThemeParams] = useState<ThemeParams | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,30 +30,51 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         const params = retrieveLaunchParams();
         setLaunchParams(params);
 
+        setColorScheme(params?.tgWebAppThemeParams?.button_text_color === "#ffffff" ? 'light' : 'dark');
+        setThemeParams(params?.tgWebAppThemeParams || null);
+        
+        const removeThemeChanged = on('theme_changed', payload => {
+          setColorScheme(payload.theme_params.button_color === "#ffffff" ? 'light' : 'dark');
+          setThemeParams(payload.theme_params || null);
+        });
+
         if (params?.tgWebAppData?.user) {
           const { id, first_name, last_name, username, photo_url } = params.tgWebAppData.user;
-          await updateUserInSupabase(id, first_name, last_name, username, photo_url);
+
+          await upsertUser(id, first_name, last_name, username, photo_url);
         }
+    
+        // Simulate minimum loading time for smooth UX
+        setTimeout(() => setIsLoading(false), 300);
+
+        return () => {
+          removeThemeChanged();
+        };
+      } else {
+        // For local development, use system theme
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = () => {
+          setColorScheme(mediaQuery.matches ? 'dark' : 'light');
+          setThemeParams(null);
+        };
+  
+        handleChange();
+        mediaQuery.addEventListener('change', handleChange);
+  
+        // Simulate minimum loading time for smooth UX
+        setTimeout(() => setIsLoading(false), 300);
+
+        return () => {
+          mediaQuery.removeEventListener('change', handleChange);
+        };
       }
-      // Simulate minimum loading time for smooth UX
-      setTimeout(() => setIsLoading(false), 300);
     };
     
     fetchData();
   }, []);
 
-  async function updateUserInSupabase(id: number, first_name: string, last_name: string | undefined, username: string | undefined, photo_url: string | undefined) {
-    const { error } = await supabase
-      .from('users')
-      .upsert([{ id, first_name, last_name, username, photo_url }], { onConflict: 'id' });
-
-    if (error) {
-      console.error('Error updating user in Supabase:', error);
-    }
-  }
-
   return (
-    <TelegramContext.Provider value={{ launchParams, isLoading }}>
+    <TelegramContext.Provider value={{ launchParams, isLoading, colorScheme, themeParams }}>
       {children}
     </TelegramContext.Provider>
   );

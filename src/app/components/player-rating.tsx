@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { createClient } from "@/app/utils/supabase/client";
-import { useTheme } from "../context/theme-context";
+import { useTelegram } from "../context/telegram-context";
 import { tv, commonVariants } from "../utils/theme-variants";
 
 // Type for a player's rating info returned by the stored procedure
@@ -20,7 +20,7 @@ export default function RatingTable() {
   const [ratings, setRatings] = useState<PlayerRating[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { colorScheme } = useTheme();
+  const { colorScheme } = useTelegram();
   
   // Get styles based on current theme
   const styles = tv(commonVariants, colorScheme);
