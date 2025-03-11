@@ -50,10 +50,12 @@ export default function Vote({ voterId }: { voterId: number }) {
     setShowNope(false);
   }, [pairs]);
 
-  const loadNewPairs = useCallback(async function loadNewPairs() {
+  const loadNewPairs = useCallback(async function loadNewPairs(showLoading = true) {
     try {
       setError(null);
-      setIsLoading(true);
+      if (showLoading) {
+        setIsLoading(true);
+      }
       const data = await getRandomVotePair(voterId);
       setPairs(data);
     } catch (error) {
@@ -91,7 +93,7 @@ export default function Vote({ voterId }: { voterId: number }) {
           
           // Load new pairs if needed
           if (pairs.length <= 1) {
-            return loadNewPairs();
+            return loadNewPairs(false);
           }
         })
         .catch(error => {
@@ -121,7 +123,7 @@ export default function Vote({ voterId }: { voterId: number }) {
         
         // Load new pairs if current list is empty
         if (pairs.length <= 1) {
-          await loadNewPairs();
+          await loadNewPairs(false);
         }
       } catch (error) {
         console.error("Error submitting vote:", error);
