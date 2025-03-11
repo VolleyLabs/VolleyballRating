@@ -36,8 +36,19 @@ export default function Vote({ voterId }: { voterId: number }) {
   const { colorScheme } = useTheme();
   const isTelegramMiniApp = isTMA();
   
+  // States for the "Me" button
+  const [showMeButton, setShowMeButton] = useState(false);
+  const [showNope, setShowNope] = useState(false);
+  
   // Get styles based on current theme
   const styles = tv(commonVariants, colorScheme);
+
+  // Determine if the "Me" button should be shown with a 1% chance
+  useEffect(() => {
+    const randomChance = Math.random() * 100;
+    setShowMeButton(randomChance <= 1);
+    setShowNope(false);
+  }, [pairs]);
 
   const loadNewPairs = useCallback(async function loadNewPairs() {
     try {
@@ -107,6 +118,15 @@ export default function Vote({ voterId }: { voterId: number }) {
     ? "animate-fadeInFast" 
     : "animate-fadeInSlideUp";
 
+  // Handler for the "Me" button click
+  const handleMeButtonClick = () => {
+    setShowNope(true);
+    setTimeout(() => {
+      setShowMeButton(false);
+      setShowNope(false);
+    }, 500);
+  };
+
   return (
     <div 
       key={isLoading ? 'loading' : pairs[0] ? `${pairs[0].playerA.id}-${pairs[0].playerB.id}` : 'empty'}
@@ -152,13 +172,32 @@ export default function Vote({ voterId }: { voterId: number }) {
             />
           </div>
 
-          <button 
-            onClick={() => handleVote(null)} 
-            className={`w-full mt-4 py-2.5 ${styles.secondaryButton} ${styles.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''}`}
-            disabled={isVoting}
-          >
-            ❓ Don&apos;t know
-          </button>
+          <div className="flex flex-col gap-2 mt-4">
+            {showMeButton && (
+              <div className="relative w-full">
+                <button 
+                  onClick={handleMeButtonClick} 
+                  className={`w-full py-2 ${styles.primaryButton} bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''} ${showNope ? 'opacity-50' : ''}`}
+                  disabled={showNope}
+                >
+                  {showNope ? "Nope 😏" : "👤 Me"}
+                </button>
+                {showNope && (
+                  <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                    <span className="text-lg font-bold text-white bg-red-500 px-4 py-2 rounded-md shadow-md animate-bounce">Nope 😏</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button 
+              onClick={() => handleVote(null)} 
+              className={`w-full py-2.5 ${styles.secondaryButton} ${styles.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''}`}
+              disabled={isVoting}
+            >
+              ❓ Don&apos;t know
+            </button>
+          </div>
         </>
       )}
     </div>
