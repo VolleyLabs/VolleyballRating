@@ -30,11 +30,11 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         const params = retrieveLaunchParams();
         setLaunchParams(params);
 
-        setColorScheme(params?.tgWebAppThemeParams?.button_text_color === "#ffffff" ? 'light' : 'dark');
+        setColorScheme(params?.tgWebAppThemeParams?.button_text_color === "#ffffff" ? 'dark' : 'light');
         setThemeParams(params?.tgWebAppThemeParams || null);
         
         const removeThemeChanged = on('theme_changed', payload => {
-          setColorScheme(payload.theme_params.button_color === "#ffffff" ? 'light' : 'dark');
+          setColorScheme(payload.theme_params.button_color === "#ffffff" ? 'dark' : 'light');
           setThemeParams(payload.theme_params || null);
         });
 
