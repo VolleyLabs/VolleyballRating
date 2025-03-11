@@ -72,32 +72,62 @@ export default function Vote({ voterId }: { voterId: number }) {
   async function handleVote(winnerId: number | null) {
     if (!pairs[0] || isVoting) return;
 
-    setIsVoting(true);
+    // Immediately update UI for better responsiveness
     setSelectedPlayer(winnerId);
-
-    // Optimistically update UI
-    const currentPair = pairs[0];
     
-    try {
-      // Submit vote
-      const success = await submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId);
-      if (!success) {
-        console.error("Failed to submit vote");
-      }
-      
-      // Update state only after voting is complete
-      // This helps avoid issues with animations in Telegram Mini App
+    // For mobile/Telegram Mini App, we want to be more responsive
+    if (isTelegramMiniApp) {
+      // Optimistically update UI first
+      const currentPair = pairs[0];
       setPairs(prevPairs => prevPairs.slice(1));
-      setSelectedPlayer(null);
       
-      // Load new pairs if current list is empty
-      if (pairs.length <= 1) {
-        await loadNewPairs();
+      // Then submit vote in background without blocking UI
+      setIsVoting(true);
+      submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId)
+        .then(success => {
+          if (!success) {
+            console.error("Failed to submit vote");
+          }
+          
+          // Load new pairs if needed
+          if (pairs.length <= 1) {
+            return loadNewPairs();
+          }
+        })
+        .catch(error => {
+          console.error("Error submitting vote:", error);
+        })
+        .finally(() => {
+          setSelectedPlayer(null);
+          setIsVoting(false);
+        });
+    } else {
+      // For desktop, keep the original flow
+      setIsVoting(true);
+      
+      // Optimistically update UI
+      const currentPair = pairs[0];
+      
+      try {
+        // Submit vote
+        const success = await submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId);
+        if (!success) {
+          console.error("Failed to submit vote");
+        }
+        
+        // Update state only after voting is complete
+        setPairs(prevPairs => prevPairs.slice(1));
+        setSelectedPlayer(null);
+        
+        // Load new pairs if current list is empty
+        if (pairs.length <= 1) {
+          await loadNewPairs();
+        }
+      } catch (error) {
+        console.error("Error submitting vote:", error);
+      } finally {
+        setIsVoting(false);
       }
-    } catch (error) {
-      console.error("Error submitting vote:", error);
-    } finally {
-      setIsVoting(false);
     }
   }
 
@@ -177,8 +207,9 @@ export default function Vote({ voterId }: { voterId: number }) {
               <div className="relative w-full">
                 <button 
                   onClick={handleMeButtonClick} 
-                  className={`w-full py-2 ${styles.primaryButton} bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''} ${showNope ? 'opacity-50' : ''}`}
+                  className={`w-full py-2 ${styles.primaryButton} bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm transition-all ${isTelegramMiniApp ? 'duration-100' : 'duration-200'} ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''} ${showNope ? 'opacity-50' : ''}`}
                   disabled={showNope}
+                  style={{ touchAction: 'manipulation' }}
                 >
                   {showNope ? "Nope 😏" : "👤 Me"}
                 </button>
@@ -192,8 +223,9 @@ export default function Vote({ voterId }: { voterId: number }) {
 
             <button 
               onClick={() => handleVote(null)} 
-              className={`w-full py-2.5 ${styles.secondaryButton} ${styles.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''}`}
+              className={`w-full py-2.5 ${styles.secondaryButton} ${styles.secondaryButtonHover} text-white rounded-md shadow-sm transition-all ${isTelegramMiniApp ? 'duration-100' : 'duration-200'} ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''}`}
               disabled={isVoting}
+              style={{ touchAction: 'manipulation' }}
             >
               ❓ Don&apos;t know
             </button>
@@ -226,16 +258,20 @@ function PlayerCard({
   const cardAnimationClasses = isTelegramMiniApp
     ? "animate-fadeInFast"
     : "animate-fadeIn";
+    
+  // Adjust transition duration based on device type
+  const transitionDuration = isTelegramMiniApp ? "duration-150" : "duration-300";
+  const buttonTransitionDuration = isTelegramMiniApp ? "duration-100" : "duration-200";
 
   return (
     <div 
-      className={`flex flex-col items-center p-3 border rounded-lg shadow-sm transition-all duration-300 ${
+      className={`flex flex-col items-center p-3 border rounded-lg shadow-sm transition-all ${transitionDuration} ${
         isSelected ? `${styles.selectedBorder} ${styles.selectedBg}` : `${styles.border} hover:shadow-md`
       } ${cardAnimationClasses} ${!isTelegramMiniApp ? 'hover:-translate-y-1' : ''}`}
       style={{ opacity: 1 }}
     >
       <div className="relative mb-2 overflow-hidden rounded-full">
-        <div className={`transition-transform duration-300 ${!isTelegramMiniApp ? 'hover:scale-105' : ''}`}>
+        <div className={`transition-transform ${transitionDuration} ${!isTelegramMiniApp ? 'hover:scale-105' : ''}`}>
           <Image 
             src={player?.photoUrl ?? "/default-avatar.svg"} 
             alt={player?.firstName ?? "Player"} 
@@ -250,10 +286,11 @@ function PlayerCard({
       <p className={`text-xs ${styles.secondaryText} mb-2 text-center`}>{player?.username ? '@' + player.username : "No username"}</p>
       <button 
         onClick={onVote} 
-        className={`w-full py-2 ${styles.primaryButton} text-white rounded-md shadow-sm transition-all duration-200 text-xs ${
+        className={`w-full py-2 ${styles.primaryButton} text-white rounded-md shadow-sm transition-all ${buttonTransitionDuration} text-xs ${
           isDisabled ? "opacity-50 cursor-not-allowed" : styles.primaryButtonHover
         } ${!isDisabled && !isTelegramMiniApp ? 'hover:scale-105 active:scale-95' : ''}`}
         disabled={isDisabled}
+        style={{ touchAction: 'manipulation' }}
       >
         {isSelected ? "✓ Selected" : "👍 Vote"}
       </button>
