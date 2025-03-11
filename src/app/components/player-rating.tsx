@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { createClient } from "@/app/utils/supabase/client";
 import { useTheme } from "../context/theme-context";
@@ -26,24 +26,30 @@ export default function RatingTable() {
   const styles = tv(commonVariants, colorScheme);
 
   // Create Supabase client instance
-  const supabase = createClient();
+  const supabase = useRef(createClient());
 
   // Fetch ratings from Supabase by calling the stored procedure
   useEffect(() => {
-    async function fetchRatings() {
-      setLoading(true);
-      setError(null);
-      const { data, error } = await supabase.rpc("calculate_player_ratings");
-      if (error) {
-        console.error("Error fetching ratings:", error);
-        setError(error.message);
-      } else {
-        setRatings(data as PlayerRating[]);
-      }
-      setLoading(false);
+    if (!supabase) {
+      return
     }
     fetchRatings();
+    const interval = setInterval(fetchRatings, 30000);
+    return () => clearInterval(interval);
   }, [supabase]);
+
+  async function fetchRatings() {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase.current.rpc("calculate_player_ratings");
+    if (error) {
+      console.error("Error fetching ratings:", error);
+      setError(error.message);
+    } else {
+      setRatings(data as PlayerRating[]);
+    }
+    setLoading(false);
+  }
 
   // Common container for both states to avoid layout shifts
   const containerClasses = `w-full max-w-md mx-auto ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`;
@@ -93,7 +99,9 @@ export default function RatingTable() {
               ))
             ) : (
               ratings.map((player, index) => (
-                <tr key={player.id} className={`border-t ${styles.tableBorder} ${styles.tableRowHover}`}>
+                <tr key={player.id} className={`border-t ${styles.tableBorder} ${styles.tableRowHover} ${player.username ? 'cursor-pointer': undefined}`} 
+                  onClick={player.username ? () => window.open('https://t.me/' + player.username, '_blank'): undefined}
+                  >
                   <td className={`py-3 px-2 sm:px-3 text-sm ${styles.text}`}>{index + 1}</td>
                   <td className="py-3 px-2 sm:px-3">
                     <div className="w-8 h-8 relative">
