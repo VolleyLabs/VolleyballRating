@@ -8,6 +8,27 @@ import { PostgrestError } from "@supabase/supabase-js";
 import { useTheme } from "../context/theme-context";
 import { tv, commonVariants } from "../utils/theme-variants";
 
+// Player card skeleton component
+function PlayerCardSkeleton({ colorScheme }: { colorScheme: 'light' | 'dark' }) {
+  const styles = tv(commonVariants, colorScheme);
+  
+  return (
+    <motion.div 
+      className={`flex flex-col items-center p-4 border rounded-lg shadow-sm ${styles.border} animate-pulse`}
+      initial={{ scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="relative mb-2 overflow-hidden rounded-full">
+        <div className="w-[80px] h-[80px] rounded-full bg-gray-300 dark:bg-gray-700"></div>
+      </div>
+      <div className="h-4 w-20 bg-gray-300 dark:bg-gray-700 rounded mt-1 mb-1"></div>
+      <div className="h-3 w-16 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
+      <div className={`w-full h-8 bg-gray-300 dark:bg-gray-700 rounded-md`}></div>
+    </motion.div>
+  );
+}
+
 export default function Vote({ voterId }: { voterId: number }) {
   const [pairs, setPairs] = useState<VotePair[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +37,7 @@ export default function Vote({ voterId }: { voterId: number }) {
   const [isVoting, setIsVoting] = useState(false);
   const { colorScheme } = useTheme();
   
-  // Получаем стили на основе текущей темы
+  // Get styles based on current theme
   const styles = tv(commonVariants, colorScheme);
 
   const loadNewPairs = useCallback(async function loadNewPairs() {
@@ -68,20 +89,12 @@ export default function Vote({ voterId }: { voterId: number }) {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px] w-full">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full"
-        />
-      </div>
-    );
-  }
+  // Common container classes to avoid layout shifts
+  const containerClasses = `w-full max-w-md mx-auto p-4 ${styles.cardBg} rounded-lg shadow-sm`;
 
   if (error) return <p className={`text-center text-base p-4 ${styles.text}`}>Error loading pairs: {error.message}</p>;
-  if (pairs.length == 0) return (
+  
+  if (pairs.length == 0 && !isLoading) return (
     <div className={`w-full max-w-md mx-auto p-6 ${styles.cardBg} rounded-lg shadow-sm text-center`}>
       <p className={`text-lg mb-2 ${styles.text}`}>You already voted for all players</p>
       <p className={`text-sm ${styles.secondaryText}`}>Thank you for participating!</p>
@@ -91,48 +104,63 @@ export default function Vote({ voterId }: { voterId: number }) {
   return (
     <AnimatePresence mode="wait">
       <motion.div 
-        key={`${pairs[0].playerA.id}-${pairs[0].playerB.id}`}
+        key={isLoading ? 'loading' : pairs[0] ? `${pairs[0].playerA.id}-${pairs[0].playerB.id}` : 'empty'}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
-        className={`w-full max-w-md mx-auto p-4 ${styles.cardBg} rounded-lg shadow-sm`}
+        className={containerClasses}
       >
-        <motion.h2 
-          className={`text-lg font-medium text-center mb-4 ${styles.text}`}
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          Who plays better?
-        </motion.h2>
+        {isLoading ? (
+          <>
+            <div className="h-6 w-40 bg-gray-300 dark:bg-gray-700 rounded mx-auto mb-4"></div>
 
-        <div className="grid grid-cols-2 gap-3 w-full">
-          <PlayerCard 
-            player={pairs[0].playerA} 
-            onVote={() => handleVote(pairs[0].playerA.id)} 
-            isSelected={selectedPlayer === pairs[0].playerA.id}
-            isDisabled={isVoting}
-            colorScheme={colorScheme}
-          />
-          <PlayerCard 
-            player={pairs[0].playerB} 
-            onVote={() => handleVote(pairs[0].playerB.id)} 
-            isSelected={selectedPlayer === pairs[0].playerB.id}
-            isDisabled={isVoting}
-            colorScheme={colorScheme}
-          />
-        </div>
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <PlayerCardSkeleton colorScheme={colorScheme} />
+              <PlayerCardSkeleton colorScheme={colorScheme} />
+            </div>
 
-        <motion.button 
-          onClick={() => handleVote(null)} 
-          className={`w-full mt-4 py-2.5 ${styles.secondaryButton} ${styles.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm`}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          disabled={isVoting}
-        >
-          ❓ Don&apos;t know
-        </motion.button>
+            <div className="w-full h-10 bg-gray-300 dark:bg-gray-700 rounded-md mt-4"></div>
+          </>
+        ) : (
+          <>
+            <motion.h2 
+              className={`text-lg font-medium text-center mb-4 ${styles.text}`}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              Who plays better?
+            </motion.h2>
+
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <PlayerCard 
+                player={pairs[0].playerA} 
+                onVote={() => handleVote(pairs[0].playerA.id)} 
+                isSelected={selectedPlayer === pairs[0].playerA.id}
+                isDisabled={isVoting}
+                colorScheme={colorScheme}
+              />
+              <PlayerCard 
+                player={pairs[0].playerB} 
+                onVote={() => handleVote(pairs[0].playerB.id)} 
+                isSelected={selectedPlayer === pairs[0].playerB.id}
+                isDisabled={isVoting}
+                colorScheme={colorScheme}
+              />
+            </div>
+
+            <motion.button 
+              onClick={() => handleVote(null)} 
+              className={`w-full mt-4 py-2.5 ${styles.secondaryButton} ${styles.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-200 ease-in-out text-sm`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              disabled={isVoting}
+            >
+              ❓ Don&apos;t know
+            </motion.button>
+          </>
+        )}
       </motion.div>
     </AnimatePresence>
   );
@@ -151,7 +179,7 @@ function PlayerCard({
   isDisabled?: boolean;
   colorScheme: 'light' | 'dark';
 }) {
-  // Получаем стили на основе текущей темы
+  // Get styles based on current theme
   const styles = tv(commonVariants, colorScheme);
 
   return (

@@ -22,7 +22,7 @@ export default function RatingTable() {
   const [error, setError] = useState<string | null>(null);
   const { colorScheme } = useTheme();
   
-  // Получаем стили на основе текущей темы
+  // Get styles based on current theme
   const styles = tv(commonVariants, colorScheme);
 
   // Create Supabase client instance
@@ -45,20 +45,15 @@ export default function RatingTable() {
     fetchRatings();
   }, [supabase]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px] w-full">
-        <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  // Common container for both states to avoid layout shifts
+  const containerClasses = `w-full max-w-md mx-auto ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`;
 
   if (error) {
-    return <p className={`text-center text-base ${styles.text} p-4`}>Error: {error}</p>;
+    return <p className={`text-center text-base ${styles.text} p-4 ${containerClasses}`}>Error: {error}</p>;
   }
 
   return (
-    <div className={`w-full max-w-md mx-auto mt-8 ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`}>
+    <div className={containerClasses}>
       <h2 className={`text-xl font-bold p-4 ${styles.headerBg} ${styles.text} text-center border-b ${styles.border}`}>
         Player Ratings
       </h2>
@@ -75,28 +70,51 @@ export default function RatingTable() {
             </tr>
           </thead>
           <tbody>
-            {ratings.map((player, index) => (
-              <tr key={player.id} className={`border-t ${styles.tableBorder} ${styles.tableRowHover}`}>
-                <td className={`py-3 px-3 text-sm ${styles.text}`}>{index + 1}</td>
-                <td className="py-3 px-3">
-                  <div className="w-8 h-8 relative">
-                    <Image
-                      src={player.photo_url || "/default-avatar.svg"}
-                      alt={player.first_name}
-                      fill
-                      className="rounded-full object-cover"
-                    />
-                  </div>
-                </td>
-                <td className={`py-3 px-3 text-sm ${styles.text}`}>
-                  {player.first_name} {player.last_name || ""}
-                </td>
-                <td className={`py-3 px-3 text-xs ${styles.secondaryText}`}>
-                  {player.username ? "@" + player.username : "No username"}
-                </td>
-                <td className={`py-3 px-3 text-right font-medium ${styles.text}`}>{player.rating.toFixed(0)}</td>
-              </tr>
-            ))}
+            {loading ? (
+              // Table row skeleton
+              Array.from({ length: 5 }).map((_, index) => (
+                <tr key={`skeleton-${index}`} className={`border-t ${styles.tableBorder} animate-pulse`}>
+                  <td className={`py-3 px-3 text-sm`}>
+                    <div className="h-4 w-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+                  </td>
+                  <td className={`py-3 px-3 text-sm`}>
+                    <div className="h-4 w-24 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                  </td>
+                  <td className={`py-3 px-3 text-xs`}>
+                    <div className="h-3 w-16 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                  </td>
+                  <td className={`py-3 px-3 text-right`}>
+                    <div className="h-4 w-8 bg-gray-300 dark:bg-gray-700 rounded ml-auto"></div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              ratings.map((player, index) => (
+                <tr key={player.id} className={`border-t ${styles.tableBorder} ${styles.tableRowHover}`}>
+                  <td className={`py-3 px-3 text-sm ${styles.text}`}>{index + 1}</td>
+                  <td className="py-3 px-3">
+                    <div className="w-8 h-8 relative">
+                      <Image
+                        src={player.photo_url || "/default-avatar.svg"}
+                        alt={player.first_name}
+                        fill
+                        className="rounded-full object-cover"
+                      />
+                    </div>
+                  </td>
+                  <td className={`py-3 px-3 text-sm ${styles.text}`}>
+                    {player.first_name} {player.last_name || ""}
+                  </td>
+                  <td className={`py-3 px-3 text-xs ${styles.secondaryText}`}>
+                    {player.username ? "@" + player.username : "No username"}
+                  </td>
+                  <td className={`py-3 px-3 text-right font-medium ${styles.text}`}>{player.rating.toFixed(0)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

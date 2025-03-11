@@ -1,51 +1,23 @@
+'use client';
+
 import Hello from './components/hello';
-//import { createClient } from '@/app/utils/supabase/server'
-//import { cookies } from 'next/headers'
+import PlayerRating from './components/player-rating';
+import Vote from './components/vote';
+import { useTelegram } from './context/telegram-context';
+import { tv } from './utils/theme-variants';
+import { useTheme } from './context/theme-context';
+import { commonVariants } from './utils/theme-variants';
 
-// interface User {
-//   id: number;
-//   first_name: string;
-//   last_name: string | null;
-//   username: string | null;
-//   photo_url: string | null;
-// }
-
-// interface Vote {
-//   id: number;
-//   playerA: number;
-//   playerB: number;
-//   winnerId: number;
-//   createdAt: string;
-//   playerAData: Player;
-//   playerBData: Player;
-//   winnerData: Player;
-// }
-
-export default async function Home() {
-  //const cookieStore = await cookies()
-  //const supabase = createClient(cookieStore)
-
-  // const { data: users } = await supabase.from('users').select()
-  // Fetch votes and join with players
-  // const { data: votes } = await supabase
-  //   .from('votes')
-  //   .select('id, playerA, playerB, winnerId, createdAt, playerAData:playerA(*), playerBData:playerB(*), winnerData:winnerId(*)')
+export default function Home() {
+  const { launchParams } = useTelegram();
+  const { colorScheme } = useTheme();
+  const styles = tv(commonVariants, colorScheme);
 
   return (
-    <ul>
+    <div className={`max-w-full w-full mx-auto px-4 py-2 flex flex-col items-center ${styles.bg} min-h-screen`}>
       <Hello />
-      {/* <br />
-      <br />
-      {"Users:"}
-      {users?.map((user: User) => (
-        <li key={user.id}>{user.first_name} {user.last_name}</li>
-      ))}
-      <br />
-      <br />
-      {"Votes:"} */}
-      {/* {votes?.map((vote: Vote) => (
-        <li key={vote.id}>{vote.playerA} {vote.playerB} {vote.winnerId}</li>
-      ))} */}
-    </ul>
+      <Vote voterId={launchParams?.tgWebAppData?.user?.id ?? 482553595} />
+      <PlayerRating />
+    </div>
   )
 }
