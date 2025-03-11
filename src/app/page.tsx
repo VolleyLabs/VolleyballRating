@@ -1,10 +1,9 @@
 import Hello from './components/hello';
-import { createClient } from '@/app/utils/supabase/server'
-import { cookies } from 'next/headers'
+//import { createClient } from '@/app/utils/supabase/server'
+//import { cookies } from 'next/headers'
 
-interface Player {
+interface User {
   id: number;
-  name: string;
   first_name: string;
   last_name: string | null;
   username: string | null;
@@ -23,10 +22,10 @@ interface Player {
 // }
 
 export default async function Home() {
-  const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  //const cookieStore = await cookies()
+  //const supabase = createClient(cookieStore)
 
-  const { data: players } = await supabase.from('players').select()
+  // const { data: users } = await supabase.from('users').select()
   // Fetch votes and join with players
   // const { data: votes } = await supabase
   //   .from('votes')
@@ -35,15 +34,15 @@ export default async function Home() {
   return (
     <ul>
       <Hello />
+      {/* <br />
       <br />
-      <br />
-      {"Players:"}
-      {players?.map((player: Player) => (
-        <li key={player.id}>{player.name}</li>
+      {"Users:"}
+      {users?.map((user: User) => (
+        <li key={user.id}>{user.first_name} {user.last_name}</li>
       ))}
       <br />
       <br />
-      {"Votes:"}
+      {"Votes:"} */}
       {/* {votes?.map((vote: Vote) => (
         <li key={vote.id}>{vote.playerA} {vote.playerB} {vote.winnerId}</li>
       ))} */}

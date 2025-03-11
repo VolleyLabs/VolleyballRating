@@ -5,6 +5,7 @@ import { retrieveLaunchParams } from '@telegram-apps/sdk';
 import { isTMA, RetrieveLPResult } from '@telegram-apps/bridge';
 import Image from 'next/image';
 import { createClient } from '@/app/utils/supabase/client';
+import Vote from './vote';
 
 const supabase = createClient();
 
@@ -38,9 +39,8 @@ export default function Hello() {
   return (
     <div className="">
       <h1>Hello, {launchParams?.tgWebAppData?.user?.first_name}</h1>
-      {launchParams?.tgWebAppData?.user?.photo_url && (
-        <Image src={launchParams?.tgWebAppData?.user?.photo_url} alt="User Photo" width={100} height={100} />
-      )}
+      <Image src={launchParams?.tgWebAppData?.user?.photo_url ?? "/default-avatar.svg"} alt="User Photo" width={100} height={100} />
+      <Vote voterId={launchParams?.tgWebAppData?.user?.id ?? 482553595} />
     </div>
   );
 }
