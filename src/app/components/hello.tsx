@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { retrieveLaunchParams } from '@telegram-apps/sdk';
 import { isTMA, RetrieveLPResult } from '@telegram-apps/bridge';
 import Image from 'next/image';
+import { createClient } from '@/app/utils/supabase/client';
+
+const supabase = createClient();
 
 export default function Hello() {
   const [launchParams, setLaunchParams] = useState<RetrieveLPResult | null>(null);
@@ -13,8 +16,24 @@ export default function Hello() {
       const launchParams = retrieveLaunchParams();
 
       setLaunchParams(launchParams);
+
+      if (launchParams?.tgWebAppData?.user) {
+        const { id, first_name, last_name, username, photo_url } = launchParams.tgWebAppData.user;
+
+        updateUserInSupabase(id, first_name, last_name, username, photo_url);
+      }
     }
   }, []);
+
+  async function updateUserInSupabase(id: number, first_name: string, last_name: string | undefined, username: string | undefined, photo_url: string | undefined) {
+    const { error } = await supabase
+      .from('players')
+      .upsert([{ id, first_name, last_name, username, photo_url }], { onConflict: 'id' });
+
+    if (error) {
+      console.error('Error updating user in Supabase:', error);
+    }
+  }
 
   return (
     <div className="">
