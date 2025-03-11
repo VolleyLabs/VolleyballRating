@@ -12,10 +12,11 @@ export default function Home() {
     setInitDataRaw(initDataRaw);
   }, []);
 
-  return
-  <div>
-    Hello, Telegram Mini App!
-    {JSON.stringify(initData)}
-    {JSON.stringify(initDataRaw)}
-  </div>;
+  return (
+    <div>
+      Hello, Telegram Mini App!
+      {JSON.stringify(initData)}
+      {JSON.stringify(initDataRaw)}
+    </div>
+  );
 }
