@@ -12,15 +12,14 @@ import { TelegramTheme } from "../utils/telegram-theme";
 function PlayerCardSkeleton({ theme }: { theme: TelegramTheme }) {
   return (
     <div 
-      className={`flex flex-col items-center p-4 border rounded-lg shadow-sm ${theme.border} animate-fadeIn`}
+      className={`flex flex-col items-center px-4 pt-4 pb-3 border rounded-lg shadow-sm ${theme.border} animate-fadeIn cursor-not-allowed`}
       style={theme.borderStyle}
     >
       <div className="relative mb-2 overflow-hidden rounded-full">
-        <div className="w-[80px] h-[80px] rounded-full bg-gray-300 dark:bg-gray-700"></div>
+        <div className="w-[120px] h-[120px] rounded-full bg-gray-300 dark:bg-gray-700"></div>
       </div>
-      <div className="h-4 w-20 bg-gray-300 dark:bg-gray-700 rounded mt-1 mb-1"></div>
-      <div className="h-3 w-16 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
-      <div className={`w-full h-8 bg-gray-300 dark:bg-gray-700 rounded-md`}></div>
+      <div className="h-4 w-24 bg-gray-300 dark:bg-gray-700 rounded mt-2 mb-1"></div>
+      <div className="h-3 w-20 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
     </div>
   );
 }
@@ -187,7 +186,7 @@ export default function Vote({ voterId }: { voterId: number }) {
     >
       {isLoading ? (
         <>
-          <div className="h-6 w-40 bg-gray-300 dark:bg-gray-700 rounded mx-auto mb-4"></div>
+          <div className="h-6 w-40 bg-gray-300 dark:bg-gray-700 rounded mx-auto mb-5"></div>
 
           <div className="grid grid-cols-2 gap-3 w-full">
             <PlayerCardSkeleton theme={theme} />
@@ -279,28 +278,36 @@ function PlayerCard({
     
   // Adjust transition duration based on device type
   const transitionDuration = isTelegramMiniApp ? "duration-150" : "duration-300";
-  const buttonTransitionDuration = isTelegramMiniApp ? "duration-100" : "duration-200";
 
   return (
-    <div 
-      className={`flex flex-col items-center p-3 border rounded-lg shadow-sm transition-all ${transitionDuration} ${
+    <button 
+      onClick={onVote}
+      disabled={isDisabled}
+      className={`flex flex-col items-center p-4 border rounded-lg shadow-sm transition-all ${transitionDuration} ${
         isSelected ? `${theme.selectedBorder} ${theme.selectedBg}` : `${theme.border} hover:shadow-md`
-      } ${cardAnimationClasses} ${!isTelegramMiniApp ? 'hover:-translate-y-1' : ''}`}
+      } ${cardAnimationClasses} ${!isTelegramMiniApp ? 'hover:-translate-y-1' : ''} w-full ${
+        isDisabled ? "opacity-70 cursor-not-allowed" : "cursor-pointer"
+      }`}
       style={isSelected ? 
         {...theme.selectedBorderStyle, ...theme.selectedBgStyle} : 
         theme.borderStyle
       }
     >
-      <div className="relative mb-2 overflow-hidden rounded-full">
-        <div className={`transition-transform ${transitionDuration} ${!isTelegramMiniApp ? 'hover:scale-105' : ''}`}>
+      <div className="relative mb-3 overflow-hidden rounded-full">
+        <div className={`transition-transform ${transitionDuration}`}>
           <Image 
             src={player?.photoUrl ?? "/default-avatar.svg"} 
             alt={player?.firstName ?? "Player"} 
-            width={80} 
-            height={80}
+            width={120} 
+            height={120}
             priority
             className="rounded-full object-cover border-2 border-gray-700 shadow-sm" 
           />
+          {isSelected && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-full">
+              <span className="text-white text-2xl">✓</span>
+            </div>
+          )}
         </div>
       </div>
       <h3 
@@ -310,21 +317,11 @@ function PlayerCard({
         {player?.firstName} {player?.lastName}
       </h3>
       <p 
-        className={`text-xs ${theme.secondaryText} mb-2 text-center`}
+        className={`text-xs ${theme.secondaryText} text-center`}
         style={theme.secondaryTextStyle}
       >
         {player?.username ? '@' + player.username : "No username"}
       </p>
-      <button 
-        onClick={onVote} 
-        className={`w-full py-2 ${theme.primaryButton} text-white rounded-md shadow-sm transition-all ${buttonTransitionDuration} text-xs ${
-          isDisabled ? "opacity-50 cursor-not-allowed" : theme.primaryButtonHover
-        } ${!isDisabled && !isTelegramMiniApp ? 'hover:scale-105 active:scale-95' : ''}`}
-        style={theme.primaryButtonStyle}
-        disabled={isDisabled}
-      >
-        {isSelected ? "✓ Selected" : "👍 Vote"}
-      </button>
-    </div>
+    </button>
   );
 }
