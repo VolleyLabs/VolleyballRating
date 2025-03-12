@@ -39,14 +39,15 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(style);
 }
 
-export default function Vote({ voterId }: { voterId: number }) {
+export default function Vote() {
   const [pairs, setPairs] = useState<VotePair[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<PostgrestError | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
-  const { theme } = useTelegram();
-  
+  const { theme, launchParams } = useTelegram();
+  const voterId = launchParams?.tgWebAppData?.user?.id ?? Number(process.env.NEXT_PUBLIC_TELEGRAM_TEST_ID);
+
   // States for the "Me" button
   const [showMeButton, setShowMeButton] = useState(false);
   const [showNope, setShowNope] = useState(false);
@@ -59,6 +60,10 @@ export default function Vote({ voterId }: { voterId: number }) {
   }, [pairs]);
 
   const loadNewPairs = useCallback(async function loadNewPairs(showLoading = true) {
+    if (!voterId) {
+      return;
+    }
+
     try {
       setError(null);
       if (showLoading) {
@@ -80,7 +85,7 @@ export default function Vote({ voterId }: { voterId: number }) {
   }, [loadNewPairs]);
 
   async function handleVote(winnerId: number | null) {
-    if (!pairs[0] || isVoting) return;
+    if (!voterId || !pairs[0] || isVoting) return;
 
     // Immediately update UI for better responsiveness
     setSelectedPlayer(winnerId);

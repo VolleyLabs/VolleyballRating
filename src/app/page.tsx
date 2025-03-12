@@ -6,7 +6,7 @@ import Vote from './components/vote';
 import { useTelegram } from './context/telegram-context';
 
 export default function Home() {
-  const { launchParams, theme } = useTelegram();
+  const { theme } = useTelegram();
 
   return (
     <div 
@@ -14,7 +14,7 @@ export default function Home() {
       style={theme.bgStyle}
     >
       <Hello />
-      <Vote voterId={launchParams?.tgWebAppData?.user?.id ?? 482553595} />
+      <Vote />
       <PlayerRating />
     </div>
   )
