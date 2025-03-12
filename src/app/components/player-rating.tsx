@@ -81,31 +81,31 @@ export default function RatingTable() {
               style={theme.tableHeaderBgStyle}
             >
               <th 
-                className={`py-2 px-2 sm:px-3 text-left font-medium ${theme.tableHeaderText}`}
+                className={`py-2 px-1 w-12 text-center font-medium ${theme.tableHeaderText}`}
                 style={theme.tableHeaderTextStyle}
               >
                 Rank
               </th>
               <th 
-                className={`py-2 px-2 sm:px-3 text-left font-medium ${theme.tableHeaderText}`}
+                className={`py-2 px-1 w-14 text-center font-medium ${theme.tableHeaderText}`}
                 style={theme.tableHeaderTextStyle}
               >
                 Avatar
               </th>
               <th 
-                className={`py-2 px-2 sm:px-3 text-left font-medium ${theme.tableHeaderText}`}
+                className={`py-2 px-2 text-left font-medium ${theme.tableHeaderText}`}
                 style={theme.tableHeaderTextStyle}
               >
                 Name
               </th>
               <th 
-                className={`py-2 px-2 sm:px-3 text-left font-medium ${theme.tableHeaderText} hidden sm:table-cell`}
+                className={`py-2 px-2 text-left font-medium ${theme.tableHeaderText} hidden xs:table-cell`}
                 style={theme.tableHeaderTextStyle}
               >
                 Username
               </th>
               <th 
-                className={`py-2 px-2 sm:px-3 text-right font-medium ${theme.tableHeaderText}`}
+                className={`py-2 px-1 w-16 text-right font-medium ${theme.tableHeaderText}`}
                 style={theme.tableHeaderTextStyle}
               >
                 Rating
@@ -121,19 +121,19 @@ export default function RatingTable() {
                   className={`border-t ${theme.tableBorder} animate-pulse`}
                   style={theme.tableBorderStyle}
                 >
-                  <td className={`py-3 px-2 sm:px-3 text-sm`}>
-                    <div className="h-4 w-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                  <td className={`py-3 px-1 text-center`}>
+                    <div className="h-4 w-4 mx-auto bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </td>
-                  <td className="py-3 px-2 sm:px-3">
-                    <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+                  <td className="py-3 px-1 text-center">
+                    <div className="w-8 h-8 mx-auto bg-gray-300 dark:bg-gray-700 rounded-full"></div>
                   </td>
-                  <td className={`py-3 px-2 sm:px-3 text-sm`}>
+                  <td className={`py-3 px-2 text-sm`}>
                     <div className="h-4 w-16 sm:w-24 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </td>
-                  <td className={`py-3 px-2 sm:px-3 text-xs hidden sm:table-cell`}>
+                  <td className={`py-3 px-2 text-xs hidden xs:table-cell`}>
                     <div className="h-3 w-16 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </td>
-                  <td className={`py-3 px-2 sm:px-3 text-right`}>
+                  <td className={`py-3 px-1 text-right`}>
                     <div className="h-4 w-8 bg-gray-300 dark:bg-gray-700 rounded ml-auto"></div>
                   </td>
                 </tr>
@@ -147,13 +147,13 @@ export default function RatingTable() {
                   onClick={player.username ? () => window.open('https://t.me/' + player.username, '_blank'): undefined}
                 >
                   <td 
-                    className={`py-3 px-2 sm:px-3 text-sm ${theme.text}`}
+                    className={`py-3 px-1 text-center text-sm ${theme.text}`}
                     style={theme.textStyle}
                   >
                     {index + 1}
                   </td>
-                  <td className="py-3 px-2 sm:px-3">
-                    <div className="w-8 h-8 relative">
+                  <td className="py-3 px-1 text-center">
+                    <div className="w-8 h-8 relative mx-auto">
                       <Image
                         src={player.photo_url || "/default-avatar.svg"}
                         alt={player.first_name}
@@ -163,19 +163,19 @@ export default function RatingTable() {
                     </div>
                   </td>
                   <td 
-                    className={`py-3 px-2 sm:px-3 text-sm ${theme.text}`}
+                    className={`py-3 px-2 text-sm ${theme.text}`}
                     style={theme.textStyle}
                   >
                     {player.first_name} {player.last_name || ""}
                   </td>
                   <td 
-                    className={`py-3 px-2 sm:px-3 text-xs ${theme.secondaryText} hidden sm:table-cell`}
+                    className={`py-3 px-2 text-xs ${theme.secondaryText} hidden xs:table-cell`}
                     style={theme.secondaryTextStyle}
                   >
                     {player.username ? "@" + player.username : "No username"}
                   </td>
                   <td 
-                    className={`py-3 px-2 sm:px-3 text-right font-medium ${theme.text}`}
+                    className={`py-3 px-1 text-right font-medium ${theme.text}`}
                     style={theme.textStyle}
                   >
                     {player.rating.toFixed(0)}
