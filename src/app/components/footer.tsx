@@ -24,7 +24,7 @@ export default function Footer({setActiveScreen} : FooterProps) {
 
   const footerElement = (icon: string, activeScreenName: ScreenName) => {
     return (
-      <div className="pb-2 flex-col align-center justify-items-center" onClick={() => setActiveScreen(activeScreenName)}>
+      <div className="pb-2" onClick={() => setActiveScreen(activeScreenName)}>
           <Image src={icon} alt={activeScreenName} width={30} height={30}/>
       </div>
     )

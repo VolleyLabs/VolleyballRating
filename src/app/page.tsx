@@ -1,6 +1,5 @@
 'use client';
 
-import Footer from '@components/footer';
 import History from '@components/history';
 import Leaderboard from '@components/leaderboard';
 import { JSX, useState } from 'react';
@@ -13,7 +12,7 @@ export default function Home() {
 
   const {theme} = useTelegram()
 
-  const [activeScreen, setActiveScreen] = useState<ScreenName>('leaderboard')
+  const [activeScreen] = useState<ScreenName>('leaderboard')
 
   const screens: Record<ScreenName, JSX.Element> = {
     leaderboard: <Leaderboard />,

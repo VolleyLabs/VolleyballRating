@@ -12,7 +12,7 @@ export default function Start() {
 
   useEffect(() => {
     initCurrentGame()
-  })
+  }, [])
 
   const initCurrentGame = async () => {
     setCurrentGame(await getActiveGame())
@@ -24,7 +24,7 @@ export default function Start() {
     </div>
   )
 
-  const gameViewer = (game) => (
+  const gameViewer = () => (
     <div>
 
     </div>
@@ -44,7 +44,7 @@ export default function Start() {
         <h3>{currentGame ? 'Reshuffle': 'Start a game!'}</h3>
       </div>
       {currentGame
-      ? gameViewer(currentGame)
+      ? gameViewer()
       : gameCreator}
     </div>
   )
