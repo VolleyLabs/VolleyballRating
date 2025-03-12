@@ -12,6 +12,7 @@ interface TelegramContextType {
   isLoading: boolean;
   themeParams: ThemeParams | null;
   theme: TelegramTheme;
+  isFullscreen: boolean;
 }
 
 const TelegramContext = createContext<TelegramContextType | undefined>(undefined);
@@ -20,6 +21,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const [launchParams, setLaunchParams] = useState<RetrieveLPResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [themeParams, setThemeParams] = useState<ThemeParams | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(true);
 
   // Generate theme styles based on themeParams
   const theme = useTelegramTheme(themeParams);
@@ -32,6 +34,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         const params = retrieveLaunchParams();
         setLaunchParams(params);
         setThemeParams(params?.tgWebAppThemeParams || null);
+        setIsFullscreen(params?.tgWebAppFullscreen ?? false);
         
         const removeThemeChanged = on('theme_changed', payload => {
           setThemeParams(payload.theme_params || null);
@@ -64,7 +67,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <TelegramContext.Provider value={{ launchParams, isLoading, themeParams, theme }}>
+    <TelegramContext.Provider value={{ launchParams, isLoading, themeParams, theme, isFullscreen }}>
       {children}
     </TelegramContext.Provider>
   );

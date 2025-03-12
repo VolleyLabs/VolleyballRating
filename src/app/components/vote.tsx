@@ -129,11 +129,11 @@ export default function Vote({ voterId }: { voterId: number }) {
   }
 
   // Common container classes to avoid layout shifts
-  const containerClasses = `w-full max-w-md mx-auto p-3 sm:p-4 mt-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden`;
+  const containerClasses = `w-full max-w-md mx-auto p-3 sm:p-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden`;
 
   if (error) return (
     <p 
-      className={`text-center text-base p-3 sm:p-4 mt-4 ${theme.text}`}
+      className={`text-center text-base p-3 sm:p-4 ${theme.text}`}
       style={theme.textStyle}
     >
       Error loading pairs: {error.message}
@@ -142,7 +142,7 @@ export default function Vote({ voterId }: { voterId: number }) {
   
   if (pairs.length == 0 && !isLoading) return (
     <div 
-      className={`w-full max-w-md mx-auto p-4 sm:p-6 mt-4 ${theme.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}
+      className={`w-full max-w-md mx-auto p-4 sm:p-6 ${theme.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}
       style={theme.cardBgStyle}
     >
       <p 

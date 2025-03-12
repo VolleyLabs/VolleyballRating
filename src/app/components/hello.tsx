@@ -4,10 +4,13 @@ import Image from 'next/image';
 import { useTelegram } from '../context/telegram-context';
 
 export default function Hello() {
-  const { launchParams, isLoading, theme } = useTelegram();
+  const { launchParams, isLoading, theme, isFullscreen } = useTelegram();
+  if (!isFullscreen) {
+    return null;
+  }
   
   // Common classes for user profile to avoid layout shifts
-  const profileClasses = `w-full max-w-md flex items-center gap-3 sm:gap-4 mt-4 p-3 sm:p-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden`;
+  const profileClasses = `w-full max-w-md flex items-center gap-3 sm:gap-4 p-3 sm:p-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden`;
 
   return (
       <div 

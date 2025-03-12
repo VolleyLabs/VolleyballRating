@@ -10,7 +10,7 @@ export default function Home() {
 
   return (
     <div 
-      className={`w-full mx-auto px-2 sm:px-4 flex pb-4 flex-col items-center ${theme.bg} min-h-screen overflow-hidden`}
+      className={`w-full mx-auto p-2 sm:p-4 flex flex-col gap-2 items-center ${theme.bg} min-h-screen overflow-hidden`}
       style={theme.bgStyle}
     >
       <Hello />
