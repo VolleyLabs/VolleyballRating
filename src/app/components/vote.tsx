@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getRandomVotePair, submitVote, VotePair, User } from "@/app/lib/supabase-queries";
+import { getRandomVotePair, submitVote, VotePair, User } from "@lib/supabase-queries";
 import Image from "next/image";
 import { PostgrestError } from "@supabase/supabase-js";
-import { useTelegram } from "../context/telegram-context";
-import { TelegramTheme } from "../utils/telegram-theme";
+import { useTelegram } from "@context/telegram-context";
+import { TelegramTheme } from "@utils/telegram-theme";
 
 // Player card skeleton component
 function PlayerCardSkeleton({ theme }: { theme: TelegramTheme }) {
