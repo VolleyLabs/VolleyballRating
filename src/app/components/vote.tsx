@@ -76,10 +76,15 @@ export default function Vote({ voterId }: { voterId: number }) {
     if (isTelegramMiniApp) {
       // Optimistically update UI first
       const currentPair = pairs[0];
+      
+      // Set isVoting before updating pairs to prevent multiple clicks
+      setIsVoting(true);
+      
+      // Update pairs and reset selectedPlayer together to maintain synchronization
       setPairs(prevPairs => prevPairs.slice(1));
+      setSelectedPlayer(null);
       
       // Then submit vote in background without blocking UI
-      setIsVoting(true);
       submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId)
         .then(success => {
           if (!success) {
@@ -95,7 +100,7 @@ export default function Vote({ voterId }: { voterId: number }) {
           console.error("Error submitting vote:", error);
         })
         .finally(() => {
-          setSelectedPlayer(null);
+          // Just reset isVoting here, selectedPlayer is already reset
           setIsVoting(false);
         });
     } else {
