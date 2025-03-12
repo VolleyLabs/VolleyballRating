@@ -18,6 +18,7 @@ export type PlayerRating = {
 export default function RatingTable() {
   const [ratings, setRatings] = useState<PlayerRating[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTelegram();
   
@@ -45,7 +46,14 @@ export default function RatingTable() {
       setRatings(data as PlayerRating[]);
     }
     setLoading(false);
+    setRefreshing(false);
   }
+
+  const handleRefresh = () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    fetchRatings();
+  };
 
   // Common container for both states to avoid layout shifts
   const containerClasses = `w-full max-w-md mx-auto ${theme.cardBg} rounded-lg shadow-sm overflow-hidden`;
@@ -66,12 +74,41 @@ export default function RatingTable() {
       className={containerClasses}
       style={theme.cardBgStyle}
     >
-      <h2 
-        className={`text-xl font-bold p-4 ${theme.headerBg} ${theme.text} text-center border-b ${theme.border}`}
-        style={{...theme.headerBgStyle, ...theme.textStyle, borderColor: theme.borderStyle.borderColor}}
+      <div 
+        className={`flex items-center justify-between p-4 ${theme.headerBg} border-b ${theme.border}`}
+        style={{...theme.headerBgStyle, borderColor: theme.borderStyle.borderColor}}
       >
-        Player Ratings
-      </h2>
+        <h2 
+          className={`text-xl font-bold ${theme.text}`}
+          style={theme.textStyle}
+        >
+          Player Ratings
+        </h2>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className={`p-2 rounded-full ${theme.primaryButton} ${refreshing ? 'opacity-70' : theme.primaryButtonHover} transition-all`}
+          style={theme.primaryButtonStyle}
+          aria-label="Refresh ratings"
+          title="Refresh ratings"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            className={`${refreshing ? 'animate-spin' : ''}`}
+            style={theme.textStyle}
+          >
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+          </svg>
+        </button>
+      </div>
       
       <div className="overflow-x-auto w-full">
         <table className="w-full min-w-full table-auto">
