@@ -228,7 +228,7 @@ export default function Vote() {
               className={`w-full py-2.5 ${theme.secondaryButton} ${theme.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-100 ease-in-out text-sm`}
               disabled={isVoting}
             >
-              ❓ Don&apos;t know
+              Skip this pair
             </button>
           </div>
         </>
