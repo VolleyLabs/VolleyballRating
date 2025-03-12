@@ -1,21 +1,19 @@
 'use client';
 
 import Image from 'next/image';
-import { tv, commonVariants } from '../utils/theme-variants';
 import { useTelegram } from '../context/telegram-context';
 
 export default function Hello() {
-  const { launchParams, isLoading } = useTelegram();
-  const { colorScheme } = useTelegram();
+  const { launchParams, isLoading, theme } = useTelegram();
   
-  // Get styles based on current theme
-  const styles = tv(commonVariants, colorScheme);
-
   // Common classes for user profile to avoid layout shifts
-  const profileClasses = `w-full max-w-md flex items-center gap-3 sm:gap-4 mt-4 p-3 sm:p-4 ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`;
+  const profileClasses = `w-full max-w-md flex items-center gap-3 sm:gap-4 mt-4 p-3 sm:p-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden`;
 
   return (
-      <div className={isLoading ? `${profileClasses} animate-pulse` : profileClasses}>
+      <div 
+        className={isLoading ? `${profileClasses} animate-pulse` : profileClasses}
+        style={theme.cardBgStyle}
+      >
         {isLoading ? (
           <>
             <div className="w-[50px] h-[50px] sm:w-[60px] sm:h-[60px] rounded-full bg-gray-300 dark:bg-gray-700 flex-shrink-0"></div>
@@ -30,9 +28,13 @@ export default function Hello() {
               alt="User Photo" 
               width={50}
               height={50}
-              className={`rounded-full border-2 ${styles.border} sm:w-[60px] sm:h-[60px] flex-shrink-0`}
+              className={`rounded-full border-2 ${theme.border} sm:w-[60px] sm:h-[60px] flex-shrink-0`}
+              style={theme.borderStyle}
             />
-            <h1 className={`text-lg sm:text-xl font-medium ${styles.text} truncate`}>
+            <h1 
+              className={`text-lg sm:text-xl font-medium ${theme.text} truncate`}
+              style={theme.textStyle}
+            >
               Hello, {launchParams?.tgWebAppData?.user?.first_name || 'Player'}!
             </h1>
           </>

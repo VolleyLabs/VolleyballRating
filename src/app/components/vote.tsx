@@ -4,18 +4,16 @@ import { useCallback, useEffect, useState } from "react";
 import { getRandomVotePair, submitVote, VotePair, User } from "@/app/lib/supabase-queries";
 import Image from "next/image";
 import { PostgrestError } from "@supabase/supabase-js";
-import { tv, commonVariants } from "../utils/theme-variants";
 import { isTMA } from '@telegram-apps/bridge';
 import { useTelegram } from "../context/telegram-context";
+import { TelegramTheme } from "../utils/telegram-theme";
 
 // Player card skeleton component
-function PlayerCardSkeleton({ colorScheme }: { colorScheme: 'light' | 'dark' }) {
-  const styles = tv(commonVariants, colorScheme);
-  
+function PlayerCardSkeleton({ theme }: { theme: TelegramTheme }) {
   return (
     <div 
-      className={`flex flex-col items-center p-4 border rounded-lg shadow-sm ${styles.border} animate-fadeIn`}
-      style={{ opacity: 1 }}
+      className={`flex flex-col items-center p-4 border rounded-lg shadow-sm ${theme.border} animate-fadeIn`}
+      style={theme.borderStyle}
     >
       <div className="relative mb-2 overflow-hidden rounded-full">
         <div className="w-[80px] h-[80px] rounded-full bg-gray-300 dark:bg-gray-700"></div>
@@ -34,14 +32,11 @@ export default function Vote({ voterId }: { voterId: number }) {
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const isTelegramMiniApp = isTMA();
-  const { colorScheme } = useTelegram();
+  const { theme } = useTelegram();
   
   // States for the "Me" button
   const [showMeButton, setShowMeButton] = useState(false);
   const [showNope, setShowNope] = useState(false);
-  
-  // Get styles based on current theme
-  const styles = tv(commonVariants, colorScheme);
 
   // Determine if the "Me" button should be shown with a 1% chance
   useEffect(() => {
@@ -134,14 +129,34 @@ export default function Vote({ voterId }: { voterId: number }) {
   }
 
   // Common container classes to avoid layout shifts
-  const containerClasses = `w-full max-w-md mx-auto p-3 sm:p-4 mt-4 ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`;
+  const containerClasses = `w-full max-w-md mx-auto p-3 sm:p-4 mt-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden`;
 
-  if (error) return <p className={`text-center text-base p-3 sm:p-4 mt-4 ${styles.text}`}>Error loading pairs: {error.message}</p>;
+  if (error) return (
+    <p 
+      className={`text-center text-base p-3 sm:p-4 mt-4 ${theme.text}`}
+      style={theme.textStyle}
+    >
+      Error loading pairs: {error.message}
+    </p>
+  );
   
   if (pairs.length == 0 && !isLoading) return (
-    <div className={`w-full max-w-md mx-auto p-4 sm:p-6 mt-4 ${styles.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}>
-      <p className={`text-lg mb-2 ${styles.text}`}>You already voted for all players</p>
-      <p className={`text-sm ${styles.secondaryText}`}>Thank you for participating!</p>
+    <div 
+      className={`w-full max-w-md mx-auto p-4 sm:p-6 mt-4 ${theme.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}
+      style={theme.cardBgStyle}
+    >
+      <p 
+        className={`text-lg mb-2 ${theme.text}`}
+        style={theme.textStyle}
+      >
+        You already voted for all players
+      </p>
+      <p 
+        className={`text-sm ${theme.secondaryText}`}
+        style={theme.secondaryTextStyle}
+      >
+        Thank you for participating!
+      </p>
     </div>
   );
 
@@ -163,15 +178,15 @@ export default function Vote({ voterId }: { voterId: number }) {
     <div 
       key={isLoading ? 'loading' : pairs[0] ? `${pairs[0].playerA.id}-${pairs[0].playerB.id}` : 'empty'}
       className={`${containerClasses} ${animationClasses}`}
-      style={{ opacity: 1 }}
+      style={theme.cardBgStyle}
     >
       {isLoading ? (
         <>
           <div className="h-6 w-40 bg-gray-300 dark:bg-gray-700 rounded mx-auto mb-4"></div>
 
           <div className="grid grid-cols-2 gap-3 w-full">
-            <PlayerCardSkeleton colorScheme={colorScheme} />
-            <PlayerCardSkeleton colorScheme={colorScheme} />
+            <PlayerCardSkeleton theme={theme} />
+            <PlayerCardSkeleton theme={theme} />
           </div>
 
           <div className="w-full h-10 bg-gray-300 dark:bg-gray-700 rounded-md mt-4"></div>
@@ -179,8 +194,8 @@ export default function Vote({ voterId }: { voterId: number }) {
       ) : (
         <>
           <h2 
-            className={`text-lg font-medium text-center mb-4 ${styles.text} animate-scaleIn`}
-            style={{ transform: 'scale(1)' }}
+            className={`text-lg font-medium text-center mb-4 ${theme.text} animate-scaleIn`}
+            style={{...theme.textStyle, transform: 'scale(1)'}}
           >
             Who plays better?
           </h2>
@@ -191,7 +206,7 @@ export default function Vote({ voterId }: { voterId: number }) {
               onVote={() => handleVote(pairs[0].playerA.id)} 
               isSelected={selectedPlayer === pairs[0].playerA.id}
               isDisabled={isVoting}
-              colorScheme={colorScheme}
+              theme={theme}
               isTelegramMiniApp={isTelegramMiniApp}
             />
             <PlayerCard 
@@ -199,7 +214,7 @@ export default function Vote({ voterId }: { voterId: number }) {
               onVote={() => handleVote(pairs[0].playerB.id)} 
               isSelected={selectedPlayer === pairs[0].playerB.id}
               isDisabled={isVoting}
-              colorScheme={colorScheme}
+              theme={theme}
               isTelegramMiniApp={isTelegramMiniApp}
             />
           </div>
@@ -209,9 +224,9 @@ export default function Vote({ voterId }: { voterId: number }) {
               <div className="relative w-full">
                 <button 
                   onClick={handleMeButtonClick} 
-                  className={`w-full py-2 ${styles.primaryButton} bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm transition-all ${isTelegramMiniApp ? 'duration-100' : 'duration-200'} ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''} ${showNope ? 'opacity-50' : ''}`}
+                  className={`w-full py-2 ${theme.primaryButton} bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm transition-all ${isTelegramMiniApp ? 'duration-100' : 'duration-200'} ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''} ${showNope ? 'opacity-50' : ''}`}
+                  style={{backgroundColor: 'rgb(147, 51, 234)'}} // Purple color
                   disabled={showNope}
-                  style={{ touchAction: 'manipulation' }}
                 >
                   {showNope ? "Nope 😏" : "👤 Me"}
                 </button>
@@ -225,9 +240,8 @@ export default function Vote({ voterId }: { voterId: number }) {
 
             <button 
               onClick={() => handleVote(null)} 
-              className={`w-full py-2.5 ${styles.secondaryButton} ${styles.secondaryButtonHover} text-white rounded-md shadow-sm transition-all ${isTelegramMiniApp ? 'duration-100' : 'duration-200'} ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''}`}
+              className={`w-full py-2.5 ${theme.secondaryButton} ${theme.secondaryButtonHover} text-white rounded-md shadow-sm transition-all ${isTelegramMiniApp ? 'duration-100' : 'duration-200'} ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''}`}
               disabled={isVoting}
-              style={{ touchAction: 'manipulation' }}
             >
               ❓ Don&apos;t know
             </button>
@@ -243,19 +257,16 @@ function PlayerCard({
   onVote, 
   isSelected = false,
   isDisabled = false,
-  colorScheme,
+  theme,
   isTelegramMiniApp = false
 }: { 
   player: User | null; 
   onVote: () => void; 
   isSelected?: boolean;
   isDisabled?: boolean;
-  colorScheme: 'light' | 'dark';
+  theme: TelegramTheme;
   isTelegramMiniApp?: boolean;
 }) {
-  // Get styles based on current theme
-  const styles = tv(commonVariants, colorScheme);
-
   // Tailwind animation classes depending on the application type
   const cardAnimationClasses = isTelegramMiniApp
     ? "animate-fadeInFast"
@@ -268,9 +279,12 @@ function PlayerCard({
   return (
     <div 
       className={`flex flex-col items-center p-3 border rounded-lg shadow-sm transition-all ${transitionDuration} ${
-        isSelected ? `${styles.selectedBorder} ${styles.selectedBg}` : `${styles.border} hover:shadow-md`
+        isSelected ? `${theme.selectedBorder} ${theme.selectedBg}` : `${theme.border} hover:shadow-md`
       } ${cardAnimationClasses} ${!isTelegramMiniApp ? 'hover:-translate-y-1' : ''}`}
-      style={{ opacity: 1 }}
+      style={isSelected ? 
+        {...theme.selectedBorderStyle, ...theme.selectedBgStyle} : 
+        theme.borderStyle
+      }
     >
       <div className="relative mb-2 overflow-hidden rounded-full">
         <div className={`transition-transform ${transitionDuration} ${!isTelegramMiniApp ? 'hover:scale-105' : ''}`}>
@@ -280,19 +294,29 @@ function PlayerCard({
             width={80} 
             height={80}
             priority
-            className={`rounded-full object-cover border-2 ${colorScheme === 'dark' ? 'border-gray-700' : 'border-white'} shadow-sm`} 
+            className="rounded-full object-cover border-2 border-gray-700 shadow-sm" 
           />
         </div>
       </div>
-      <h3 className={`mt-1 text-sm font-medium text-center ${styles.text}`}>{player?.firstName} {player?.lastName}</h3>
-      <p className={`text-xs ${styles.secondaryText} mb-2 text-center`}>{player?.username ? '@' + player.username : "No username"}</p>
+      <h3 
+        className={`mt-1 text-sm font-medium text-center ${theme.text}`}
+        style={theme.textStyle}
+      >
+        {player?.firstName} {player?.lastName}
+      </h3>
+      <p 
+        className={`text-xs ${theme.secondaryText} mb-2 text-center`}
+        style={theme.secondaryTextStyle}
+      >
+        {player?.username ? '@' + player.username : "No username"}
+      </p>
       <button 
         onClick={onVote} 
-        className={`w-full py-2 ${styles.primaryButton} text-white rounded-md shadow-sm transition-all ${buttonTransitionDuration} text-xs ${
-          isDisabled ? "opacity-50 cursor-not-allowed" : styles.primaryButtonHover
+        className={`w-full py-2 ${theme.primaryButton} text-white rounded-md shadow-sm transition-all ${buttonTransitionDuration} text-xs ${
+          isDisabled ? "opacity-50 cursor-not-allowed" : theme.primaryButtonHover
         } ${!isDisabled && !isTelegramMiniApp ? 'hover:scale-105 active:scale-95' : ''}`}
+        style={theme.primaryButtonStyle}
         disabled={isDisabled}
-        style={{ touchAction: 'manipulation' }}
       >
         {isSelected ? "✓ Selected" : "👍 Vote"}
       </button>

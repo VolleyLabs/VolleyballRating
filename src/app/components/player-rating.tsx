@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { createClient } from "@/app/utils/supabase/client";
 import { useTelegram } from "../context/telegram-context";
-import { tv, commonVariants } from "../utils/theme-variants";
 
 // Type for a player's rating info returned by the stored procedure
 export type PlayerRating = {
@@ -20,11 +19,8 @@ export default function RatingTable() {
   const [ratings, setRatings] = useState<PlayerRating[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { colorScheme } = useTelegram();
+  const { theme } = useTelegram();
   
-  // Get styles based on current theme
-  const styles = tv(commonVariants, colorScheme);
-
   // Create Supabase client instance
   const supabase = useRef(createClient());
 
@@ -52,34 +48,79 @@ export default function RatingTable() {
   }
 
   // Common container for both states to avoid layout shifts
-  const containerClasses = `w-full max-w-md mx-auto ${styles.cardBg} rounded-lg shadow-sm overflow-hidden`;
+  const containerClasses = `w-full max-w-md mx-auto ${theme.cardBg} rounded-lg shadow-sm overflow-hidden`;
 
   if (error) {
-    return <p className={`text-center text-base ${styles.text} p-4 ${containerClasses}`}>Error: {error}</p>;
+    return (
+      <p 
+        className={`text-center text-base ${theme.text} p-4 ${containerClasses}`}
+        style={{...theme.textStyle, ...theme.cardBgStyle}}
+      >
+        Error: {error}
+      </p>
+    );
   }
 
   return (
-    <div className={containerClasses}>
-      <h2 className={`text-xl font-bold p-4 ${styles.headerBg} ${styles.text} text-center border-b ${styles.border}`}>
+    <div 
+      className={containerClasses}
+      style={theme.cardBgStyle}
+    >
+      <h2 
+        className={`text-xl font-bold p-4 ${theme.headerBg} ${theme.text} text-center border-b ${theme.border}`}
+        style={{...theme.headerBgStyle, ...theme.textStyle, borderColor: theme.borderStyle.borderColor}}
+      >
         Player Ratings
       </h2>
       
       <div className="overflow-x-auto w-full">
         <table className="w-full min-w-full table-auto">
           <thead>
-            <tr className={`${styles.tableHeaderBg} text-sm`}>
-              <th className={`py-2 px-2 sm:px-3 text-left font-medium ${styles.tableHeaderText}`}>Rank</th>
-              <th className={`py-2 px-2 sm:px-3 text-left font-medium ${styles.tableHeaderText}`}>Avatar</th>
-              <th className={`py-2 px-2 sm:px-3 text-left font-medium ${styles.tableHeaderText}`}>Name</th>
-              <th className={`py-2 px-2 sm:px-3 text-left font-medium ${styles.tableHeaderText} hidden sm:table-cell`}>Username</th>
-              <th className={`py-2 px-2 sm:px-3 text-right font-medium ${styles.tableHeaderText}`}>Rating</th>
+            <tr 
+              className={`${theme.tableHeaderBg} text-sm`}
+              style={theme.tableHeaderBgStyle}
+            >
+              <th 
+                className={`py-2 px-2 sm:px-3 text-left font-medium ${theme.tableHeaderText}`}
+                style={theme.tableHeaderTextStyle}
+              >
+                Rank
+              </th>
+              <th 
+                className={`py-2 px-2 sm:px-3 text-left font-medium ${theme.tableHeaderText}`}
+                style={theme.tableHeaderTextStyle}
+              >
+                Avatar
+              </th>
+              <th 
+                className={`py-2 px-2 sm:px-3 text-left font-medium ${theme.tableHeaderText}`}
+                style={theme.tableHeaderTextStyle}
+              >
+                Name
+              </th>
+              <th 
+                className={`py-2 px-2 sm:px-3 text-left font-medium ${theme.tableHeaderText} hidden sm:table-cell`}
+                style={theme.tableHeaderTextStyle}
+              >
+                Username
+              </th>
+              <th 
+                className={`py-2 px-2 sm:px-3 text-right font-medium ${theme.tableHeaderText}`}
+                style={theme.tableHeaderTextStyle}
+              >
+                Rating
+              </th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               // Table row skeleton
               Array.from({ length: 5 }).map((_, index) => (
-                <tr key={`skeleton-${index}`} className={`border-t ${styles.tableBorder} animate-pulse`}>
+                <tr 
+                  key={`skeleton-${index}`} 
+                  className={`border-t ${theme.tableBorder} animate-pulse`}
+                  style={theme.tableBorderStyle}
+                >
                   <td className={`py-3 px-2 sm:px-3 text-sm`}>
                     <div className="h-4 w-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </td>
@@ -99,10 +140,18 @@ export default function RatingTable() {
               ))
             ) : (
               ratings.map((player, index) => (
-                <tr key={player.id} className={`border-t ${styles.tableBorder} ${styles.tableRowHover} ${player.username ? 'cursor-pointer': undefined}`} 
+                <tr 
+                  key={player.id} 
+                  className={`border-t ${theme.tableBorder} ${theme.tableRowHover} ${player.username ? 'cursor-pointer': undefined}`} 
+                  style={theme.tableBorderStyle}
                   onClick={player.username ? () => window.open('https://t.me/' + player.username, '_blank'): undefined}
+                >
+                  <td 
+                    className={`py-3 px-2 sm:px-3 text-sm ${theme.text}`}
+                    style={theme.textStyle}
                   >
-                  <td className={`py-3 px-2 sm:px-3 text-sm ${styles.text}`}>{index + 1}</td>
+                    {index + 1}
+                  </td>
                   <td className="py-3 px-2 sm:px-3">
                     <div className="w-8 h-8 relative">
                       <Image
@@ -113,13 +162,24 @@ export default function RatingTable() {
                       />
                     </div>
                   </td>
-                  <td className={`py-3 px-2 sm:px-3 text-sm ${styles.text}`}>
+                  <td 
+                    className={`py-3 px-2 sm:px-3 text-sm ${theme.text}`}
+                    style={theme.textStyle}
+                  >
                     {player.first_name} {player.last_name || ""}
                   </td>
-                  <td className={`py-3 px-2 sm:px-3 text-xs ${styles.secondaryText} hidden sm:table-cell`}>
+                  <td 
+                    className={`py-3 px-2 sm:px-3 text-xs ${theme.secondaryText} hidden sm:table-cell`}
+                    style={theme.secondaryTextStyle}
+                  >
                     {player.username ? "@" + player.username : "No username"}
                   </td>
-                  <td className={`py-3 px-2 sm:px-3 text-right font-medium ${styles.text}`}>{player.rating.toFixed(0)}</td>
+                  <td 
+                    className={`py-3 px-2 sm:px-3 text-right font-medium ${theme.text}`}
+                    style={theme.textStyle}
+                  >
+                    {player.rating.toFixed(0)}
+                  </td>
                 </tr>
               ))
             )}
