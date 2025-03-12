@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { getRandomVotePair, submitVote, VotePair, User } from "@/app/lib/supabase-queries";
 import Image from "next/image";
 import { PostgrestError } from "@supabase/supabase-js";
-import { isTMA } from '@telegram-apps/bridge';
 import { useTelegram } from "../context/telegram-context";
 import { TelegramTheme } from "../utils/telegram-theme";
 
@@ -24,13 +23,28 @@ function PlayerCardSkeleton({ theme }: { theme: TelegramTheme }) {
   );
 }
 
+// Define keyframes for the green flash effect
+const greenFlashKeyframes = `
+@keyframes greenFlash {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+`;
+
+// Add the keyframes to the document
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.innerHTML = greenFlashKeyframes;
+  document.head.appendChild(style);
+}
+
 export default function Vote({ voterId }: { voterId: number }) {
   const [pairs, setPairs] = useState<VotePair[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<PostgrestError | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
-  const isTelegramMiniApp = isTMA();
   const { theme } = useTelegram();
   
   // States for the "Me" button
@@ -71,64 +85,30 @@ export default function Vote({ voterId }: { voterId: number }) {
     // Immediately update UI for better responsiveness
     setSelectedPlayer(winnerId);
     
-    // For mobile/Telegram Mini App, we want to be more responsive
-    if (isTelegramMiniApp) {
-      // Optimistically update UI first
-      const currentPair = pairs[0];
+    setIsVoting(true);
+    
+    // Optimistically update UI
+    const currentPair = pairs[0];
+    
+    try {
+      // Submit vote
+      const success = await submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId);
+      if (!success) {
+        console.error("Failed to submit vote");
+      }
       
-      // Set isVoting before updating pairs to prevent multiple clicks
-      setIsVoting(true);
-      
-      // Update pairs and reset selectedPlayer together to maintain synchronization
+      // Update state only after voting is complete
       setPairs(prevPairs => prevPairs.slice(1));
       setSelectedPlayer(null);
       
-      // Then submit vote in background without blocking UI
-      submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId)
-        .then(success => {
-          if (!success) {
-            console.error("Failed to submit vote");
-          }
-          
-          // Load new pairs if needed
-          if (pairs.length <= 1) {
-            return loadNewPairs(false);
-          }
-        })
-        .catch(error => {
-          console.error("Error submitting vote:", error);
-        })
-        .finally(() => {
-          // Just reset isVoting here, selectedPlayer is already reset
-          setIsVoting(false);
-        });
-    } else {
-      // For desktop, keep the original flow
-      setIsVoting(true);
-      
-      // Optimistically update UI
-      const currentPair = pairs[0];
-      
-      try {
-        // Submit vote
-        const success = await submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId);
-        if (!success) {
-          console.error("Failed to submit vote");
-        }
-        
-        // Update state only after voting is complete
-        setPairs(prevPairs => prevPairs.slice(1));
-        setSelectedPlayer(null);
-        
-        // Load new pairs if current list is empty
-        if (pairs.length <= 1) {
-          await loadNewPairs(false);
-        }
-      } catch (error) {
-        console.error("Error submitting vote:", error);
-      } finally {
-        setIsVoting(false);
+      // Load new pairs if current list is empty
+      if (pairs.length <= 1) {
+        await loadNewPairs(false);
       }
+    } catch (error) {
+      console.error("Error submitting vote:", error);
+    } finally {
+      setIsVoting(false);
     }
   }
 
@@ -164,10 +144,8 @@ export default function Vote({ voterId }: { voterId: number }) {
     </div>
   );
 
-  // Tailwind animation classes depending on the application type
-  const animationClasses = isTelegramMiniApp 
-    ? "animate-fadeInFast" 
-    : "animate-fadeInSlideUp";
+  // Tailwind animation classes for Telegram Mini App
+  const animationClasses = "animate-fadeInFast";
 
   // Handler for the "Me" button click
   const handleMeButtonClick = () => {
@@ -211,7 +189,6 @@ export default function Vote({ voterId }: { voterId: number }) {
               isSelected={selectedPlayer === pairs[0].playerA.id}
               isDisabled={isVoting}
               theme={theme}
-              isTelegramMiniApp={isTelegramMiniApp}
             />
             <PlayerCard 
               player={pairs[0].playerB} 
@@ -219,7 +196,6 @@ export default function Vote({ voterId }: { voterId: number }) {
               isSelected={selectedPlayer === pairs[0].playerB.id}
               isDisabled={isVoting}
               theme={theme}
-              isTelegramMiniApp={isTelegramMiniApp}
             />
           </div>
 
@@ -228,7 +204,7 @@ export default function Vote({ voterId }: { voterId: number }) {
               <div className="relative w-full">
                 <button 
                   onClick={handleMeButtonClick} 
-                  className={`w-full py-2 ${theme.primaryButton} bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm transition-all ${isTelegramMiniApp ? 'duration-100' : 'duration-200'} ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''} ${showNope ? 'opacity-50' : ''}`}
+                  className={`w-full py-2 ${theme.primaryButton} bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm transition-all duration-100 ease-in-out text-sm ${showNope ? 'opacity-50' : ''}`}
                   style={{backgroundColor: 'rgb(147, 51, 234)'}} // Purple color
                   disabled={showNope}
                 >
@@ -244,7 +220,7 @@ export default function Vote({ voterId }: { voterId: number }) {
 
             <button 
               onClick={() => handleVote(null)} 
-              className={`w-full py-2.5 ${theme.secondaryButton} ${theme.secondaryButtonHover} text-white rounded-md shadow-sm transition-all ${isTelegramMiniApp ? 'duration-100' : 'duration-200'} ease-in-out text-sm ${!isTelegramMiniApp ? 'hover:scale-[1.02] active:scale-[0.98]' : ''}`}
+              className={`w-full py-2.5 ${theme.secondaryButton} ${theme.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-100 ease-in-out text-sm`}
               disabled={isVoting}
             >
               ❓ Don&apos;t know
@@ -261,58 +237,71 @@ function PlayerCard({
   onVote, 
   isSelected = false,
   isDisabled = false,
-  theme,
-  isTelegramMiniApp = false
+  theme
 }: { 
   player: User | null; 
   onVote: () => void; 
   isSelected?: boolean;
   isDisabled?: boolean;
   theme: TelegramTheme;
-  isTelegramMiniApp?: boolean;
 }) {
-  // Tailwind animation classes depending on the application type
-  const cardAnimationClasses = isTelegramMiniApp
-    ? "animate-fadeInFast"
-    : "animate-fadeIn";
+  // Tailwind animation classes for Telegram Mini App
+  const cardAnimationClasses = "animate-fadeInFast";
     
-  // Adjust transition duration based on device type
-  const transitionDuration = isTelegramMiniApp ? "duration-150" : "duration-300";
+  // Adjust transition duration for Telegram Mini App
+  const transitionDuration = "duration-150";
+
+  // Special styles for selection effect
+  const selectionStyle: React.CSSProperties = isSelected ? {
+    animation: 'greenFlash 0.6s ease-out',
+    borderColor: '#22c55e', // Green-500
+    borderWidth: '2px',
+    transform: 'scale(1.02)',
+  } : {};
+
+  // Handle touch events specifically
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Prevent default to avoid any browser-specific touch behaviors
+    e.preventDefault();
+  };
 
   return (
     <button 
       onClick={onVote}
+      onTouchStart={handleTouchStart}
       disabled={isDisabled}
       className={`flex flex-col items-center p-4 border rounded-lg shadow-sm transition-all ${transitionDuration} ${
         isSelected ? `${theme.selectedBorder} ${theme.selectedBg}` : `${theme.border} hover:shadow-md`
-      } ${cardAnimationClasses} ${!isTelegramMiniApp ? 'hover:-translate-y-1' : ''} w-full ${
+      } ${cardAnimationClasses} w-full ${
         isDisabled ? "opacity-70 cursor-not-allowed" : "cursor-pointer"
-      }`}
-      style={isSelected ? 
-        {...theme.selectedBorderStyle, ...theme.selectedBgStyle} : 
-        theme.borderStyle
-      }
+      } touch-manipulation`} // Added touch-manipulation for better touch handling
+      style={{
+        ...isSelected ? selectionStyle : theme.borderStyle,
+        WebkitTapHighlightColor: 'transparent', // Remove tap highlight on mobile
+        touchAction: 'manipulation', // Improve touch behavior
+      }}
     >
       <div className="relative mb-3 overflow-hidden rounded-full">
-        <div className={`transition-transform ${transitionDuration}`}>
+        <div className={`transition-transform ${transitionDuration} ${isSelected ? 'scale-105' : ''}`}>
           <Image 
             src={player?.photoUrl ?? "/default-avatar.svg"} 
             alt={player?.firstName ?? "Player"} 
             width={120} 
             height={120}
             priority
-            className="rounded-full object-cover border-2 border-gray-700 shadow-sm" 
+            className={`rounded-full object-cover border-2 ${isSelected ? 'border-green-500' : 'border-gray-700'} shadow-sm`} 
+            draggable={false} // Prevent dragging of images which can interfere with touch
           />
           {isSelected && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-full">
-              <span className="text-white text-2xl">✓</span>
+            <div className="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-40 rounded-full">
+              <span className="text-white text-3xl animate-pulse">✓</span>
             </div>
           )}
         </div>
       </div>
       <h3 
-        className={`mt-1 text-sm font-medium text-center ${theme.text}`}
-        style={theme.textStyle}
+        className={`mt-1 text-sm font-medium text-center ${theme.text} ${isSelected ? 'text-green-500' : ''}`}
+        style={isSelected ? undefined : theme.textStyle}
       >
         {player?.firstName} {player?.lastName}
       </h3>
