@@ -1,7 +1,7 @@
 'use client';
 
 import Hello from './components/hello';
-import PlayerRating from './components/player-rating';
+import RatingTable from './components/rating';
 import Vote from './components/vote';
 import { useTelegram } from './context/telegram-context';
 
@@ -15,7 +15,7 @@ export default function Home() {
     >
       <Hello />
       <Vote />
-      <PlayerRating />
+      <RatingTable />
     </div>
   )
 }
