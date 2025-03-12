@@ -152,7 +152,7 @@ export default function RatingTable() {
           <tbody>
             {loading ? (
               // Table row skeleton
-              Array.from({ length: 5 }).map((_, index) => (
+              Array.from({ length: 10 }).map((_, index) => (
                 <tr 
                   key={`skeleton-${index}`} 
                   className={`border-t ${theme.tableBorder} animate-pulse`}
