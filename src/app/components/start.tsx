@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTelegram } from "@context/telegram-context";
 import { Game, getActiveGame } from "@lib/supabase-queries";
 
@@ -10,13 +10,13 @@ export default function Start() {
 
   const [currentGame, setCurrentGame] = useState<Game | null>(null)
 
+  const initCurrentGame = useCallback(async () => {
+    setCurrentGame(await getActiveGame())
+  }, [setCurrentGame])
+
   useEffect(() => {
     initCurrentGame()
-  }, [])
-
-  const initCurrentGame = async () => {
-    setCurrentGame(await getActiveGame())
-  }
+  }, [initCurrentGame])
 
   const gameCreator = (
     <div>

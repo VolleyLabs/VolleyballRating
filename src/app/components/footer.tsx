@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useTelegram } from "@context/telegram-context";
 import { ScreenName } from "../page";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { isAdmin } from "@lib/supabase-queries";
 
 type FooterProps = {
@@ -14,21 +14,21 @@ export default function Footer({setActiveScreen} : FooterProps) {
   const { launchParams, theme } = useTelegram();
   const [admin, setAdmin] = useState<boolean>(false)
 
-  const initIsAdmin = async () => {
-    setAdmin(await isAdmin(launchParams?.tgWebAppData?.user?.id ?? 832467215))
-  }
+  const initIsAdmin = useCallback(async () => {
+    setAdmin(await isAdmin(launchParams?.tgWebAppData?.user?.id ?? Number(process.env.NEXT_PUBLIC_TELEGRAM_TEST_ID) ))
+  }, [launchParams])
 
   useEffect(() => {
     initIsAdmin()
-  })
+  }, [initIsAdmin])
 
-  const footerElement = (icon: string, activeScreenName: ScreenName) => {
+  const footerElement = useCallback((icon: string, activeScreenName: ScreenName) => {
     return (
       <div className="pb-2" onClick={() => setActiveScreen(activeScreenName)}>
           <Image src={icon} alt={activeScreenName} width={30} height={30}/>
       </div>
     )
-  }
+  }, [setActiveScreen])
 
   const leaderboard = footerElement('/leaderboard.svg', 'leaderboard')
   const history = footerElement('/history.svg', 'history')
