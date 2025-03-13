@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { createClient } from "@/app/utils/supabase/client";
-import { useTelegram } from "../context/telegram-context";
+import { useTelegram } from "@context/telegram-context";
+import { supabase } from "@lib/supabase-queries";
 
 // Type for a player's rating info returned by the stored procedure
 export type PlayerRating = {
@@ -23,7 +23,6 @@ export default function RatingTable() {
   const { theme } = useTelegram();
   
   // Create Supabase client instance
-  const supabase = useRef(createClient());
 
   // Fetch ratings from Supabase by calling the stored procedure
   useEffect(() => {
@@ -38,7 +37,7 @@ export default function RatingTable() {
   async function fetchRatings() {
     setLoading(true);
     setError(null);
-    const { data, error } = await supabase.current.rpc("calculate_player_ratings");
+    const { data, error } = await supabase.rpc("calculate_player_ratings");
     if (error) {
       console.error("Error fetching ratings:", error);
       setError(error.message);

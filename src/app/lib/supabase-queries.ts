@@ -1,6 +1,6 @@
 import { createClient } from '@/app/utils/supabase/client';
 
-const supabase = createClient();
+export const supabase = createClient();
 
 export type User = {
   id: number;
@@ -8,6 +8,7 @@ export type User = {
   lastName?: string;
   username?: string;
   photoUrl?: string;
+  admin: boolean;
 };
 
 export type DB_RandomVotePair = {
@@ -27,6 +28,23 @@ export type VotePair = {
   playerA: User;
   playerB: User;
 };
+
+export type Game = {
+  id: string,
+  team_a: string[],
+  team_b: string[],
+  team_a_score: number,
+  team_b_score: number,
+  state: GameState,
+  creator: number,
+  finisher: number
+}
+
+export enum GameState {
+  ACTIVE = 'ACTIVE',
+  FINISHED = 'FINISHED',
+  CANCELLED = 'CANCELLED'
+}
 
 export async function getRandomVotePair(voterId: number): Promise<VotePair[]> {
   const { data, error } = await supabase
@@ -74,4 +92,41 @@ export async function upsertUser(id: number, first_name: string, last_name: stri
   if (error) {
     console.error('Error updating user in Supabase:', error);
   }
+}
+
+export async function isAdmin(id: number) {
+  const result = await supabase.from('users').select('admin').eq('id', id).limit(1)
+
+  if (result.error) {
+    console.error('Error selecting admin status', result.error);
+    throw result.error;
+  }
+  if (result.data.length != 1) {
+    console.error('Error selecting admin status, user not found', result.error);
+    throw new Error('User not found')
+  }
+  return result.data[0].admin
+}
+
+export async function getActiveGame(): Promise<Game | null> {
+  const result = await supabase.from('games').select().eq('state', 'ACTIVE').limit(1)
+
+  if (result.error) {
+    console.error('Error getting active game', result.error);
+    throw result.error;
+  }
+
+  return result.data.length == 0
+    ? null
+    : result.data[0] as Game
+}
+
+export async function createActiveGame(game: Game) {
+  const result = await supabase.from('games').insert([game])
+
+  if (result.error) {
+    console.error('Error creating active game', result.error);
+    throw result.error;
+  }
+
 }
