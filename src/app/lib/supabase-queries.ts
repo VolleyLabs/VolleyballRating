@@ -233,26 +233,46 @@ export async function createVoting(voting: CreateVoting) {
 
 export async function getActiveVotings() {
   const result = await supabase.from('votings').select().eq('state', 'ACTIVE')
+  if (result.error) {
+    console.error("Error getActiveVotings:", result.error);
+    throw result.error;
+  }
   return (result.data as Voting[]).map(v => ({...v, game_time: new Date(v.game_time)}))
 }
 
 export const getActiveGameSchedules = lazyAsyncSupplier(async () => {
   const result = await supabase.from('game_schedules').select().eq('state', 'ACTIVE')
+  if (result.error) {
+    console.error("Error getActiveGameSchedules:", result.error);
+    throw result.error;
+  }
   return result.data as GameSchedule[]
 })
 
 export const getGameSchedule = lazyAsyncSupplier(async (schedule_id: string) => {
   const result = await supabase.from('game_schedules').select().eq('id', schedule_id)
+  if (result.error) {
+    console.error("Error getGameSchedule:", result.error);
+    throw result.error;
+  }
   return result.data![0] as GameSchedule
 })
 
 export const getGameLocations = lazyAsyncSupplier(async () => {
   const result = await supabase.from('game_locations').select()
+  if (result.error) {
+    console.error("Error getGameLocations:", result.error);
+    throw result.error;
+  }
   return result.data as GameLocation[]
 })
 
 export const getVotingByPollId = async (pollId: string) => {
   const result = await supabase.from('votings').select().eq('poll_id', pollId)
+  if (result.error) {
+    console.error("Error getVotingByPollId:", result.error);
+    throw result.error;
+  }
   const voting = (result.data![0] as Voting)
   return {
     ...voting,
@@ -262,30 +282,54 @@ export const getVotingByPollId = async (pollId: string) => {
 
 export const getVotingPlayers = async (votingId: string) => {
   const result = await supabase.from('voting_players').select().eq('voting_id', votingId).order('created_at')
+  if (result.error) {
+    console.error("Error getVotingPlayers:", result.error);
+    throw result.error;
+  }
   return result.data! as VotingPlayer[] || [] as VotingPlayer[]
 }
 
 export const addVotingPlayer = async (votingPlayer: CreateVotingPlayer) => {
-  await supabase.from('voting_players')
+  const result = await supabase.from('voting_players')
     .insert([votingPlayer])
+  if (result.error) {
+    console.error("Error addVotingPlayer:", result.error);
+    throw result.error;
+  }
 }
 
 export const deleteVotingPlayer = async (votingPlayer: VotingPlayer) => {
-  await supabase.from('voting_players')
+  const result = await supabase.from('voting_players')
     .delete()
     .eq('id', votingPlayer.id)
+    if (result.error) {
+      console.error("Error deleteVotingPlayer:", result.error);
+      throw result.error;
+    }
 }
 
 export const getUsersByIds = async (userIds: number[]) => {
-  const response = await supabase.from('users').select().in('id', userIds)
-  return response.data! as UserDbType[]
+  const result = await supabase.from('users').select().in('id', userIds)
+  if (result.error) {
+    console.error("Error getUsersByIds:", result.error);
+    throw result.error;
+  }
+  return result.data! as UserDbType[]
 }
 
 export const getUser = async (userId: number) => {
-  const response = await supabase.from('users').select().eq('id', userId)
-  return response.data![0] as UserDbType
+  const result = await supabase.from('users').select().eq('id', userId)
+  if (result.error) {
+    console.error("Error getUser:", result.error);
+    throw result.error;
+  }
+  return result.data![0] as UserDbType
 }
 
 export const closeVoting = async (voting: Voting) => {
-  await supabase.from('votings').update({'state': 'CLOSED'}).eq('id', voting.id)
+  const result = await supabase.from('votings').update({'state': 'CLOSED'}).eq('id', voting.id)
+  if (result.error) {
+    console.error("Error getUser:", result.error);
+    throw result.error;
+  }
 }
