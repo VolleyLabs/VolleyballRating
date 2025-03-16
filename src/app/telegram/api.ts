@@ -1,3 +1,4 @@
+import { BotError } from "grammy";
 import { DayOfWeek, GameLocation, GameSchedule, stripSeconds, UserDbType, Voting } from "../lib/supabase-queries";
 import { getTimeString } from "../utils/date";
 import { bot } from "./bot";
@@ -95,4 +96,7 @@ export const notifyOneIn = async (userIn: UserDbType) => {
     process.env.CHAT_ID!,
     `В игру вступает @${userIn.username}`
   )
+}
+export const notifyAdminAboutError = async (chatId: string, error: BotError) => {
+  return await bot.api.sendMessage(chatId, `Error in telegram bot: ${error}`)
 }

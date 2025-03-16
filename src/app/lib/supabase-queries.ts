@@ -18,6 +18,7 @@ export type UserDbType = {
   username?: string;
   photo_url?: string;
   admin: boolean;
+  chat_id: string;
 };
 
 export type DB_RandomVotePair = {
@@ -310,6 +311,15 @@ export const deleteVotingPlayer = async (votingPlayer: VotingPlayer) => {
 
 export const getUsersByIds = async (userIds: number[]) => {
   const result = await supabase.from('users').select().in('id', userIds)
+  if (result.error) {
+    console.error("Error getUsersByIds:", result.error);
+    throw result.error;
+  }
+  return result.data! as UserDbType[]
+}
+
+export const getAdminUsers = async () => {
+  const result = await supabase.from('users').select().eq('admin', true)
   if (result.error) {
     console.error("Error getUsersByIds:", result.error);
     throw result.error;
