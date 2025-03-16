@@ -16,11 +16,11 @@ bot.on('poll_answer', async (ctx) => {
   const user = await getUser(userId)
   const votedToPlay = ctx.pollAnswer.option_ids.includes(0)
   const voting = await getVotingByPollId(pollId)
-  const schedule = await getGameSchedule(voting.game_schedule_id)
   if (!voting) {
     console.log('Voting not found')
     return
   }
+  const schedule = await getGameSchedule(voting.game_schedule_id)
   const votingPlayers = await getVotingPlayers(voting.id)
   const gamePlayers = votingPlayers.slice(0, schedule.players_count)
   const alreadyVoted = votingPlayers.filter(p => p.player_id === userId)[0]

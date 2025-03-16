@@ -6,9 +6,11 @@ import "@/app/telegram/handlers"
 export async function GET() {
   const now = new Date();
   const votings = await getActiveVotings()
-  votings
-    .filter(v => isSameDay(now, v.game_time))
-    .forEach(v => notifyAndCloseVoting(v))
+    await Promise.all(
+          votings
+            .filter(v => isSameDay(now, v.game_time))
+            .map(v => notifyAndCloseVoting(v))
+    )
   return NextResponse.json({})
 }
 
