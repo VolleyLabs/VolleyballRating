@@ -1,7 +1,10 @@
 import { bot } from "@/app/telegram/bot"
 import "@/app/telegram/handlers"
-import { webhookCallback } from "grammy"
+import { NextRequest } from "next/server"
 
-export const config = { api: { bodyParser: false } }
-
-export default webhookCallback(bot, "next-js")
+export async function POST(req: NextRequest) {
+  const body = await req.text(); // получаем сырой текст тела запроса
+  const update = JSON.parse(body);
+  await bot.handleUpdate(update);
+  return new Response("ok", { status: 200 });
+}
