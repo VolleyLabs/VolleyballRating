@@ -16,7 +16,7 @@ import {
   notifyOneOutWarning,
 } from "./api";
 
-const MIN_PLAYERS_COUNT = 1;
+const MIN_PLAYERS_COUNT = 12;
 
 bot.on("message:text", async (ctx) => {
   console.log("Received message");
