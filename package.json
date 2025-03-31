@@ -15,12 +15,12 @@
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.49.1",
-    "@telegram-apps/sdk": "^3.5.1",
-    "grammy": "^1.35.0",
-    "next": "15.2.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@supabase/supabase-js": "^2.49.4",
+    "@telegram-apps/sdk": "^3.6.0",
+    "grammy": "^1.35.1",
+    "next": "15.2.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -30,7 +30,7 @@
     "@types/react-dom": "^19",
     "concurrently": "^9.1.2",
     "eslint": "^9",
-    "eslint-config-next": "15.2.2",
+    "eslint-config-next": "15.2.4",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wait-on": "^8.0.3"
