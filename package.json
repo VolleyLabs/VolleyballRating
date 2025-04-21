@@ -17,8 +17,8 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@telegram-apps/sdk": "^3.7.1",
-    "grammy": "^1.35.1",
-    "next": "15.3.0",
+    "grammy": "^1.36.1",
+    "next": "15.3.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -30,7 +30,7 @@
     "@types/react-dom": "^19",
     "concurrently": "^9.1.2",
     "eslint": "^9",
-    "eslint-config-next": "15.3.0",
+    "eslint-config-next": "15.3.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wait-on": "^8.0.3"
