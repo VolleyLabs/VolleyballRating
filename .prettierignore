@@ -1,0 +1,19 @@
+# Ignore artifacts
+build
+coverage
+.next
+node_modules
+public
+.git
+.github
+.cursor
+.vscode
+dist
+
+# Package files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+next-env.d.ts
