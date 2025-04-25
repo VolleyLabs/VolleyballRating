@@ -26,10 +26,10 @@ export default function Navigation({ activeScreen, setActiveScreen, screenNames 
           <button
             key={screen}
             onClick={() => setActiveScreen(screen)}
-            className={`p-3 rounded-full transition-colors ${
+            className={`p-3 rounded-full transition-all duration-200 transform hover:scale-110 ${
               activeScreen === screen 
-                ? theme.primaryButton
-                : theme.secondaryButton
+                ? `${theme.primaryButton} hover:brightness-110`
+                : `${theme.secondaryButton} hover:bg-opacity-80 hover:shadow-md`
             }`}
             style={activeScreen === screen ? theme.primaryButtonStyle : {}}
             title={screen.charAt(0).toUpperCase() + screen.slice(1)}
