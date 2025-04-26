@@ -10,6 +10,7 @@ export type User = {
   username?: string;
   photoUrl?: string;
   admin: boolean;
+  pickupHeight?: number;
 };
 export type UserDbType = {
   id: number;
@@ -19,6 +20,7 @@ export type UserDbType = {
   photo_url?: string;
   admin: boolean;
   chat_id: string;
+  pickup_height?: number;
 };
 
 export type DB_RandomVotePair = {
@@ -176,13 +178,66 @@ export async function submitVote(voterId: number, playerA: number, playerB: numb
   return true;
 }
 
-export async function upsertUser(id: number, first_name: string, last_name: string | undefined, username: string | undefined, photo_url: string | undefined) {
-  const { error } = await supabase
-    .from('users')
-    .upsert([{ id, first_name, last_name, username, photo_url }], { onConflict: 'id' });
-
-  if (error) {
-    console.error('Error updating user in Supabase:', error);
+export async function upsertUser(id: number, first_name: string, last_name: string | undefined, username: string | undefined, photo_url: string | undefined, pickup_height?: number) {
+  try {
+    // Check if user exists
+    const { data, error: checkError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id);
+    
+    if (checkError) {
+      console.error('Error checking if user exists:', checkError);
+      throw checkError;
+    }
+    
+    if (data && data.length > 0) {
+      // User exists, update only the provided fields
+      // This preserves any fields not included in the update
+      const updates: Record<string, string | number | boolean | null | undefined> = {};
+      
+      // Only include fields that are being updated
+      if (first_name !== undefined) updates.first_name = first_name;
+      if (last_name !== undefined) updates.last_name = last_name;
+      if (username !== undefined) updates.username = username;
+      if (photo_url !== undefined) updates.photo_url = photo_url;
+      if (pickup_height !== undefined) updates.pickup_height = pickup_height;
+      
+      // Only perform update if we have fields to update
+      if (Object.keys(updates).length > 0) {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update(updates)
+          .eq('id', id);
+        
+        if (updateError) {
+          console.error('Error updating user:', updateError);
+          throw updateError;
+        }
+      }
+    } else {
+      // User doesn't exist, insert new user
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([{ 
+          id, 
+          first_name, 
+          last_name, 
+          username, 
+          photo_url,
+          pickup_height
+        }]);
+      
+      if (insertError) {
+        console.error('Error inserting new user:', insertError);
+        throw insertError;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in upsertUser:', error);
+    throw error;
   }
 }
 

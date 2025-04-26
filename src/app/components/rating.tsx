@@ -20,7 +20,7 @@ export default function RatingTable() {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const { theme } = useTelegram();
+  const { theme, isAdmin } = useTelegram();
   
   // Create Supabase client instance
 
@@ -32,7 +32,7 @@ export default function RatingTable() {
     fetchRatings();
     const interval = setInterval(fetchRatings, 30000);
     return () => clearInterval(interval);
-  }, [supabase]);
+  }, []);
 
   async function fetchRatings() {
     setLoading(true);
@@ -140,12 +140,14 @@ export default function RatingTable() {
               >
                 Username
               </th>
-              <th 
-                className={`py-2 px-1 w-16 text-right font-medium ${theme.tableHeaderText}`}
-                style={theme.tableHeaderTextStyle}
-              >
-                Rating
-              </th>
+              {isAdmin && (
+                <th 
+                  className={`py-2 px-1 w-16 text-right font-medium ${theme.tableHeaderText}`}
+                  style={theme.tableHeaderTextStyle}
+                >
+                  Rating
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -169,9 +171,11 @@ export default function RatingTable() {
                   <td className={`py-3 px-2 text-xs hidden xs:table-cell`}>
                     <div className="h-3 w-16 bg-gray-300 dark:bg-gray-700 rounded"></div>
                   </td>
-                  <td className={`py-3 px-1 text-right`}>
-                    <div className="h-4 w-8 bg-gray-300 dark:bg-gray-700 rounded ml-auto"></div>
-                  </td>
+                  {isAdmin && (
+                    <td className={`py-3 px-1 text-right`}>
+                      <div className="h-4 w-8 bg-gray-300 dark:bg-gray-700 rounded ml-auto"></div>
+                    </td>
+                  )}
                 </tr>
               ))
             ) : (
@@ -210,12 +214,14 @@ export default function RatingTable() {
                   >
                     {player.username ? "@" + player.username : "No username"}
                   </td>
-                  <td 
-                    className={`py-3 px-1 text-right font-medium ${theme.text}`}
-                    style={theme.textStyle}
-                  >
-                    {player.rating.toFixed(0)}
-                  </td>
+                  {isAdmin && (
+                    <td 
+                      className={`py-3 px-1 text-right font-medium ${theme.text}`}
+                      style={theme.textStyle}
+                    >
+                      {player.rating.toFixed(0)}
+                    </td>
+                  )}
                 </tr>
               ))
             )}
