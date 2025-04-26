@@ -11,7 +11,7 @@ interface NavigationProps {
 }
 
 export default function Navigation({ activeScreen, setActiveScreen, screenNames }: NavigationProps) {
-  const { launchParams, theme, isAdmin, isLoading } = useTelegram();
+  const { launchParams, theme, isAdmin, isLoading, isAnonymous } = useTelegram();
 
   const iconMap: Record<ScreenName, string> = {
     leaderboard: '/leaderboard.svg',
@@ -27,7 +27,9 @@ export default function Navigation({ activeScreen, setActiveScreen, screenNames 
   return (
     <nav className={`flex items-center justify-between p-4 border-b ${theme.border}`} style={theme.borderStyle}>
       <div className="flex items-center gap-3">
-        {isLoading ? (
+        {isAnonymous ? (
+          <div></div>
+        ) : isLoading ? (
           <div className="w-[40px] h-[40px] rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse"></div>
         ) : (
           <div 
@@ -60,7 +62,7 @@ export default function Navigation({ activeScreen, setActiveScreen, screenNames 
             )}
           </div>
         )}
-        {!isLoading && (
+        {!isLoading && !isAnonymous && (
           <span 
             className={`text-sm font-medium ${theme.text} hidden sm:inline-block cursor-pointer transition-all duration-200 hover:text-[#4CD964]`} 
             style={theme.textStyle}

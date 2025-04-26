@@ -45,7 +45,7 @@ export default function Vote() {
   const [error, setError] = useState<PostgrestError | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
-  const { theme, launchParams } = useTelegram();
+  const { theme, launchParams, isAnonymous } = useTelegram();
   const voterId = launchParams?.tgWebAppData?.user?.id ?? Number(process.env.NEXT_PUBLIC_TELEGRAM_TEST_ID);
 
   // States for the "Me" button
@@ -83,6 +83,10 @@ export default function Vote() {
   useEffect(() => {
     loadNewPairs();
   }, [loadNewPairs]);
+
+  if (isAnonymous) {
+    return null;
+  }
 
   async function handleVote(winnerId: number | null) {
     if (!voterId || !pairs[0] || isVoting) return;

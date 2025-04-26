@@ -14,6 +14,7 @@ interface TelegramContextType {
   theme: TelegramTheme;
   isFullscreen: boolean;
   isAdmin: boolean;
+  isAnonymous: boolean;
 }
 
 const TelegramContext = createContext<TelegramContextType | undefined>(undefined);
@@ -24,6 +25,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const [themeParams, setThemeParams] = useState<ThemeParams | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   // Generate theme styles based on themeParams
   const theme = useTelegramTheme(themeParams);
@@ -55,6 +57,9 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
             console.error('Error checking admin status:', error);
             setIsAdmin(false);
           }
+          
+          // User has Telegram ID, not anonymous
+          setIsAnonymous(false);
         } else {
           // For development environment with test ID
           try {
@@ -62,10 +67,14 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
             if (!isNaN(testId)) {
               const adminStatus = await checkIsAdmin(testId);
               setIsAdmin(adminStatus);
+              setIsAnonymous(false);
+            } else {
+              setIsAnonymous(true);
             }
           } catch (error) {
             console.error('Error checking admin status with test ID:', error);
             setIsAdmin(false);
+            setIsAnonymous(true);
           }
         }
     
@@ -76,7 +85,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           removeThemeChanged();
         };
       } else {
-        // For local development, use default theme
+        // For local development or web access, use default theme
         setThemeParams(null); // Will use default theme
         
         // Check admin status with test ID for local development
@@ -85,10 +94,15 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           if (!isNaN(testId)) {
             const adminStatus = await checkIsAdmin(testId);
             setIsAdmin(adminStatus);
+            setIsAnonymous(false);
+          } else {
+            // No valid test ID, consider as anonymous web user
+            setIsAnonymous(true);
           }
         } catch (error) {
           console.error('Error checking admin status with test ID:', error);
           setIsAdmin(false);
+          setIsAnonymous(true);
         }
   
         // Simulate minimum loading time for smooth UX
@@ -102,7 +116,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <TelegramContext.Provider value={{ launchParams, isLoading, themeParams, theme, isFullscreen, isAdmin }}>
+    <TelegramContext.Provider value={{ launchParams, isLoading, themeParams, theme, isFullscreen, isAdmin, isAnonymous }}>
       {children}
     </TelegramContext.Provider>
   );
