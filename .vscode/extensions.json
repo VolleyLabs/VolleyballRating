@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "dsznajder.es7-react-js-snippets",
+    "editorconfig.editorconfig",
+    "patbenatar.advanced-new-file",
+    "visualstudioexptteam.intellicode-api-usage-examples",
+    "christian-kohler.npm-intellisense",
+    "visualstudioexptteam.vscodeintellicode",
+    "rvest.vs-code-prettier-eslint",
+    "redhat.vscode-yaml",
+    "pulkitgangwar.nextjs-snippets",
+    "aaron-bond.better-comments",
+    "mikestead.dotenv",
+    "christian-kohler.path-intellisense",
+    "yoavbls.pretty-ts-errors",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+    "GitHub.vscode-pull-request-github"
+  ]
+}

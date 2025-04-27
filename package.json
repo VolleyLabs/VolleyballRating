@@ -8,7 +8,20 @@
     "start": "next start",
     "lint": "next lint",
     "tunnel": "devtunnel host -p 3000 --allow-anonymous",
-    "tunnel2": "ngrok http 3000"
+    "tunnel2": "ngrok http 3000",
+    "supabase:login": "npx supabase login",
+    "supabase:link": "npx supabase link --project-ref ufejocelbvrvgmoewhaw",
+    "supabase:unlink": "npx supabase unlink",
+    "supabase:start": "npx supabase stop --all && npx supabase start",
+    "supabase:stop": "npx supabase stop --all",
+    "supabase:reset": "npx supabase db reset",
+    "supabase:status": "npx supabase status",
+    "supabase:pull": "npx supabase db pull",
+    "supabase:push": "npx supabase db push",
+    "supabase:types": "supabase gen types typescript --local > database.types.gen.ts",
+    "migration:new": "npx supabase db diff -f $1",
+    "migration:from-diff": "npx supabase db diff --use-migra -f $1",
+    "migration:up": "npx supabase migration up"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
