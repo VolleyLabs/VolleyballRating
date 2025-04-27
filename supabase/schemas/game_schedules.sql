@@ -15,3 +15,14 @@ COMMENT ON TABLE public.game_schedules IS 'Stores recurring game schedule inform
 
 ALTER TABLE ONLY public.game_schedules
     ADD CONSTRAINT game_schedules_pkey PRIMARY KEY (id);
+
+-- Seed data
+INSERT INTO public.game_schedules (id, created_at, day_of_week, time, duration_minutes, location, voting_in_advance_days, voting_time, players_count, state) 
+VALUES 
+('05189544-8d89-4a76-b07e-9c7f2b7d51d0', '2025-03-16 01:03:18.511514+00', 'SUNDAY', '20:00:00', '120', '3ebcb7b6-37c1-4555-b1a2-252d9a13d41b', '2', '22:10:00', '12', 'ACTIVE'),
+('32fe07bf-ca6f-4bb9-83e2-5947c5478d17', '2025-03-16 01:03:18.511514+00', 'THURSDAY', '21:00:00', '120', '3ebcb7b6-37c1-4555-b1a2-252d9a13d41b', '2', '22:00:00', '12', 'ACTIVE'),
+('3ac54cad-2d6d-48bb-86f0-54f7fbd80ef9', '2025-03-16 01:03:18.511514+00', 'SATURDAY', '20:00:00', '120', '3ebcb7b6-37c1-4555-b1a2-252d9a13d41b', '2', '22:00:00', '12', 'ACTIVE'),
+('97a60c40-2fb2-460d-8c6a-37efe9a95708', '2025-03-16 01:03:18.511514+00', 'TUESDAY', '20:00:00', '120', '3ebcb7b6-37c1-4555-b1a2-252d9a13d41b', '2', '22:00:00', '12', 'ACTIVE'),
+('c3394bc3-a1d4-41c2-a75c-7cbc0c685d97', '2025-03-16 01:03:18.511514+00', 'MONDAY', '20:00:00', '120', '3ebcb7b6-37c1-4555-b1a2-252d9a13d41b', '2', '22:00:00', '12', 'ACTIVE'),
+('d4f97d6d-da82-4536-8cc6-84207d186c10', '2025-03-16 01:03:18.511514+00', 'FRIDAY', '20:00:00', '120', '3ebcb7b6-37c1-4555-b1a2-252d9a13d41b', '2', '22:00:00', '12', 'ACTIVE'),
+('dc8b6df9-63e6-4aa7-9263-16f401fe9e0c', '2025-03-16 01:03:18.511514+00', 'MONDAY', '23:01:00', '120', '3ebcb7b6-37c1-4555-b1a2-252d9a13d41b', '2', '12:58:00', '12', 'ACTIVE');
