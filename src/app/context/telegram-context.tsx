@@ -49,6 +49,57 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  // Function to check if token is expired or will expire soon
+  const isTokenExpiredOrExpiringSoon = (
+    token: string,
+    minutesThreshold: number = 10
+  ): boolean => {
+    try {
+      // Decode the JWT to get the payload
+      const base64Payload = token.split(".")[1];
+      const payload = JSON.parse(atob(base64Payload));
+
+      // Check if the expiration timestamp is in the past or will be in the next X minutes
+      const currentTime = Math.floor(Date.now() / 1000);
+      const thresholdTime = currentTime + minutesThreshold * 60;
+      return payload.exp < thresholdTime;
+    } catch (error) {
+      console.error("Error parsing token:", error);
+      // If there's an error parsing the token, consider it expired
+      return true;
+    }
+  };
+
+  // Function to clear stored auth data
+  const clearStoredAuthData = () => {
+    localStorage.removeItem("telegram_auth_token");
+    localStorage.removeItem("telegram_is_admin");
+    setToken(null);
+    setIsAdmin(false);
+  };
+
+  // Function to refresh authentication periodically
+  useEffect(() => {
+    // Only run this effect if we have a token and we're in the browser
+    if (!token || typeof window === "undefined") return;
+
+    const checkAndRefreshToken = () => {
+      if (isTokenExpiredOrExpiringSoon(token)) {
+        console.log(
+          "Token is expiring soon, refreshing the page to get new data"
+        );
+        // Refresh the page to get fresh authentication data
+        window.location.reload();
+      }
+    };
+
+    // Check every 5 minutes
+    const intervalId = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
+
+    // Clean up the interval on unmount
+    return () => clearInterval(intervalId);
+  }, [token]);
+
   // Function to check if token is expired
   const isTokenExpired = (token: string): boolean => {
     try {
@@ -64,14 +115,6 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       // If there's an error parsing the token, consider it expired
       return true;
     }
-  };
-
-  // Function to clear stored auth data
-  const clearStoredAuthData = () => {
-    localStorage.removeItem("telegram_auth_token");
-    localStorage.removeItem("telegram_is_admin");
-    setToken(null);
-    setIsAdmin(false);
   };
 
   useEffect(() => {
@@ -91,8 +134,8 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         if (savedToken) {
           // Check if token is expired
           if (isTokenExpired(savedToken)) {
-            console.log("Saved token has expired, removing it");
-            clearStoredAuthData();
+            console.log("Saved token has expired, will try to re-authenticate");
+            // Don't clear stored auth data yet, we'll try to re-authenticate
           } else {
             // Token is valid, use it
             setToken(savedToken);
@@ -123,84 +166,103 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Call our API to validate the data and get a Supabase token
-        const response = await fetch("/api/telegram-auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData: webApp.initData }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Authentication failed");
-        }
-
-        const { token: newToken, isAdmin: newIsAdmin } = await response.json();
-
-        // Set the token and admin status in state
-        setToken(newToken);
-        setIsAdmin(newIsAdmin);
-
-        // Store token and admin status in localStorage for persistence
-        localStorage.setItem("telegram_auth_token", newToken);
-        localStorage.setItem(
-          "telegram_is_admin",
-          newIsAdmin ? "true" : "false"
-        );
-
-        // Set the token in Supabase client
-        initializeSupabase(newToken);
-
-        setWebApp(webApp);
-
-        // Set theme parameters safely
-        setThemeParams(webApp.themeParams || null);
-
-        // Parse init data from Telegram WebApp
-        let initData: WebAppInitData = { auth_date: 0, hash: "" };
-        try {
-          initData = webApp.initDataUnsafe as WebAppInitData;
-        } catch (error) {
-          console.error("Error parsing initData:", error);
-        }
-
         // Subscribe to theme changes
         const handleThemeChange = () => {
           setThemeParams(webApp.themeParams || null);
         };
 
-        webApp.onEvent("themeChanged", handleThemeChange);
+        // Call our API to validate the data and get a Supabase token
+        try {
+          const response = await fetch("/api/telegram-auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ initData: webApp.initData }),
+          });
 
-        if (initData?.user) {
-          const { id, first_name, last_name, username, photo_url } =
-            initData.user;
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Authentication error:", errorData.error);
 
-          // Save user ID to state and localStorage
-          setUserId(id);
-          localStorage.setItem("telegram_user_id", id.toString());
+            // If token expired, clear the stored token and refresh the page to force re-auth
+            if (errorData.error === "Authentication data expired") {
+              console.log(
+                "Authentication data expired, refreshing to get new data"
+              );
+              clearStoredAuthData();
+              // Refresh the page to get fresh authentication data from Telegram
+              window.location.reload();
+              return;
+            }
 
-          await upsertUser(id, first_name, last_name, username, photo_url);
+            throw new Error(errorData.error || "Authentication failed");
+          }
 
-          // User has Telegram ID, not anonymous
-          setIsAnonymous(false);
-        } else {
-          // For development environment with test ID
+          const { token: newToken, isAdmin: newIsAdmin } =
+            await response.json();
+
+          // Set the token and admin status in state
+          setToken(newToken);
+          setIsAdmin(newIsAdmin);
+
+          // Store token and admin status in localStorage for persistence
+          localStorage.setItem("telegram_auth_token", newToken);
+          localStorage.setItem(
+            "telegram_is_admin",
+            newIsAdmin ? "true" : "false"
+          );
+
+          // Set the token in Supabase client
+          initializeSupabase(newToken);
+
+          setWebApp(webApp);
+
+          // Set theme parameters safely
+          setThemeParams(webApp.themeParams || null);
+
+          // Parse init data from Telegram WebApp
+          let initData: WebAppInitData = { auth_date: 0, hash: "" };
           try {
-            const testId = Number(process.env.NEXT_PUBLIC_TELEGRAM_TEST_ID);
-            if (!isNaN(testId)) {
-              // Save test ID to state and localStorage
-              setUserId(testId);
-              localStorage.setItem("telegram_user_id", testId.toString());
+            initData = webApp.initDataUnsafe as WebAppInitData;
+          } catch (error) {
+            console.error("Error parsing initData:", error);
+          }
 
-              setIsAnonymous(false);
-            } else {
+          webApp.onEvent("themeChanged", handleThemeChange);
+
+          if (initData?.user) {
+            const { id, first_name, last_name, username, photo_url } =
+              initData.user;
+
+            // Save user ID to state and localStorage
+            setUserId(id);
+            localStorage.setItem("telegram_user_id", id.toString());
+
+            await upsertUser(id, first_name, last_name, username, photo_url);
+
+            // User has Telegram ID, not anonymous
+            setIsAnonymous(false);
+          } else {
+            // For development environment with test ID
+            try {
+              const testId = Number(process.env.NEXT_PUBLIC_TELEGRAM_TEST_ID);
+              if (!isNaN(testId)) {
+                // Save test ID to state and localStorage
+                setUserId(testId);
+                localStorage.setItem("telegram_user_id", testId.toString());
+
+                setIsAnonymous(false);
+              } else {
+                setIsAnonymous(true);
+              }
+            } catch (error) {
+              console.error("Error checking admin status with test ID:", error);
+              setIsAdmin(false);
               setIsAnonymous(true);
             }
-          } catch (error) {
-            console.error("Error checking admin status with test ID:", error);
-            setIsAdmin(false);
-            setIsAnonymous(true);
           }
+        } catch (error) {
+          console.error("Authentication error:", error);
+          setIsLoading(false);
         }
 
         // Simulate minimum loading time for smooth UX
