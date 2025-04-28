@@ -12,3 +12,36 @@ comment on table public.votings is 'Stores voting sessions for game participatio
 
 alter table only public.votings
     add constraint votings_pkey primary key (id);
+
+-- Enable Row Level Security
+ALTER TABLE public.votings ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Votings are viewable by everyone" 
+ON public.votings FOR SELECT 
+TO authenticated, anon
+USING (true);
+
+CREATE POLICY "Only admins can create votings" 
+ON public.votings FOR INSERT 
+TO authenticated
+WITH CHECK (EXISTS (
+  SELECT 1 FROM public.jwt_claim_admin()
+  WHERE role = 'admin'
+));
+
+CREATE POLICY "Only admins can update votings" 
+ON public.votings FOR UPDATE 
+TO authenticated
+USING (EXISTS (
+  SELECT 1 FROM public.jwt_claim_admin() 
+  WHERE role = 'admin'
+));
+
+CREATE POLICY "Only admins can delete votings" 
+ON public.votings FOR DELETE 
+TO authenticated
+USING (EXISTS (
+  SELECT 1 FROM public.jwt_claim_admin() 
+  WHERE role = 'admin'
+));

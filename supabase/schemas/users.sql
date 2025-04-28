@@ -14,3 +14,18 @@ COMMENT ON TABLE public.users IS 'Main users table storing Telegram user informa
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+-- Enable Row Level Security
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Public users are viewable by everyone" 
+ON public.users FOR SELECT 
+TO authenticated, anon
+USING (true);
+
+CREATE POLICY "Users can update own record" 
+ON public.users FOR UPDATE 
+TO authenticated
+USING (auth.uid()::text = id::text) 
+WITH CHECK (auth.uid()::text = id::text);

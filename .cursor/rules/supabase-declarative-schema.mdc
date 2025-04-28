@@ -1,0 +1,29 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Supabase Declarative Schema
+
+## Overview
+This project uses Supabase's declarative schema approach as the source of truth for database structure and policies. Schema files in `supabase/schemas/` define the database state and migrations are generated using the diff tool.
+
+## Directory Structure
+- `supabase/schemas/` - Contains declarative SQL schema files
+- `supabase/migrations/` - Generated migration files
+- `supabase/config.toml` - Configuration for schema ordering
+
+## Workflow
+
+### Making Schema Changes
+1. Stop the local Supabase instance: `supabase stop`
+2. Edit or create files in `supabase/schemas/`
+3. Generate a migration: `supabase db diff -f meaningful_name`
+4. Start the database: `supabase start`
+5. Apply migrations: `supabase migration up`
+
+### Deploying Changes
+1. Just push your changes to repo.
+
+## Configuration
+Schema files are applied in the order specified in [supabase/config.toml](mdc:supabase/config.toml):

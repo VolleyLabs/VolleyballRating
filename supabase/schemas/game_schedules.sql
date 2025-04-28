@@ -16,6 +16,39 @@ COMMENT ON TABLE public.game_schedules IS 'Stores recurring game schedule inform
 ALTER TABLE ONLY public.game_schedules
     ADD CONSTRAINT game_schedules_pkey PRIMARY KEY (id);
 
+-- Enable Row Level Security
+ALTER TABLE public.game_schedules ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Game schedules are viewable by everyone" 
+ON public.game_schedules FOR SELECT 
+TO authenticated, anon
+USING (true);
+
+CREATE POLICY "Only admins can create game schedules" 
+ON public.game_schedules FOR INSERT 
+TO authenticated
+WITH CHECK (EXISTS (
+  SELECT 1 FROM public.jwt_claim_admin()
+  WHERE role = 'admin'
+));
+
+CREATE POLICY "Only admins can update game schedules" 
+ON public.game_schedules FOR UPDATE 
+TO authenticated
+USING (EXISTS (
+  SELECT 1 FROM public.jwt_claim_admin() 
+  WHERE role = 'admin'
+));
+
+CREATE POLICY "Only admins can delete game schedules" 
+ON public.game_schedules FOR DELETE 
+TO authenticated
+USING (EXISTS (
+  SELECT 1 FROM public.jwt_claim_admin() 
+  WHERE role = 'admin'
+));
+
 -- Seed data
 INSERT INTO public.game_schedules (id, created_at, day_of_week, time, duration_minutes, location, voting_in_advance_days, voting_time, players_count, state) 
 VALUES 

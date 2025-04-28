@@ -7,7 +7,11 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { isAdmin as checkIsAdmin, upsertUser } from "../lib/supabase-queries";
+import {
+  isAdmin as checkIsAdmin,
+  supabase,
+  upsertUser,
+} from "../lib/supabase-queries";
 import { useTelegramTheme } from "../utils/telegram-theme";
 
 interface TelegramContextType {
@@ -17,6 +21,8 @@ interface TelegramContextType {
   theme: ReturnType<typeof useTelegramTheme>;
   isAdmin: boolean;
   isAnonymous: boolean;
+  token: string | null; // Add token to the context
+  userId: number | null; // Add userId for easier access
 }
 
 const TelegramContext = createContext<TelegramContextType | undefined>(
@@ -29,9 +35,44 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const [themeParams, setThemeParams] = useState<ThemeParams | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
 
   // Generate theme styles based on themeParams
   const theme = useTelegramTheme(themeParams);
+
+  // Function to initialize Supabase with the token
+  const initializeSupabase = (accessToken: string) => {
+    supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: "", // Refresh tokens aren't used with this auth method
+    });
+  };
+
+  // Function to check if token is expired
+  const isTokenExpired = (token: string): boolean => {
+    try {
+      // Decode the JWT to get the payload
+      const base64Payload = token.split(".")[1];
+      const payload = JSON.parse(atob(base64Payload));
+
+      // Check if the expiration timestamp is in the past
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp < currentTime;
+    } catch (error) {
+      console.error("Error parsing token:", error);
+      // If there's an error parsing the token, consider it expired
+      return true;
+    }
+  };
+
+  // Function to clear stored auth data
+  const clearStoredAuthData = () => {
+    localStorage.removeItem("telegram_auth_token");
+    localStorage.removeItem("telegram_is_admin");
+    setToken(null);
+    setIsAdmin(false);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,9 +81,76 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       // Guard against server-side rendering - Telegram WebApp only exists in browser
       const isBrowser = typeof window !== "undefined";
 
+      // Try to load saved token from localStorage
+      if (isBrowser) {
+        const savedToken = localStorage.getItem("telegram_auth_token");
+        const savedUserId = localStorage.getItem("telegram_user_id");
+        const savedIsAdmin =
+          localStorage.getItem("telegram_is_admin") === "true";
+
+        if (savedToken) {
+          // Check if token is expired
+          if (isTokenExpired(savedToken)) {
+            console.log("Saved token has expired, removing it");
+            clearStoredAuthData();
+          } else {
+            // Token is valid, use it
+            setToken(savedToken);
+            setIsAdmin(savedIsAdmin);
+            initializeSupabase(savedToken);
+
+            if (savedUserId) {
+              const userId = parseInt(savedUserId);
+              setUserId(userId);
+              setIsAnonymous(false);
+            }
+          }
+        }
+      }
+
       // Check if Telegram WebApp is available (only in browser client-side)
       if (isBrowser && window.Telegram?.WebApp) {
         const webApp = window.Telegram.WebApp;
+
+        // Notify Telegram WebApp that we are ready
+        window.Telegram.WebApp.ready();
+
+        // Expand the WebApp to fullscreen
+        window.Telegram.WebApp.expand();
+
+        if (!webApp.initData) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Call our API to validate the data and get a Supabase token
+        const response = await fetch("/api/telegram-auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData: webApp.initData }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Authentication failed");
+        }
+
+        const { token: newToken, isAdmin: newIsAdmin } = await response.json();
+
+        // Set the token and admin status in state
+        setToken(newToken);
+        setIsAdmin(newIsAdmin);
+
+        // Store token and admin status in localStorage for persistence
+        localStorage.setItem("telegram_auth_token", newToken);
+        localStorage.setItem(
+          "telegram_is_admin",
+          newIsAdmin ? "true" : "false"
+        );
+
+        // Set the token in Supabase client
+        initializeSupabase(newToken);
+
         setWebApp(webApp);
 
         // Set theme parameters safely
@@ -67,16 +175,11 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           const { id, first_name, last_name, username, photo_url } =
             initData.user;
 
-          await upsertUser(id, first_name, last_name, username, photo_url);
+          // Save user ID to state and localStorage
+          setUserId(id);
+          localStorage.setItem("telegram_user_id", id.toString());
 
-          // Check if user is admin
-          try {
-            const adminStatus = await checkIsAdmin(id);
-            setIsAdmin(adminStatus);
-          } catch (error) {
-            console.error("Error checking admin status:", error);
-            setIsAdmin(false);
-          }
+          await upsertUser(id, first_name, last_name, username, photo_url);
 
           // User has Telegram ID, not anonymous
           setIsAnonymous(false);
@@ -85,8 +188,10 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           try {
             const testId = Number(process.env.NEXT_PUBLIC_TELEGRAM_TEST_ID);
             if (!isNaN(testId)) {
-              const adminStatus = await checkIsAdmin(testId);
-              setIsAdmin(adminStatus);
+              // Save test ID to state and localStorage
+              setUserId(testId);
+              localStorage.setItem("telegram_user_id", testId.toString());
+
               setIsAnonymous(false);
             } else {
               setIsAnonymous(true);
@@ -117,8 +222,24 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           try {
             const testId = Number(process.env.NEXT_PUBLIC_TELEGRAM_TEST_ID);
             if (!isNaN(testId)) {
-              const adminStatus = await checkIsAdmin(testId);
-              setIsAdmin(adminStatus);
+              // Save test ID to state and localStorage if not already set
+              if (!userId) {
+                setUserId(testId);
+                localStorage.setItem("telegram_user_id", testId.toString());
+              }
+
+              // Check if test user is admin
+              try {
+                const adminStatus = await checkIsAdmin(testId);
+                setIsAdmin(adminStatus);
+                localStorage.setItem(
+                  "telegram_is_admin",
+                  adminStatus ? "true" : "false"
+                );
+              } catch (error) {
+                console.error("Error checking admin status:", error);
+              }
+
               setIsAnonymous(false);
             } else {
               setIsAnonymous(true);
@@ -155,6 +276,8 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         theme,
         isAdmin,
         isAnonymous,
+        token,
+        userId,
       }}
     >
       {children}
