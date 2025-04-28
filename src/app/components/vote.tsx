@@ -1,12 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  getRandomVotePair,
-  submitVote,
-  VotePair,
-  User,
-} from "@lib/supabase-queries";
+import { getRandomVotePair, submitVote, VotePair } from "@lib/supabase-queries";
+import { User } from "../../../database.types";
 import Image from "next/image";
 import { PostgrestError } from "@supabase/supabase-js";
 import { useTelegram } from "@context/telegram-context";
@@ -327,8 +323,8 @@ function PlayerCard({
           }`}
         >
           <Image
-            src={player?.photoUrl ?? "/default-avatar.svg"}
-            alt={player?.firstName ?? "Player"}
+            src={player?.photo_url ?? "/default-avatar.svg"}
+            alt={player?.first_name ?? "Player"}
             width={120}
             height={120}
             priority
@@ -350,7 +346,7 @@ function PlayerCard({
         }`}
         style={isSelected ? undefined : theme.textStyle}
       >
-        {player?.firstName} {player?.lastName}
+        {player?.first_name} {player?.last_name}
       </h3>
       <p
         className={`text-xs ${theme.secondaryText} text-center`}

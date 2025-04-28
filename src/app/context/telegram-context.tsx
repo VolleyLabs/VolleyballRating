@@ -327,7 +327,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
     };
 
     fetchData();
-  }, []);
+  }, [userId]);
 
   return (
     <TelegramContext.Provider

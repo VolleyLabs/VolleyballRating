@@ -28,7 +28,7 @@ export default function Settings() {
       const user = await getUser(userId);
       console.log("Fetched user data:", user);
       if (user && user.pickup_height !== undefined) {
-        setPickupHeight(user.pickup_height);
+        setPickupHeight(user.pickup_height ?? undefined);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
