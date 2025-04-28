@@ -1,0 +1,52 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Telegram Theme Integration
+
+This project integrates seamlessly with Telegram's theming system to provide a consistent UI experience that matches the user's Telegram app theme.
+
+## Key Files
+- [src/app/utils/telegram-theme.ts](mdc:src/app/utils/telegram-theme.ts) - Converts Telegram theme parameters to application styles
+- [src/app/context/telegram-context.tsx](mdc:src/app/context/telegram-context.tsx) - Receives and manages theme updates
+
+## Theme Parameters
+Telegram provides several theme parameters that this application uses:
+- `bg_color` - Main background color
+- `text_color` - Main text color
+- `hint_color` - Secondary text color
+- `link_color` - Color for links
+- `button_color` - Color for buttons
+- `secondary_bg_color` - Secondary background color
+- And many others...
+
+## Theme Detection
+The application has logic to detect if the theme is dark or light based on color luminance:
+```typescript
+function isColorDark(color: string): boolean {
+  // Remove the hash if it exists
+  const hex = color.replace('#', '');
+  
+  // Parse the hex values
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  // Calculate luminance (perceived brightness)
+  // Formula: 0.299*R + 0.587*G + 0.114*B
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Return true if the color is dark (luminance < 0.5)
+  return luminance < 0.5;
+}
+```
+
+## Dynamic Styling
+The application combines Tailwind classes with dynamic inline styles to apply the Telegram theme:
+1. Tailwind classes are used for fallback styling
+2. Inline styles are applied with the actual Telegram theme colors
+3. CSS variables are available for styling components
+
+## Default Theme
+For non-Telegram environments (like local development), a default dark theme is provided.

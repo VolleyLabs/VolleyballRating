@@ -1,0 +1,32 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Telegram Mini App Integration
+
+This project uses the official Telegram Mini App SDK for integration with Telegram. The main integration points are:
+
+## Key Files
+- [src/app/layout.tsx](mdc:src/app/layout.tsx) - Loads the Telegram Mini App script
+- [src/app/context/telegram-context.tsx](mdc:src/app/context/telegram-context.tsx) - Provides a React context for Telegram functionality
+
+## Telegram SDK Usage
+The application uses the official Telegram Web App SDK instead of third-party libraries. The SDK is loaded via a script tag in the layout file:
+
+```typescript
+<Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
+```
+
+## TypeScript Integration
+The project uses `@types/telegram-web-app` for TypeScript definitions, which provides global types for the Telegram SDK. These types are available throughout the application.
+
+## Context Provider
+The `TelegramProvider` component in [src/app/context/telegram-context.tsx](mdc:src/app/context/telegram-context.tsx) handles:
+- Accessing the Telegram WebApp instance
+- Managing theme parameters
+- User authentication through Telegram
+- Admin status checking
+
+## Theme Integration
+Telegram theme parameters are processed through [src/app/utils/telegram-theme.ts](mdc:src/app/utils/telegram-theme.ts) to provide consistent styling that matches the user's Telegram theme settings.

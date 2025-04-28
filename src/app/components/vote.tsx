@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getRandomVotePair, submitVote, VotePair, User } from "@lib/supabase-queries";
+import {
+  getRandomVotePair,
+  submitVote,
+  VotePair,
+  User,
+} from "@lib/supabase-queries";
 import Image from "next/image";
 import { PostgrestError } from "@supabase/supabase-js";
 import { useTelegram } from "@context/telegram-context";
@@ -10,7 +15,7 @@ import { TelegramTheme } from "@utils/telegram-theme";
 // Player card skeleton component
 function PlayerCardSkeleton({ theme }: { theme: TelegramTheme }) {
   return (
-    <div 
+    <div
       className={`flex flex-col items-center px-4 pt-4 pb-3 border rounded-lg shadow-sm ${theme.border} animate-fadeIn cursor-not-allowed`}
       style={theme.borderStyle}
     >
@@ -33,8 +38,8 @@ const greenFlashKeyframes = `
 `;
 
 // Add the keyframes to the document
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
   style.innerHTML = greenFlashKeyframes;
   document.head.appendChild(style);
 }
@@ -45,8 +50,10 @@ export default function Vote() {
   const [error, setError] = useState<PostgrestError | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
-  const { theme, launchParams, isAnonymous } = useTelegram();
-  const voterId = launchParams?.tgWebAppData?.user?.id ?? Number(process.env.NEXT_PUBLIC_TELEGRAM_TEST_ID);
+  const { theme, webApp, isAnonymous } = useTelegram();
+  const voterId =
+    webApp?.initDataUnsafe?.user?.id ??
+    Number(process.env.NEXT_PUBLIC_TELEGRAM_TEST_ID);
 
   // States for the "Me" button
   const [showMeButton, setShowMeButton] = useState(false);
@@ -59,25 +66,28 @@ export default function Vote() {
     setShowNope(false);
   }, [pairs]);
 
-  const loadNewPairs = useCallback(async function loadNewPairs(showLoading = true) {
-    if (!voterId) {
-      return;
-    }
-
-    try {
-      setError(null);
-      if (showLoading) {
-        setIsLoading(true);
+  const loadNewPairs = useCallback(
+    async function loadNewPairs(showLoading = true) {
+      if (!voterId) {
+        return;
       }
-      const data = await getRandomVotePair(voterId);
-      setPairs(data);
-    } catch (error) {
-      console.error("Error prefetching next pair:", error);
-      setError(error as PostgrestError);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [voterId]);
+
+      try {
+        setError(null);
+        if (showLoading) {
+          setIsLoading(true);
+        }
+        const data = await getRandomVotePair(voterId);
+        setPairs(data);
+      } catch (error) {
+        console.error("Error prefetching next pair:", error);
+        setError(error as PostgrestError);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [voterId]
+  );
 
   // Initial fetch
   useEffect(() => {
@@ -93,23 +103,28 @@ export default function Vote() {
 
     // Immediately update UI for better responsiveness
     setSelectedPlayer(winnerId);
-    
+
     setIsVoting(true);
-    
+
     // Optimistically update UI
     const currentPair = pairs[0];
-    
+
     try {
       // Submit vote
-      const success = await submitVote(voterId, currentPair.playerA.id, currentPair.playerB.id, winnerId);
+      const success = await submitVote(
+        voterId,
+        currentPair.playerA.id,
+        currentPair.playerB.id,
+        winnerId
+      );
       if (!success) {
         console.error("Failed to submit vote");
       }
-      
+
       // Update state only after voting is complete
-      setPairs(prevPairs => prevPairs.slice(1));
+      setPairs((prevPairs) => prevPairs.slice(1));
       setSelectedPlayer(null);
-      
+
       // Load new pairs if current list is empty
       if (pairs.length <= 1) {
         await loadNewPairs(false);
@@ -124,34 +139,33 @@ export default function Vote() {
   // Common container classes to avoid layout shifts
   const containerClasses = `w-full max-w-md mx-auto p-3 sm:p-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden`;
 
-  if (error) return (
-    <p 
-      className={`text-center text-base p-3 sm:p-4 ${theme.text}`}
-      style={theme.textStyle}
-    >
-      Error loading pairs: {error.message}
-    </p>
-  );
-  
-  if (pairs.length == 0 && !isLoading) return (
-    <div 
-      className={`w-full max-w-md mx-auto p-4 sm:p-6 ${theme.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}
-      style={theme.cardBgStyle}
-    >
-      <p 
-        className={`text-lg mb-2 ${theme.text}`}
+  if (error)
+    return (
+      <p
+        className={`text-center text-base p-3 sm:p-4 ${theme.text}`}
         style={theme.textStyle}
       >
-        You already voted for all players
+        Error loading pairs: {error.message}
       </p>
-      <p 
-        className={`text-sm ${theme.secondaryText}`}
-        style={theme.secondaryTextStyle}
+    );
+
+  if (pairs.length == 0 && !isLoading)
+    return (
+      <div
+        className={`w-full max-w-md mx-auto p-4 sm:p-6 ${theme.cardBg} rounded-lg shadow-sm text-center overflow-hidden`}
+        style={theme.cardBgStyle}
       >
-        Thank you for participating!
-      </p>
-    </div>
-  );
+        <p className={`text-lg mb-2 ${theme.text}`} style={theme.textStyle}>
+          You already voted for all players
+        </p>
+        <p
+          className={`text-sm ${theme.secondaryText}`}
+          style={theme.secondaryTextStyle}
+        >
+          Thank you for participating!
+        </p>
+      </div>
+    );
 
   // Tailwind animation classes for Telegram Mini App
   const animationClasses = "animate-fadeInFast";
@@ -166,8 +180,14 @@ export default function Vote() {
   };
 
   return (
-    <div 
-      key={isLoading ? 'loading' : pairs[0] ? `${pairs[0].playerA.id}-${pairs[0].playerB.id}` : 'empty'}
+    <div
+      key={
+        isLoading
+          ? "loading"
+          : pairs[0]
+          ? `${pairs[0].playerA.id}-${pairs[0].playerB.id}`
+          : "empty"
+      }
       className={`${containerClasses} ${animationClasses}`}
       style={theme.cardBgStyle}
     >
@@ -184,24 +204,24 @@ export default function Vote() {
         </>
       ) : (
         <>
-          <h2 
+          <h2
             className={`text-lg font-medium text-center mb-4 ${theme.text} animate-scaleIn`}
-            style={{...theme.textStyle, transform: 'scale(1)'}}
+            style={{ ...theme.textStyle, transform: "scale(1)" }}
           >
             Who plays better?
           </h2>
 
           <div className="grid grid-cols-2 gap-3 w-full">
-            <PlayerCard 
-              player={pairs[0].playerA} 
-              onVote={() => handleVote(pairs[0].playerA.id)} 
+            <PlayerCard
+              player={pairs[0].playerA}
+              onVote={() => handleVote(pairs[0].playerA.id)}
               isSelected={selectedPlayer === pairs[0].playerA.id}
               isDisabled={isVoting}
               theme={theme}
             />
-            <PlayerCard 
-              player={pairs[0].playerB} 
-              onVote={() => handleVote(pairs[0].playerB.id)} 
+            <PlayerCard
+              player={pairs[0].playerB}
+              onVote={() => handleVote(pairs[0].playerB.id)}
               isSelected={selectedPlayer === pairs[0].playerB.id}
               isDisabled={isVoting}
               theme={theme}
@@ -211,24 +231,30 @@ export default function Vote() {
           <div className="flex flex-col gap-2 mt-4">
             {showMeButton && (
               <div className="relative w-full">
-                <button 
-                  onClick={handleMeButtonClick} 
-                  className={`w-full py-2 ${theme.primaryButton} bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm transition-all duration-100 ease-in-out text-sm ${showNope ? 'opacity-50' : ''}`}
-                  style={{backgroundColor: 'rgb(147, 51, 234)'}} // Purple color
+                <button
+                  onClick={handleMeButtonClick}
+                  className={`w-full py-2 ${
+                    theme.primaryButton
+                  } bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm transition-all duration-100 ease-in-out text-sm ${
+                    showNope ? "opacity-50" : ""
+                  }`}
+                  style={{ backgroundColor: "rgb(147, 51, 234)" }} // Purple color
                   disabled={showNope}
                 >
                   {showNope ? "Nope 😏" : "👤 Me"}
                 </button>
                 {showNope && (
                   <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                    <span className="text-lg font-bold text-white bg-red-500 px-4 py-2 rounded-md shadow-md animate-bounce">Nope 😏</span>
+                    <span className="text-lg font-bold text-white bg-red-500 px-4 py-2 rounded-md shadow-md animate-bounce">
+                      Nope 😏
+                    </span>
                   </div>
                 )}
               </div>
             )}
 
-            <button 
-              onClick={() => handleVote(null)} 
+            <button
+              onClick={() => handleVote(null)}
               className={`w-full py-2.5 ${theme.secondaryButton} ${theme.secondaryButtonHover} text-white rounded-md shadow-sm transition-all duration-100 ease-in-out text-sm`}
               disabled={isVoting}
             >
@@ -241,32 +267,34 @@ export default function Vote() {
   );
 }
 
-function PlayerCard({ 
-  player, 
-  onVote, 
+function PlayerCard({
+  player,
+  onVote,
   isSelected = false,
   isDisabled = false,
-  theme
-}: { 
-  player: User | null; 
-  onVote: () => void; 
+  theme,
+}: {
+  player: User | null;
+  onVote: () => void;
   isSelected?: boolean;
   isDisabled?: boolean;
   theme: TelegramTheme;
 }) {
   // Tailwind animation classes for Telegram Mini App
   const cardAnimationClasses = "animate-fadeInFast";
-    
+
   // Adjust transition duration for Telegram Mini App
   const transitionDuration = "duration-150";
 
   // Special styles for selection effect
-  const selectionStyle: React.CSSProperties = isSelected ? {
-    animation: 'greenFlash 0.6s ease-out',
-    borderColor: '#22c55e', // Green-500
-    borderWidth: '2px',
-    transform: 'scale(1.02)',
-  } : {};
+  const selectionStyle: React.CSSProperties = isSelected
+    ? {
+        animation: "greenFlash 0.6s ease-out",
+        borderColor: "#22c55e", // Green-500
+        borderWidth: "2px",
+        transform: "scale(1.02)",
+      }
+    : {};
 
   // Handle touch events specifically
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -275,30 +303,38 @@ function PlayerCard({
   };
 
   return (
-    <button 
+    <button
       onClick={onVote}
       onTouchStart={handleTouchStart}
       disabled={isDisabled}
       className={`flex flex-col items-center p-4 border rounded-lg shadow-sm transition-all ${transitionDuration} ${
-        isSelected ? `${theme.selectedBorder} ${theme.selectedBg}` : `${theme.border} hover:shadow-md`
+        isSelected
+          ? `${theme.selectedBorder} ${theme.selectedBg}`
+          : `${theme.border} hover:shadow-md`
       } ${cardAnimationClasses} w-full ${
         isDisabled ? "opacity-70 cursor-not-allowed" : "cursor-pointer"
       } touch-manipulation`} // Added touch-manipulation for better touch handling
       style={{
-        ...isSelected ? selectionStyle : theme.borderStyle,
-        WebkitTapHighlightColor: 'transparent', // Remove tap highlight on mobile
-        touchAction: 'manipulation', // Improve touch behavior
+        ...(isSelected ? selectionStyle : theme.borderStyle),
+        WebkitTapHighlightColor: "transparent", // Remove tap highlight on mobile
+        touchAction: "manipulation", // Improve touch behavior
       }}
     >
       <div className="relative mb-3 overflow-hidden rounded-full">
-        <div className={`transition-transform ${transitionDuration} ${isSelected ? 'scale-105' : ''}`}>
-          <Image 
-            src={player?.photoUrl ?? "/default-avatar.svg"} 
-            alt={player?.firstName ?? "Player"} 
-            width={120} 
+        <div
+          className={`transition-transform ${transitionDuration} ${
+            isSelected ? "scale-105" : ""
+          }`}
+        >
+          <Image
+            src={player?.photoUrl ?? "/default-avatar.svg"}
+            alt={player?.firstName ?? "Player"}
+            width={120}
             height={120}
             priority
-            className={`rounded-full object-cover border-2 ${isSelected ? 'border-green-500' : 'border-gray-700'} shadow-sm`} 
+            className={`rounded-full object-cover border-2 ${
+              isSelected ? "border-green-500" : "border-gray-700"
+            } shadow-sm`}
             draggable={false} // Prevent dragging of images which can interfere with touch
           />
           {isSelected && (
@@ -308,17 +344,19 @@ function PlayerCard({
           )}
         </div>
       </div>
-      <h3 
-        className={`mt-1 text-sm font-medium text-center ${theme.text} ${isSelected ? 'text-green-500' : ''}`}
+      <h3
+        className={`mt-1 text-sm font-medium text-center ${theme.text} ${
+          isSelected ? "text-green-500" : ""
+        }`}
         style={isSelected ? undefined : theme.textStyle}
       >
         {player?.firstName} {player?.lastName}
       </h3>
-      <p 
+      <p
         className={`text-xs ${theme.secondaryText} text-center`}
         style={theme.secondaryTextStyle}
       >
-        {player?.username ? '@' + player.username : "No username"}
+        {player?.username ? "@" + player.username : "No username"}
       </p>
     </button>
   );

@@ -1,0 +1,36 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Project Structure
+
+This Next.js project follows the App Router structure with a focus on Telegram Mini App integration. Here's an overview of the main directories and files:
+
+## Core Directories
+- `src/app` - Main application code using Next.js App Router
+- `src/components` - Reusable UI components
+- `supabase` - Supabase database configuration and migrations
+
+## Key Files and Directories
+- `src/app/layout.tsx` - Root layout with Telegram SDK integration
+- `src/app/page.tsx` - Main application page
+- `src/app/context` - React contexts for state management
+- `src/app/utils` - Utility functions and helpers
+- `src/app/lib` - Core business logic and external integrations
+
+## Database Integration
+The project uses Supabase for data storage with:
+- `supabase/` - Supabase configuration
+- `src/app/lib/supabase-queries.ts` - Database queries and mutations
+- `database.types.ts` - TypeScript types for database entities
+
+## State Management
+The application uses React Context for state management:
+- `src/app/context/telegram-context.tsx` - Manages Telegram Mini App integration
+
+## Styling
+The project uses Tailwind CSS for styling with:
+- `tailwind.config.js` - Tailwind configuration
+- `src/app/globals.css` - Global CSS styles
+- Dynamic styles based on Telegram theme parameters
