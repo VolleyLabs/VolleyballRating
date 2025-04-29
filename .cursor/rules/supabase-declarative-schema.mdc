@@ -1,7 +1,7 @@
 ---
-description: 
-globs: 
-alwaysApply: false
+description:
+globs:
+alwaysApply: true
 ---
 # Supabase Declarative Schema
 
@@ -16,11 +16,14 @@ This project uses Supabase's declarative schema approach as the source of truth 
 ## Workflow
 
 ### Making Schema Changes
-1. Stop the local Supabase instance: `supabase stop`
-2. Edit or create files in `supabase/schemas/`
-3. Generate a migration: `supabase db diff -f meaningful_name`
-4. Start the database: `supabase start`
-5. Apply migrations: `supabase migration up`
+1. Edit or create files in `supabase/schemas/`
+2. Generate a migration and apply changes:
+   ```bash
+   npm run migration:new your_migration_name  # Stops Supabase and creates migration
+   npm run supabase:start                     # Starts Supabase again
+   npm run migration:up                       # Applies migrations
+   npm run supabase:types                     # Regenerates TypeScript types
+   ```
 
 ### Deploying Changes
 1. Just push your changes to repo.
