@@ -34,6 +34,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admins: {
+        Row: {
+          created_at: string
+          granted_by: number | null
+          id: string
+          user_id: number
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: number | null
+          id?: string
+          user_id: number
+        }
+        Update: {
+          created_at?: string
+          granted_by?: number | null
+          id?: string
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admins_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_locations: {
         Row: {
           address: string
@@ -305,6 +341,12 @@ export type Database = {
           player_b_last_name: string
           player_b_username: string
           player_b_photo_url: string
+        }[]
+      }
+      jwt_claim_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          role: string
         }[]
       }
     }
