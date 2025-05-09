@@ -71,6 +71,7 @@ export type GameLocation = {
   id: string;
   name: string;
   address: string;
+  google_link: string;
 };
 
 export type GameSchedule = {
@@ -352,6 +353,52 @@ export const getGameLocations = lazyAsyncSupplier(async () => {
   return result.data as GameLocation[];
 });
 
+export const createGameLocation = async (
+  location: Omit<GameLocation, "id">
+) => {
+  const { data, error } = await supabase
+    .from("game_locations")
+    .insert([location])
+    .select();
+
+  if (error) {
+    console.error("Error creating game location:", error);
+    throw error;
+  }
+
+  return data[0] as GameLocation;
+};
+
+export const updateGameLocation = async (location: GameLocation) => {
+  const { data, error } = await supabase
+    .from("game_locations")
+    .update({
+      name: location.name,
+      address: location.address,
+      google_link: location.google_link,
+    })
+    .eq("id", location.id)
+    .select();
+
+  if (error) {
+    console.error("Error updating game location:", error);
+    throw error;
+  }
+
+  return data[0] as GameLocation;
+};
+
+export const deleteGameLocation = async (id: string) => {
+  const { error } = await supabase.from("game_locations").delete().eq("id", id);
+
+  if (error) {
+    console.error("Error deleting game location:", error);
+    throw error;
+  }
+
+  return true;
+};
+
 export const getVotingByPollId = async (pollId: string) => {
   const result = await supabase.from("votings").select().eq("poll_id", pollId);
   if (result.error) {
@@ -433,4 +480,55 @@ export const closeVoting = async (voting: Voting) => {
     console.error("Error getUser:", result.error);
     throw result.error;
   }
+};
+
+export const createGameSchedule = async (
+  schedule: Omit<GameSchedule, "id" | "created_at">
+) => {
+  const { data, error } = await supabase
+    .from("game_schedules")
+    .insert([schedule])
+    .select();
+
+  if (error) {
+    console.error("Error creating game schedule:", error);
+    throw error;
+  }
+
+  return data[0] as GameSchedule;
+};
+
+export const updateGameSchedule = async (schedule: GameSchedule) => {
+  const { data, error } = await supabase
+    .from("game_schedules")
+    .update({
+      day_of_week: schedule.day_of_week,
+      time: schedule.time,
+      duration_minutes: schedule.duration_minutes,
+      location: schedule.location,
+      voting_in_advance_days: schedule.voting_in_advance_days,
+      voting_time: schedule.voting_time,
+      players_count: schedule.players_count,
+      state: schedule.state,
+    })
+    .eq("id", schedule.id)
+    .select();
+
+  if (error) {
+    console.error("Error updating game schedule:", error);
+    throw error;
+  }
+
+  return data[0] as GameSchedule;
+};
+
+export const deleteGameSchedule = async (id: string) => {
+  const { error } = await supabase.from("game_schedules").delete().eq("id", id);
+
+  if (error) {
+    console.error("Error deleting game schedule:", error);
+    throw error;
+  }
+
+  return true;
 };

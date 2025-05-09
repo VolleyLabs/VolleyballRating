@@ -39,6 +39,8 @@ export default function Navigation({
     history: "/history.svg",
     start: "/volleyball.svg",
     settings: "/settings.svg",
+    locations: "/location.svg",
+    schedules: "/calendar.svg",
   };
 
   const handleAvatarClick = () => {

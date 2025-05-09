@@ -7,8 +7,15 @@ import { useTelegram } from "@context/telegram-context";
 import Start from "@components/start";
 import Settings from "@components/settings";
 import Navigation from "./components/navigation";
-
-export type ScreenName = "leaderboard" | "history" | "start" | "settings";
+import GameSchedules from "./components/game-schedules";
+import GameLocations from "./components/game-locations";
+export type ScreenName =
+  | "leaderboard"
+  | "history"
+  | "start"
+  | "settings"
+  | "locations"
+  | "schedules";
 
 export default function Home() {
   const { theme } = useTelegram();
@@ -20,6 +27,8 @@ export default function Home() {
     history: <History />,
     start: <Start />,
     settings: <Settings />,
+    locations: <GameLocations />,
+    schedules: <GameSchedules />,
   };
 
   // Get visible navigation items (settings is accessed via avatar)
