@@ -1,8 +1,9 @@
 @TELEGRAM_BOT_TOKEN={{$dotenv TELEGRAM_BOT_TOKEN}}
 @NEXT_PUBLIC_APP_URL={{$dotenv NEXT_PUBLIC_APP_URL}}
+@PRODUCTION_APP_URL={{$dotenv PRODUCTION_APP_URL}}
 
 ### Set Production Webhook
-GET https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/setWebhook?url=https://volleyball-rating.vercel.app/api/bot
+GET https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/setWebhook?url={{PRODUCTION_APP_URL}}/api/bot
 
 ### Set Webhook
 GET https://api.telegram.org/bot{{TELEGRAM_BOT_TOKEN}}/setWebhook?url={{NEXT_PUBLIC_APP_URL}}api/bot
