@@ -51,9 +51,41 @@ function ScoreDisplay({
   const [rightFlash, setRightFlash] = useState(false);
   const [previousScoreData, setPreviousScoreData] =
     useState<DailyScoreData | null>(null);
+  const [dynamicFontSize, setDynamicFontSize] = useState("80vh");
 
   const currentSets = scoreData.sets;
   const dailyTotals = scoreData.totals;
+
+  // Calculate optimal font size based on viewport dimensions
+  const calculateOptimalFontSize = () => {
+    if (typeof window === "undefined") return "80vh";
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    // For each side (half width), calculate max font size
+    // Account for 2-digit numbers and some padding
+    const maxWidthBasedSize = width * 0.5 * 0.7; // 70% of half width for 2-digit numbers
+    const maxHeightBasedSize = height * 0.8; // 80% of height accounting for top/bottom elements
+
+    return `${Math.min(maxWidthBasedSize, maxHeightBasedSize)}px`;
+  };
+
+  // Update font size on mount and resize
+  useEffect(() => {
+    const updateFontSize = () => {
+      setDynamicFontSize(calculateOptimalFontSize());
+    };
+
+    updateFontSize();
+    window.addEventListener("resize", updateFontSize);
+    window.addEventListener("orientationchange", updateFontSize);
+
+    return () => {
+      window.removeEventListener("resize", updateFontSize);
+      window.removeEventListener("orientationchange", updateFontSize);
+    };
+  }, []);
 
   // Detect score changes and trigger flash
   useEffect(() => {
@@ -111,35 +143,28 @@ function ScoreDisplay({
           }}
         />
 
-        {/* Top bar with exit button and daily totals */}
-        <div className="flex justify-between items-center p-4 bg-gray-900">
-          <button
-            onClick={onToggleFullscreen}
-            className="text-white bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+        {/* Global score at top center */}
+        {dailyTotals && (
+          <div
+            className="absolute top-4 left-1/2 transform -translate-x-1/2 text-white font-medium z-10 px-8 py-2"
+            style={{ fontSize: "8rem" }}
           >
-            Exit Fullscreen
-          </button>
-          {dailyTotals && (
-            <div className="text-center">
-              <div className="text-white text-lg font-medium">
-                {dailyTotals.left_wins} — {dailyTotals.right_wins}
-              </div>
-            </div>
-          )}
-          <div className="w-[120px]"></div> {/* Spacer for centering */}
-        </div>
+            <span className="mr-8">{dailyTotals.left_wins}</span>
+            <span className="ml-8">{dailyTotals.right_wins}</span>
+          </div>
+        )}
 
-        {/* Main score area */}
-        <div className="flex-1 flex">
+        {/* Main score area - full height */}
+        <div className="flex-1 flex relative">
           {/* Left side */}
-          <div className="flex-1 flex flex-col items-center justify-center bg-black border-r border-gray-600">
+          <div className="flex-1 flex flex-col items-center justify-center bg-black border-r border-gray-600 relative">
             <div
               className={`text-blue-400 font-light transition-all duration-200 ${
                 leftFlash ? "scale-110 brightness-150" : ""
               }`}
               style={{
-                fontSize: "min(60vw, 70vh)",
-                lineHeight: "0.5",
+                fontSize: dynamicFontSize,
+                lineHeight: "0.4",
                 fontFamily: "system-ui, -apple-system",
               }}
             >
@@ -154,14 +179,24 @@ function ScoreDisplay({
                 rightFlash ? "scale-110 brightness-150" : ""
               }`}
               style={{
-                fontSize: "min(60vw, 70vh)",
-                lineHeight: "0.5",
+                fontSize: dynamicFontSize,
+                lineHeight: "0.4",
                 fontFamily: "system-ui, -apple-system",
               }}
             >
               {currentSets?.right_score || 0}
             </div>
           </div>
+        </div>
+
+        {/* Bottom exit button */}
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20">
+          <button
+            onClick={onToggleFullscreen}
+            className="text-white bg-gray-800 bg-opacity-80 hover:bg-opacity-100 px-6 py-3 rounded-full text-sm font-medium transition-all backdrop-blur-sm"
+          >
+            Exit Fullscreen
+          </button>
         </div>
       </div>
     );
@@ -194,8 +229,12 @@ function ScoreDisplay({
         <div className="flex justify-between items-center mb-2">
           <div className="w-8"></div> {/* Spacer */}
           {dailyTotals && (
-            <div className={`text-xl ${theme.text} font-medium tracking-wide`}>
-              {dailyTotals.left_wins} — {dailyTotals.right_wins}
+            <div
+              className={`${theme.text} font-medium tracking-wide px-6 py-2`}
+              style={{ fontSize: "6rem" }}
+            >
+              <span className="mr-6">{dailyTotals.left_wins}</span>
+              <span className="ml-6">{dailyTotals.right_wins}</span>
             </div>
           )}
           <button
