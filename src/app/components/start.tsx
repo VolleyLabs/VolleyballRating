@@ -8,6 +8,60 @@ import {
   DailyScoreData,
 } from "@lib/supabase-queries";
 
+// Sound effects using Web Audio API
+const createBeep = (
+  frequency: number,
+  duration: number,
+  volume: number = 0.3
+) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as typeof window & { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
+    const audioContext = new AudioContextClass();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+    oscillator.type = "sine";
+
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(
+      volume,
+      audioContext.currentTime + 0.01
+    );
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.001,
+      audioContext.currentTime + duration
+    );
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+  } catch (error) {
+    console.log("Audio not supported:", error);
+  }
+};
+
+// Different sounds for each side (inspired by Apple Watch)
+const playLeftSound = () => {
+  // Higher pitch "up" tone
+  createBeep(800, 0.15, 0.4);
+  setTimeout(() => createBeep(1000, 0.1, 0.3), 150);
+};
+
+const playRightSound = () => {
+  // Success chime (lower pitch)
+  createBeep(523, 0.1, 0.4); // C5
+  setTimeout(() => createBeep(659, 0.1, 0.3), 100); // E5
+  setTimeout(() => createBeep(784, 0.2, 0.4), 200); // G5
+};
+
 // Score Display Component - Apple Watch style
 function ScoreDisplay({
   scoreData,
@@ -37,17 +91,22 @@ function ScoreDisplay({
 
       if (leftChanged) {
         setLeftFlash(true);
-        // Play different sounds for different sides if available
+        // Play left sound (up tone)
+        playLeftSound();
+        // Vibrate for left side
         if ("vibrate" in navigator) {
-          navigator.vibrate([100, 50, 100]); // Different pattern for left
+          navigator.vibrate([100, 50, 100]);
         }
         setTimeout(() => setLeftFlash(false), 5000);
       }
 
       if (rightChanged) {
         setRightFlash(true);
+        // Play right sound (success chime)
+        playRightSound();
+        // Vibrate for right side
         if ("vibrate" in navigator) {
-          navigator.vibrate([200]); // Different pattern for right
+          navigator.vibrate([200]);
         }
         setTimeout(() => setRightFlash(false), 5000);
       }
