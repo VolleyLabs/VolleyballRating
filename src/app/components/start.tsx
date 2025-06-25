@@ -148,11 +148,11 @@ function ScoreDisplay({
         {/* Global score at top center */}
         {dailyTotals && (
           <div
-            className="absolute top-4 left-1/2 transform -translate-x-1/2 text-white font-medium z-10 px-8 py-2"
-            style={{ fontSize: "8rem" }}
+            className="absolute top-1 left-1/2 transform -translate-x-1/2 text-white font-medium z-10 px-4 py-1"
+            style={{ fontSize: "6.4rem" }}
           >
-            <span className="mr-8">{dailyTotals.left_wins}</span>
-            <span className="ml-8">{dailyTotals.right_wins}</span>
+            <span className="mr-6">{dailyTotals.left_wins}</span>
+            <span className="ml-6">{dailyTotals.right_wins}</span>
           </div>
         )}
 
@@ -240,11 +240,11 @@ function ScoreDisplay({
           <div className="w-8"></div> {/* Spacer */}
           {dailyTotals && (
             <div
-              className={`${theme.text} font-medium tracking-wide px-6 py-2`}
-              style={{ fontSize: "6rem" }}
+              className={`${theme.text} font-medium tracking-wide px-4 py-1`}
+              style={{ fontSize: "4.8rem" }}
             >
-              <span className="mr-6">{dailyTotals.left_wins}</span>
-              <span className="ml-6">{dailyTotals.right_wins}</span>
+              <span className="mr-4">{dailyTotals.left_wins}</span>
+              <span className="ml-4">{dailyTotals.right_wins}</span>
             </div>
           )}
           <button
