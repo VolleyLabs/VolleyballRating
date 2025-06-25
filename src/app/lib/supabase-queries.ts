@@ -532,3 +532,83 @@ export const deleteGameSchedule = async (id: string) => {
 
   return true;
 };
+
+// Daily scores tracking
+export type DailySet = {
+  day: string;
+  left_score: number;
+  right_score: number;
+  updated_at: string;
+};
+
+export type DailyTotal = {
+  day: string;
+  left_wins: number;
+  right_wins: number;
+  updated_at: string;
+};
+
+export type DailyScoreData = {
+  sets: DailySet | null;
+  totals: DailyTotal | null;
+};
+
+export type DailyScoreSubscriptionCallback = (
+  scoreData: DailyScoreData
+) => void;
+
+export const getTodaysScores = async (): Promise<DailyScoreData> => {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
+  const [setsResult, totalsResult] = await Promise.all([
+    supabase.from("daily_sets").select("*").eq("day", today).single(),
+    supabase.from("daily_totals").select("*").eq("day", today).single(),
+  ]);
+
+  return {
+    sets: setsResult.data || null,
+    totals: totalsResult.data || null,
+  };
+};
+
+export const subscribeToDailyScores = (
+  callback: DailyScoreSubscriptionCallback
+) => {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
+  const channel = supabase
+    .channel("daily-scores")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "daily_sets",
+        filter: `day=eq.${today}`,
+      },
+      async (payload) => {
+        console.log("sets change", payload.new);
+        // Fetch both sets and totals when sets change
+        const scoreData = await getTodaysScores();
+        callback(scoreData);
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "daily_totals",
+        filter: `day=eq.${today}`,
+      },
+      async (payload) => {
+        console.log("totals change", payload.new);
+        // Fetch both sets and totals when totals change
+        const scoreData = await getTodaysScores();
+        callback(scoreData);
+      }
+    )
+    .subscribe();
+
+  return channel;
+};
