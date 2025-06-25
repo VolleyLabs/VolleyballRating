@@ -125,23 +125,23 @@ function ScoreDisplay({
       <div className="fixed inset-0 bg-black z-50 flex flex-col">
         {/* Flash overlays */}
         <div
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${
+          className={`absolute inset-0 pointer-events-none ${
             leftFlash ? "opacity-60" : "opacity-0"
           }`}
           style={{
             background:
               "linear-gradient(to right, #3b82f6 50%, transparent 50%)",
-            animation: leftFlash ? "pulse 0.5s ease-in-out" : "none",
+            transition: leftFlash ? "none" : "opacity 1s ease-out",
           }}
         />
         <div
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${
+          className={`absolute inset-0 pointer-events-none ${
             rightFlash ? "opacity-60" : "opacity-0"
           }`}
           style={{
             background:
               "linear-gradient(to left, #ef4444 50%, transparent 50%)",
-            animation: rightFlash ? "pulse 0.5s ease-in-out" : "none",
+            transition: rightFlash ? "none" : "opacity 1s ease-out",
           }}
         />
 
@@ -161,16 +161,17 @@ function ScoreDisplay({
           {/* Left side */}
           <div className="flex-1 flex flex-col items-center justify-center bg-black border-r border-gray-600 relative">
             <div
-              className={`text-blue-400 font-light transition-all duration-300 ${
-                leftFlash ? "scale-125 brightness-200" : ""
+              className={`font-light transition-all duration-200 ${
+                leftFlash ? "scale-125" : ""
               }`}
               style={{
                 fontSize: dynamicFontSize,
                 lineHeight: "0.4",
                 fontFamily: "system-ui, -apple-system",
+                color: leftFlash ? "#60a5fa" : "#60a5fa", // Always bright blue
                 textShadow: leftFlash
-                  ? "0 0 30px rgba(59, 130, 246, 0.8)"
-                  : "none",
+                  ? "0 0 40px rgba(96, 165, 250, 1), 0 0 80px rgba(96, 165, 250, 0.5)"
+                  : "0 0 10px rgba(96, 165, 250, 0.3)",
               }}
             >
               {currentSets?.left_score || 0}
@@ -180,16 +181,17 @@ function ScoreDisplay({
           {/* Right side */}
           <div className="flex-1 flex flex-col items-center justify-center bg-black">
             <div
-              className={`text-red-400 font-light transition-all duration-300 ${
-                rightFlash ? "scale-125 brightness-200" : ""
+              className={`font-light transition-all duration-200 ${
+                rightFlash ? "scale-125" : ""
               }`}
               style={{
                 fontSize: dynamicFontSize,
                 lineHeight: "0.4",
                 fontFamily: "system-ui, -apple-system",
+                color: rightFlash ? "#f87171" : "#f87171", // Always bright red
                 textShadow: rightFlash
-                  ? "0 0 30px rgba(239, 68, 68, 0.8)"
-                  : "none",
+                  ? "0 0 40px rgba(248, 113, 113, 1), 0 0 80px rgba(248, 113, 113, 0.5)"
+                  : "0 0 10px rgba(248, 113, 113, 0.3)",
               }}
             >
               {currentSets?.right_score || 0}
@@ -216,21 +218,21 @@ function ScoreDisplay({
     >
       {/* Flash overlays for normal mode */}
       <div
-        className={`absolute inset-0 pointer-events-none transition-opacity duration-500 rounded-2xl ${
+        className={`absolute inset-0 pointer-events-none rounded-2xl ${
           leftFlash ? "opacity-40" : "opacity-0"
         }`}
         style={{
           background: "linear-gradient(to right, #3b82f6 50%, transparent 50%)",
-          animation: leftFlash ? "pulse 0.5s ease-in-out" : "none",
+          transition: leftFlash ? "none" : "opacity 1s ease-out",
         }}
       />
       <div
-        className={`absolute inset-0 pointer-events-none transition-opacity duration-500 rounded-2xl ${
+        className={`absolute inset-0 pointer-events-none rounded-2xl ${
           rightFlash ? "opacity-40" : "opacity-0"
         }`}
         style={{
           background: "linear-gradient(to left, #ef4444 50%, transparent 50%)",
-          animation: rightFlash ? "pulse 0.5s ease-in-out" : "none",
+          transition: rightFlash ? "none" : "opacity 1s ease-out",
         }}
       />
 
