@@ -125,21 +125,23 @@ function ScoreDisplay({
       <div className="fixed inset-0 bg-black z-50 flex flex-col">
         {/* Flash overlays */}
         <div
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ${
-            leftFlash ? "opacity-20" : "opacity-0"
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${
+            leftFlash ? "opacity-60" : "opacity-0"
           }`}
           style={{
             background:
               "linear-gradient(to right, #3b82f6 50%, transparent 50%)",
+            animation: leftFlash ? "pulse 0.5s ease-in-out" : "none",
           }}
         />
         <div
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ${
-            rightFlash ? "opacity-20" : "opacity-0"
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${
+            rightFlash ? "opacity-60" : "opacity-0"
           }`}
           style={{
             background:
               "linear-gradient(to left, #ef4444 50%, transparent 50%)",
+            animation: rightFlash ? "pulse 0.5s ease-in-out" : "none",
           }}
         />
 
@@ -159,13 +161,16 @@ function ScoreDisplay({
           {/* Left side */}
           <div className="flex-1 flex flex-col items-center justify-center bg-black border-r border-gray-600 relative">
             <div
-              className={`text-blue-400 font-light transition-all duration-200 ${
-                leftFlash ? "scale-110 brightness-150" : ""
+              className={`text-blue-400 font-light transition-all duration-300 ${
+                leftFlash ? "scale-125 brightness-200" : ""
               }`}
               style={{
                 fontSize: dynamicFontSize,
                 lineHeight: "0.4",
                 fontFamily: "system-ui, -apple-system",
+                textShadow: leftFlash
+                  ? "0 0 30px rgba(59, 130, 246, 0.8)"
+                  : "none",
               }}
             >
               {currentSets?.left_score || 0}
@@ -175,13 +180,16 @@ function ScoreDisplay({
           {/* Right side */}
           <div className="flex-1 flex flex-col items-center justify-center bg-black">
             <div
-              className={`text-red-400 font-light transition-all duration-200 ${
-                rightFlash ? "scale-110 brightness-150" : ""
+              className={`text-red-400 font-light transition-all duration-300 ${
+                rightFlash ? "scale-125 brightness-200" : ""
               }`}
               style={{
                 fontSize: dynamicFontSize,
                 lineHeight: "0.4",
                 fontFamily: "system-ui, -apple-system",
+                textShadow: rightFlash
+                  ? "0 0 30px rgba(239, 68, 68, 0.8)"
+                  : "none",
               }}
             >
               {currentSets?.right_score || 0}
@@ -208,19 +216,21 @@ function ScoreDisplay({
     >
       {/* Flash overlays for normal mode */}
       <div
-        className={`absolute inset-0 pointer-events-none transition-opacity duration-200 rounded-2xl ${
-          leftFlash ? "opacity-10" : "opacity-0"
+        className={`absolute inset-0 pointer-events-none transition-opacity duration-500 rounded-2xl ${
+          leftFlash ? "opacity-40" : "opacity-0"
         }`}
         style={{
           background: "linear-gradient(to right, #3b82f6 50%, transparent 50%)",
+          animation: leftFlash ? "pulse 0.5s ease-in-out" : "none",
         }}
       />
       <div
-        className={`absolute inset-0 pointer-events-none transition-opacity duration-200 rounded-2xl ${
-          rightFlash ? "opacity-10" : "opacity-0"
+        className={`absolute inset-0 pointer-events-none transition-opacity duration-500 rounded-2xl ${
+          rightFlash ? "opacity-40" : "opacity-0"
         }`}
         style={{
           background: "linear-gradient(to left, #ef4444 50%, transparent 50%)",
+          animation: rightFlash ? "pulse 0.5s ease-in-out" : "none",
         }}
       />
 
@@ -252,13 +262,16 @@ function ScoreDisplay({
         {/* Left Team */}
         <div className="flex flex-col items-center">
           <div
-            className={`font-light text-blue-500 transition-all duration-200 ${
-              leftFlash ? "scale-110 brightness-125" : ""
+            className={`font-light text-blue-500 transition-all duration-300 ${
+              leftFlash ? "scale-120 brightness-150" : ""
             }`}
             style={{
               fontSize: "12rem",
               lineHeight: "0.8",
               fontFamily: "system-ui, -apple-system",
+              textShadow: leftFlash
+                ? "0 0 40px rgba(59, 130, 246, 0.9)"
+                : "none",
             }}
           >
             {currentSets?.left_score || 0}
@@ -268,13 +281,16 @@ function ScoreDisplay({
         {/* Right Team */}
         <div className="flex flex-col items-center">
           <div
-            className={`font-light text-red-500 transition-all duration-200 ${
-              rightFlash ? "scale-110 brightness-125" : ""
+            className={`font-light text-red-500 transition-all duration-300 ${
+              rightFlash ? "scale-120 brightness-150" : ""
             }`}
             style={{
               fontSize: "12rem",
               lineHeight: "0.8",
               fontFamily: "system-ui, -apple-system",
+              textShadow: rightFlash
+                ? "0 0 40px rgba(239, 68, 68, 0.9)"
+                : "none",
             }}
           >
             {currentSets?.right_score || 0}
