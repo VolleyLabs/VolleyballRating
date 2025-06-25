@@ -8,58 +8,32 @@ import {
   DailyScoreData,
 } from "@lib/supabase-queries";
 
-// Sound effects using Web Audio API
-const createBeep = (
-  frequency: number,
-  duration: number,
-  volume: number = 0.3
-) => {
-  if (typeof window === "undefined") return;
+// Speech synthesis for announcing score changes
+const speak = (text: string, pitch: number = 1, rate: number = 1.2) => {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
   try {
-    const AudioContextClass =
-      window.AudioContext ||
-      (window as typeof window & { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext;
-    const audioContext = new AudioContextClass();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.pitch = pitch;
+    utterance.rate = rate;
+    utterance.volume = 0.8;
 
-    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-    oscillator.type = "sine";
-
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(
-      volume,
-      audioContext.currentTime + 0.01
-    );
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.001,
-      audioContext.currentTime + duration
-    );
-
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + duration);
+    window.speechSynthesis.speak(utterance);
   } catch (error) {
-    console.log("Audio not supported:", error);
+    console.log("Speech synthesis not supported:", error);
   }
 };
 
-// Different sounds for each side (inspired by Apple Watch)
-const playLeftSound = () => {
-  // Higher pitch "up" tone
-  createBeep(800, 0.15, 0.4);
-  setTimeout(() => createBeep(1000, 0.1, 0.3), 150);
+// Different announcements for each side
+const announceLeftScore = () => {
+  speak("Left", 1.2, 1.4); // Higher pitch for left
 };
 
-const playRightSound = () => {
-  // Success chime (lower pitch)
-  createBeep(523, 0.1, 0.4); // C5
-  setTimeout(() => createBeep(659, 0.1, 0.3), 100); // E5
-  setTimeout(() => createBeep(784, 0.2, 0.4), 200); // G5
+const announceRightScore = () => {
+  speak("Right", 0.8, 1.2); // Lower pitch for right
 };
 
 // Score Display Component - Apple Watch style
@@ -91,8 +65,8 @@ function ScoreDisplay({
 
       if (leftChanged) {
         setLeftFlash(true);
-        // Play left sound (up tone)
-        playLeftSound();
+        // Announce left score change
+        announceLeftScore();
         // Vibrate for left side
         if ("vibrate" in navigator) {
           navigator.vibrate([100, 50, 100]);
@@ -102,8 +76,8 @@ function ScoreDisplay({
 
       if (rightChanged) {
         setRightFlash(true);
-        // Play right sound (success chime)
-        playRightSound();
+        // Announce right score change
+        announceRightScore();
         // Vibrate for right side
         if ("vibrate" in navigator) {
           navigator.vibrate([200]);
@@ -147,8 +121,7 @@ function ScoreDisplay({
           </button>
           {dailyTotals && (
             <div className="text-center">
-              <div className="text-white text-sm mb-1">DAILY TOTALS</div>
-              <div className="text-gray-300 text-xs">
+              <div className="text-white text-lg font-medium">
                 {dailyTotals.left_wins} — {dailyTotals.right_wins}
               </div>
             </div>
@@ -160,16 +133,13 @@ function ScoreDisplay({
         <div className="flex-1 flex">
           {/* Left side */}
           <div className="flex-1 flex flex-col items-center justify-center bg-black border-r border-gray-600">
-            <div className="text-blue-400 text-lg font-medium mb-4 tracking-wider">
-              LEFT
-            </div>
             <div
               className={`text-blue-400 font-light transition-all duration-200 ${
                 leftFlash ? "scale-110 brightness-150" : ""
               }`}
               style={{
-                fontSize: "min(40vw, 30vh)",
-                lineHeight: "0.8",
+                fontSize: "min(60vw, 70vh)",
+                lineHeight: "0.5",
                 fontFamily: "system-ui, -apple-system",
               }}
             >
@@ -179,27 +149,19 @@ function ScoreDisplay({
 
           {/* Right side */}
           <div className="flex-1 flex flex-col items-center justify-center bg-black">
-            <div className="text-red-400 text-lg font-medium mb-4 tracking-wider">
-              RIGHT
-            </div>
             <div
               className={`text-red-400 font-light transition-all duration-200 ${
                 rightFlash ? "scale-110 brightness-150" : ""
               }`}
               style={{
-                fontSize: "min(40vw, 30vh)",
-                lineHeight: "0.8",
+                fontSize: "min(60vw, 70vh)",
+                lineHeight: "0.5",
                 fontFamily: "system-ui, -apple-system",
               }}
             >
               {currentSets?.right_score || 0}
             </div>
           </div>
-        </div>
-
-        {/* Current set indicator */}
-        <div className="text-center py-2 bg-gray-900">
-          <div className="text-gray-400 text-xs">CURRENT SET</div>
         </div>
       </div>
     );
@@ -227,11 +189,15 @@ function ScoreDisplay({
         }}
       />
 
-      {/* Current Set Status */}
+      {/* Header with global score */}
       <div className="text-center mb-6 relative z-10">
         <div className="flex justify-between items-center mb-2">
           <div className="w-8"></div> {/* Spacer */}
-          <p className={`text-sm ${theme.secondaryText}`}>CURRENT SET</p>
+          {dailyTotals && (
+            <div className={`text-xl ${theme.text} font-medium tracking-wide`}>
+              {dailyTotals.left_wins} — {dailyTotals.right_wins}
+            </div>
+          )}
           <button
             onClick={onToggleFullscreen}
             className="text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-2 py-1 rounded transition-colors"
@@ -240,23 +206,21 @@ function ScoreDisplay({
             ⛶
           </button>
         </div>
-        <div className={`text-xs ${theme.secondaryText} tracking-wide`}>
-          {dailyTotals?.left_wins || 0} — {dailyTotals?.right_wins || 0}
-        </div>
       </div>
 
       {/* Current Set Score Display */}
       <div className="flex justify-between items-center mb-8 relative z-10">
         {/* Left Team */}
         <div className="flex flex-col items-center">
-          <div className={`text-sm ${theme.secondaryText} mb-2 tracking-wide`}>
-            LEFT
-          </div>
           <div
-            className={`text-6xl font-light text-blue-500 mb-4 transition-all duration-200 ${
+            className={`font-light text-blue-500 transition-all duration-200 ${
               leftFlash ? "scale-110 brightness-125" : ""
             }`}
-            style={{ fontFamily: "system-ui, -apple-system" }}
+            style={{
+              fontSize: "12rem",
+              lineHeight: "0.8",
+              fontFamily: "system-ui, -apple-system",
+            }}
           >
             {currentSets?.left_score || 0}
           </div>
@@ -264,40 +228,20 @@ function ScoreDisplay({
 
         {/* Right Team */}
         <div className="flex flex-col items-center">
-          <div className={`text-sm ${theme.secondaryText} mb-2 tracking-wide`}>
-            RIGHT
-          </div>
           <div
-            className={`text-6xl font-light text-red-500 mb-4 transition-all duration-200 ${
+            className={`font-light text-red-500 transition-all duration-200 ${
               rightFlash ? "scale-110 brightness-125" : ""
             }`}
-            style={{ fontFamily: "system-ui, -apple-system" }}
+            style={{
+              fontSize: "12rem",
+              lineHeight: "0.8",
+              fontFamily: "system-ui, -apple-system",
+            }}
           >
             {currentSets?.right_score || 0}
           </div>
         </div>
       </div>
-
-      {/* Daily Totals */}
-      {dailyTotals && (
-        <div className="text-center pt-4 border-t border-gray-300 dark:border-gray-600 relative z-10">
-          <p className={`text-xs ${theme.secondaryText} mb-2`}>DAILY TOTALS</p>
-          <div className="flex justify-center gap-8">
-            <div className="text-center">
-              <div className={`text-lg font-medium text-blue-500`}>
-                {dailyTotals.left_wins}
-              </div>
-              <div className={`text-xs ${theme.secondaryText}`}>LEFT WINS</div>
-            </div>
-            <div className="text-center">
-              <div className={`text-lg font-medium text-red-500`}>
-                {dailyTotals.right_wins}
-              </div>
-              <div className={`text-xs ${theme.secondaryText}`}>RIGHT WINS</div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
