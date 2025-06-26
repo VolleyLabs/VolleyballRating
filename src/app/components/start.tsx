@@ -214,7 +214,8 @@ function ScoreDisplay({
 
   return (
     <div
-      className={`${theme.cardBg} rounded-2xl p-8 mx-4 my-6 shadow-lg relative overflow-hidden`}
+      className={`w-full max-w-md mx-auto p-3 sm:p-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden flex-1`}
+      style={theme.cardBgStyle}
     >
       {/* Flash overlays for normal mode */}
       <div
@@ -236,66 +237,156 @@ function ScoreDisplay({
         }}
       />
 
-      {/* Header with global score */}
-      <div className="text-center mb-6 relative z-10">
-        <div className="flex justify-between items-center mb-2">
-          <div className="w-8"></div> {/* Spacer */}
-          {dailyTotals && (
-            <div
-              className={`${theme.text} font-medium tracking-wide px-4 py-1`}
-              style={{ fontSize: "4.8rem" }}
-            >
-              <span className="mr-4">{dailyTotals.left_wins}</span>
-              <span className="ml-4">{dailyTotals.right_wins}</span>
-            </div>
-          )}
-          <button
-            onClick={onToggleFullscreen}
-            className="text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-2 py-1 rounded transition-colors"
-            title="Fullscreen mode"
+      {/* Header with title and fullscreen button */}
+      <div className="flex justify-between items-center mb-6 relative z-10">
+        <div className="flex-1">
+          <h1
+            className={`text-2xl font-bold ${theme.text} mb-1`}
+            style={theme.textStyle}
           >
-            ⛶
-          </button>
+            🏐 Live Score
+          </h1>
+          <p
+            className={`text-sm ${theme.secondaryText}`}
+            style={theme.secondaryTextStyle}
+          >
+            Real-time volleyball tracking
+          </p>
         </div>
+        <button
+          onClick={onToggleFullscreen}
+          className="text-3xl bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-4 py-3 rounded transition-colors"
+          title="Fullscreen mode"
+        >
+          ⛶
+        </button>
       </div>
 
-      {/* Current Set Score Display */}
-      <div className="flex justify-between items-center mb-8 relative z-10">
-        {/* Left Team */}
-        <div className="flex flex-col items-center">
-          <div
-            className={`font-light text-blue-500 transition-all duration-300 ${
-              leftFlash ? "scale-120 brightness-150" : ""
-            }`}
-            style={{
-              fontSize: "12rem",
-              lineHeight: "0.8",
-              fontFamily: "system-ui, -apple-system",
-              textShadow: leftFlash
-                ? "0 0 40px rgba(59, 130, 246, 0.9)"
-                : "none",
-            }}
+      {/* Daily Totals Section */}
+      {dailyTotals && (
+        <div
+          className={`${theme.border} border rounded-lg p-4 mb-6 relative z-10`}
+          style={theme.borderStyle}
+        >
+          <h2
+            className={`text-lg font-semibold ${theme.text} mb-3 text-center`}
+            style={theme.textStyle}
           >
-            {currentSets?.left_score || 0}
+            📊 Daily Results
+          </h2>
+          <div className="flex justify-between items-center">
+            <div className="flex flex-col items-center">
+              <div className="text-blue-500 font-bold text-3xl mb-1">
+                {dailyTotals.left_wins}
+              </div>
+              <div
+                className={`text-sm ${theme.secondaryText} font-medium`}
+                style={theme.secondaryTextStyle}
+              >
+                LEFT WINS
+              </div>
+            </div>
+            <div
+              className={`text-2xl ${theme.text} font-light`}
+              style={theme.textStyle}
+            >
+              —
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="text-red-500 font-bold text-3xl mb-1">
+                {dailyTotals.right_wins}
+              </div>
+              <div
+                className={`text-sm ${theme.secondaryText} font-medium`}
+                style={theme.secondaryTextStyle}
+              >
+                RIGHT WINS
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Current Set Score Display - Expanded */}
+      <div className="relative z-10 flex-1 flex flex-col">
+        <h2
+          className={`text-xl font-semibold ${theme.text} mb-6 text-center`}
+          style={theme.textStyle}
+        >
+          🔥 Current Set
+        </h2>
+        <div className="flex justify-between items-center flex-1 mb-8">
+          {/* Left Team */}
+          <div className="flex flex-col items-center flex-1 justify-center">
+            <div
+              className={`text-sm ${theme.secondaryText} font-semibold mb-4 tracking-wide`}
+              style={theme.secondaryTextStyle}
+            >
+              LEFT
+            </div>
+            <div
+              className={`font-light text-blue-500 transition-all duration-300 ${
+                leftFlash ? "scale-110 brightness-150" : ""
+              }`}
+              style={{
+                fontSize: "8rem",
+                lineHeight: "0.8",
+                fontFamily: "system-ui, -apple-system",
+                textShadow: leftFlash
+                  ? "0 0 40px rgba(59, 130, 246, 0.9)"
+                  : "0 0 5px rgba(59, 130, 246, 0.3)",
+              }}
+            >
+              {currentSets?.left_score || 0}
+            </div>
+          </div>
+
+          {/* VS Separator */}
+          <div className="px-4">
+            <div
+              className={`text-xl ${theme.secondaryText} font-medium`}
+              style={theme.secondaryTextStyle}
+            >
+              VS
+            </div>
+          </div>
+
+          {/* Right Team */}
+          <div className="flex flex-col items-center flex-1 justify-center">
+            <div
+              className={`text-sm ${theme.secondaryText} font-semibold mb-4 tracking-wide`}
+              style={theme.secondaryTextStyle}
+            >
+              RIGHT
+            </div>
+            <div
+              className={`font-light text-red-500 transition-all duration-300 ${
+                rightFlash ? "scale-110 brightness-150" : ""
+              }`}
+              style={{
+                fontSize: "8rem",
+                lineHeight: "0.8",
+                fontFamily: "system-ui, -apple-system",
+                textShadow: rightFlash
+                  ? "0 0 40px rgba(239, 68, 68, 0.9)"
+                  : "0 0 5px rgba(239, 68, 68, 0.3)",
+              }}
+            >
+              {currentSets?.right_score || 0}
+            </div>
           </div>
         </div>
 
-        {/* Right Team */}
-        <div className="flex flex-col items-center">
-          <div
-            className={`font-light text-red-500 transition-all duration-300 ${
-              rightFlash ? "scale-120 brightness-150" : ""
-            }`}
-            style={{
-              fontSize: "12rem",
-              lineHeight: "0.8",
-              fontFamily: "system-ui, -apple-system",
-              textShadow: rightFlash
-                ? "0 0 40px rgba(239, 68, 68, 0.9)"
-                : "none",
-            }}
-          >
-            {currentSets?.right_score || 0}
+        {/* Status Indicator */}
+        <div className="flex items-center justify-center pt-6 border-t border-gray-200 dark:border-gray-700 mt-auto">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <span
+              className={`text-base ${theme.secondaryText} font-medium`}
+              style={theme.secondaryTextStyle}
+            >
+              Live tracking active
+            </span>
           </div>
         </div>
       </div>
