@@ -20,12 +20,12 @@ export type ScreenName =
 export default function Home() {
   const { theme } = useTelegram();
 
-  const [activeScreen, setActiveScreen] = useState<ScreenName>("leaderboard");
+  const [activeScreen, setActiveScreen] = useState<ScreenName>("start");
 
   const screens: Record<ScreenName, JSX.Element> = {
+    start: <Start />,
     leaderboard: <Leaderboard />,
     history: <History />,
-    start: <Start />,
     settings: <Settings />,
     locations: <GameLocations />,
     schedules: <GameSchedules />,
