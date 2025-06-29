@@ -1,0 +1,125 @@
+.scoreboard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #ffffff;
+  /*padding: 20px;*/
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  height: 100%;
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+ /* margin-bottom: 20px;*/
+  flex-grow: 2;
+}
+
+.score {
+  font-size: 16em;
+/*  margin: 5px 0;*/
+  transform: rotate(90deg);
+}
+
+.button {
+  padding: 5px 5px;
+  font-size: 1em;
+/*  margin: 5px;*/
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+.reset {
+  background-color: #dc3545;
+  transform: rotate(90deg);
+}
+
+.reset:hover {
+  background-color: #c82333;
+}
+
+.connect {
+  background-color: #28a745;
+}
+
+.connect:hover {
+  background-color: #218838;
+}
+
+.allScore {
+  flex-grow: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.whistle {
+  width: 100%;
+}
+
+.buttons {
+  width: 35px;
+  cursor: pointer;
+  height: 100%;
+  background-color: mediumseagreen;
+}
+ .round {
+   float: right;
+   margin-right: 1px;
+ }
+.whistleImg {
+  padding-left: 61px;
+}
+.net {
+  background: linear-gradient(black 25%, transparent 25%) 0 0, linear-gradient(black 25%, transparent 25%) 0 0, linear-gradient(90deg, black 25%, transparent 25%) 0 0, linear-gradient(90deg, black 25%, transparent 25%) 0 0;
+  background-size: 21px 21px;
+  background-color: #FFFFFF !important;
+  border: 1px solid #FFFFFF;
+  box-sizing: border-box;
+  height: 49px;
+}
+
+.judge {
+  width: 35px;
+  height: 40px;
+  background-color: black;
+  margin-top: 10px;
+}
+
+.judgeBottom {
+  width: 35px;
+  height: 40px;
+  background-color: black;
+  margin-top: 10px;
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 15px;
+}
+
+.setScore {
+  color: #800080 !important;
+
+}
+
+.rotated-combobox {
+  transform: rotate(90deg); /* Поворот на 90 градусов */
+  transform-origin: center; /* Точка вращения */
+  display: inline-block;
+  width: 150px; /* Ширина комбобокса */
+  height: 29px; /* Высота комбобокса */
+  margin-top: 100px;
+  margin-left: -57px;
+}
+
+/* Чтобы текст внутри комбобокса тоже выглядел корректно */
+.rotated-combobox option {
+  transform: rotate(-90deg); /* Вращаем текст обратно */
+}
