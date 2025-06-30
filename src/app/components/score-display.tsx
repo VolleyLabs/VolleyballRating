@@ -36,6 +36,7 @@ export default function ScoreDisplay({
   const [selectedVoice, setSelectedVoice] = useState<string>("default");
   const [volume, setVolume] = useState<number>(0.7); // 70% default volume
   const [showAudioModal, setShowAudioModal] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState<boolean>(true); // Audio enabled by default
 
   const currentSets = scoreData.sets;
   const dailyTotals = scoreData.totals;
@@ -55,34 +56,87 @@ export default function ScoreDisplay({
     return `${Math.min(maxWidthBasedSize, maxHeightBasedSize)}px`;
   };
 
-  // Initialize audio on first user interaction
+  // Initialize audio enabled preference from localStorage on mount
   useEffect(() => {
-    const initAudioOnInteraction = async () => {
-      const success = await initializeAudio();
-      setAudioReady(success);
-    };
+    if (typeof window === "undefined") return;
 
-    const handleUserInteraction = () => {
-      initAudioOnInteraction();
-      // Remove listeners after first interaction
-      document.removeEventListener("touchstart", handleUserInteraction);
-      document.removeEventListener("click", handleUserInteraction);
-      document.removeEventListener("keydown", handleUserInteraction);
-    };
-
-    // Add listeners for user interaction
-    document.addEventListener("touchstart", handleUserInteraction, {
-      passive: true,
-    });
-    document.addEventListener("click", handleUserInteraction);
-    document.addEventListener("keydown", handleUserInteraction);
-
-    return () => {
-      document.removeEventListener("touchstart", handleUserInteraction);
-      document.removeEventListener("click", handleUserInteraction);
-      document.removeEventListener("keydown", handleUserInteraction);
-    };
+    // Load audio enabled preference from localStorage (default: true)
+    const savedAudioEnabled = localStorage.getItem("volleyball-audio-enabled");
+    const isAudioEnabled =
+      savedAudioEnabled === null ? true : savedAudioEnabled === "true";
+    setAudioEnabled(isAudioEnabled);
   }, []);
+
+  // Initialize audio when enabled state changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // If audio is enabled, try to initialize it automatically
+    if (audioEnabled) {
+      const initAudioAutomatically = async () => {
+        try {
+          const success = await initializeAudio();
+          setAudioReady(success);
+          if (success) {
+            console.log("Audio initialized automatically");
+          } else {
+            console.log(
+              "Audio initialization failed - may need user interaction"
+            );
+          }
+        } catch (error) {
+          console.log("Audio auto-initialization failed:", error);
+          setAudioReady(false);
+        }
+      };
+
+      // Try to initialize audio automatically
+      initAudioAutomatically();
+
+      // Fallback: Add listeners for user interaction if auto-init fails
+      const initAudioOnInteraction = async () => {
+        if (audioEnabled && !audioReady) {
+          const success = await initializeAudio();
+          setAudioReady(success);
+          if (success) {
+            console.log("Audio initialized via user interaction");
+          }
+        }
+      };
+
+      const handleUserInteraction = () => {
+        initAudioOnInteraction();
+        // Remove listeners after first successful interaction
+        if (audioReady) {
+          document.removeEventListener("touchstart", handleUserInteraction);
+          document.removeEventListener("click", handleUserInteraction);
+          document.removeEventListener("keydown", handleUserInteraction);
+          document.removeEventListener("scroll", handleUserInteraction);
+        }
+      };
+
+      // Add listeners for user interaction as fallback
+      document.addEventListener("touchstart", handleUserInteraction, {
+        passive: true,
+      });
+      document.addEventListener("click", handleUserInteraction);
+      document.addEventListener("keydown", handleUserInteraction);
+      document.addEventListener("scroll", handleUserInteraction, {
+        passive: true,
+      });
+
+      return () => {
+        document.removeEventListener("touchstart", handleUserInteraction);
+        document.removeEventListener("click", handleUserInteraction);
+        document.removeEventListener("keydown", handleUserInteraction);
+        document.removeEventListener("scroll", handleUserInteraction);
+      };
+    } else {
+      // Audio is disabled by user preference
+      setAudioReady(false);
+      console.log("Audio disabled by user preference");
+    }
+  }, [audioEnabled]);
 
   // Update font size on mount and resize
   useEffect(() => {
@@ -119,14 +173,16 @@ export default function ScoreDisplay({
           setTimeout(() => setRightFlash(false), 5000);
         }
 
-        // Announce the current score (both scores)
-        announceScoreVolleyball(
-          currentSets.left_score,
-          currentSets.right_score,
-          leftChanged,
-          rightChanged,
-          audioPlaylist
-        );
+        // Announce the current score (both scores) if audio is enabled
+        if (audioEnabled && audioReady) {
+          announceScoreVolleyball(
+            currentSets.left_score,
+            currentSets.right_score,
+            leftChanged,
+            rightChanged,
+            audioPlaylist
+          );
+        }
 
         // Vibrate for any score change
         if ("vibrate" in navigator) {
@@ -135,7 +191,7 @@ export default function ScoreDisplay({
       }
     }
     setPreviousScoreData(scoreData);
-  }, [scoreData, previousScoreData, currentSets]);
+  }, [scoreData, previousScoreData, currentSets, audioEnabled, audioReady]);
 
   // Volume control handler with localStorage persistence
   const handleVolumeChange = (newVolume: number) => {
@@ -145,6 +201,28 @@ export default function ScoreDisplay({
     // Save to localStorage
     if (typeof window !== "undefined") {
       localStorage.setItem("volleyball-audio-volume", newVolume.toString());
+    }
+  };
+
+  // Audio enabled toggle handler with localStorage persistence
+  const handleAudioEnabledChange = (enabled: boolean) => {
+    setAudioEnabled(enabled);
+
+    // Save to localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("volleyball-audio-enabled", enabled.toString());
+    }
+
+    // If disabling audio, reset audio ready state
+    if (!enabled) {
+      setAudioReady(false);
+    } else {
+      // If enabling audio, try to initialize it
+      const initAudio = async () => {
+        const success = await initializeAudio();
+        setAudioReady(success);
+      };
+      initAudio();
     }
   };
 
@@ -298,9 +376,25 @@ export default function ScoreDisplay({
         <div className="flex space-x-2">
           {/* Audio Settings Button */}
           <button
-            onClick={() => setShowAudioModal(true)}
+            onClick={async () => {
+              // Try to initialize audio when user opens settings
+              if (audioEnabled && !audioReady) {
+                const success = await initializeAudio();
+                setAudioReady(success);
+                if (success) {
+                  console.log("Audio initialized via settings button");
+                }
+              }
+              setShowAudioModal(true);
+            }}
             className="text-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-2 rounded transition-colors flex items-center space-x-1 relative"
-            title={`Audio settings - ${audioReady ? "Ready" : "Tap to enable"}`}
+            title={`Audio settings - ${
+              !audioEnabled
+                ? "Disabled"
+                : audioReady
+                ? "Ready"
+                : "Tap to enable"
+            }`}
           >
             <span>🔊</span>
             <span className="text-sm hidden sm:inline">
@@ -309,7 +403,11 @@ export default function ScoreDisplay({
             {/* Audio status indicator */}
             <div
               className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
-                audioReady ? "bg-green-500" : "bg-yellow-500"
+                !audioEnabled
+                  ? "bg-red-500"
+                  : audioReady
+                  ? "bg-green-500"
+                  : "bg-yellow-500"
               }`}
             ></div>
           </button>
@@ -378,7 +476,20 @@ export default function ScoreDisplay({
         >
           🔥 Current Set
         </h2>
-        <div className="flex justify-between items-center flex-1 mb-8">
+        <div
+          className="flex justify-between items-center flex-1 mb-8 cursor-pointer"
+          onClick={async () => {
+            // Try to initialize audio when user taps the score area
+            if (audioEnabled && !audioReady) {
+              const success = await initializeAudio();
+              setAudioReady(success);
+              if (success) {
+                console.log("Audio initialized via score tap");
+              }
+            }
+          }}
+          title={!audioReady && audioEnabled ? "Tap to enable audio" : ""}
+        >
           {/* Left Team */}
           <div className="flex flex-col items-center flex-1 justify-center">
             <div
@@ -442,14 +553,27 @@ export default function ScoreDisplay({
 
         {/* Status Indicators */}
         <div className="flex items-center justify-center pt-6 border-t border-gray-200 dark:border-gray-700 mt-auto">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            <span
-              className={`text-sm ${theme.secondaryText} font-medium`}
-              style={theme.secondaryTextStyle}
-            >
-              Live tracking
-            </span>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span
+                className={`text-sm ${theme.secondaryText} font-medium`}
+                style={theme.secondaryTextStyle}
+              >
+                Live tracking
+              </span>
+            </div>
+            {audioEnabled && !audioReady && (
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
+                <span
+                  className={`text-xs ${theme.secondaryText} font-medium opacity-75`}
+                  style={theme.secondaryTextStyle}
+                >
+                  Tap anywhere to enable audio
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -464,6 +588,8 @@ export default function ScoreDisplay({
         onVolumeChange={handleVolumeChange}
         audioReady={audioReady}
         onAudioReadyChange={setAudioReady}
+        audioEnabled={audioEnabled}
+        onAudioEnabledChange={handleAudioEnabledChange}
         audioCache={audioCache}
         audioPlaylist={audioPlaylist}
       />

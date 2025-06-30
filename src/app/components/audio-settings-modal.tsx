@@ -19,6 +19,8 @@ interface AudioSettingsModalProps {
   onVolumeChange: (volume: number) => void;
   audioReady: boolean;
   onAudioReadyChange: (ready: boolean) => void;
+  audioEnabled: boolean;
+  onAudioEnabledChange: (enabled: boolean) => void;
   audioCache: AudioCache;
   audioPlaylist: AudioPlaylist;
 }
@@ -32,6 +34,8 @@ export default function AudioSettingsModal({
   onVolumeChange,
   audioReady,
   onAudioReadyChange,
+  audioEnabled,
+  onAudioEnabledChange,
   audioCache,
   audioPlaylist,
 }: AudioSettingsModalProps) {
@@ -64,8 +68,46 @@ export default function AudioSettingsModal({
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Voice Selection */}
+          {/* Audio Enable/Disable Toggle */}
           <div>
+            <label
+              className={`block text-sm font-medium ${theme.text} mb-3`}
+              style={theme.textStyle}
+            >
+              Audio Announcements
+            </label>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => onAudioEnabledChange(!audioEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  audioEnabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    audioEnabled ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+              <span
+                className={`text-sm ${theme.text} font-medium`}
+                style={theme.textStyle}
+              >
+                {audioEnabled ? "Enabled" : "Disabled"}
+              </span>
+            </div>
+            {!audioEnabled && (
+              <p
+                className={`text-xs ${theme.secondaryText} mt-2`}
+                style={theme.secondaryTextStyle}
+              >
+                Turn on to hear score announcements during games
+              </p>
+            )}
+          </div>
+
+          {/* Voice Selection */}
+          <div className={audioEnabled ? "" : "opacity-50"}>
             <label
               className={`block text-sm font-medium ${theme.text} mb-2`}
               style={theme.textStyle}
@@ -78,7 +120,8 @@ export default function AudioSettingsModal({
                 onVoiceChange(e.target.value);
                 audioCache.changeVoice(e.target.value);
               }}
-              className={`w-full p-3 text-base bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg ${theme.text}`}
+              disabled={!audioEnabled}
+              className={`w-full p-3 text-base bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg ${theme.text} disabled:cursor-not-allowed`}
             >
               {VOICE_OPTIONS.map((option: { value: string; name: string }) => (
                 <option key={option.value} value={option.value}>
@@ -89,7 +132,7 @@ export default function AudioSettingsModal({
           </div>
 
           {/* Volume Control */}
-          <div>
+          <div className={audioEnabled ? "" : "opacity-50"}>
             <label
               className={`block text-sm font-medium ${theme.text} mb-2`}
               style={theme.textStyle}
@@ -105,7 +148,8 @@ export default function AudioSettingsModal({
                 step="0.1"
                 value={volume}
                 onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-                className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                disabled={!audioEnabled}
+                className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 disabled:cursor-not-allowed"
                 style={{
                   background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
                     volume * 100
@@ -117,14 +161,14 @@ export default function AudioSettingsModal({
                 <button
                   onClick={() => onVolumeChange(Math.max(0, volume - 0.1))}
                   className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
-                  disabled={volume <= 0}
+                  disabled={!audioEnabled || volume <= 0}
                 >
                   🔉 Decrease
                 </button>
                 <button
                   onClick={() => onVolumeChange(Math.min(1, volume + 0.1))}
                   className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
-                  disabled={volume >= 1}
+                  disabled={!audioEnabled || volume >= 1}
                 >
                   🔊 Increase
                 </button>
@@ -133,7 +177,7 @@ export default function AudioSettingsModal({
           </div>
 
           {/* Audio Status */}
-          <div>
+          <div className={audioEnabled ? "" : "opacity-50"}>
             <label
               className={`block text-sm font-medium ${theme.text} mb-2`}
               style={theme.textStyle}
@@ -143,20 +187,28 @@ export default function AudioSettingsModal({
             <div className="flex items-center space-x-2 mb-3">
               <div
                 className={`w-3 h-3 rounded-full ${
-                  audioReady ? "bg-green-500" : "bg-yellow-500"
+                  !audioEnabled
+                    ? "bg-red-500"
+                    : audioReady
+                    ? "bg-green-500"
+                    : "bg-yellow-500"
                 }`}
               ></div>
               <span
                 className={`text-sm ${theme.secondaryText}`}
                 style={theme.secondaryTextStyle}
               >
-                {audioReady ? "Audio ready" : "Tap to enable audio"}
+                {!audioEnabled
+                  ? "Audio disabled"
+                  : audioReady
+                  ? "Audio ready"
+                  : "Tap to enable audio"}
               </span>
             </div>
           </div>
 
           {/* Test Buttons */}
-          <div>
+          <div className={audioEnabled ? "" : "opacity-50"}>
             <label
               className={`block text-sm font-medium ${theme.text} mb-3`}
               style={theme.textStyle}
@@ -175,7 +227,8 @@ export default function AudioSettingsModal({
                   );
                   announceScoreVolleyball(15, 12, true, false, audioPlaylist);
                 }}
-                className="w-full py-3 px-4 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                disabled={!audioEnabled}
+                className="w-full py-3 px-4 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span>🔊</span>
                 <span>Test Volleyball Score (15-12)</span>
@@ -192,7 +245,8 @@ export default function AudioSettingsModal({
                   );
                   announceCurrentScore(24, 23, audioPlaylist);
                 }}
-                className="w-full py-3 px-4 bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                disabled={!audioEnabled}
+                className="w-full py-3 px-4 bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span>🎯</span>
                 <span>Test Current Score (24-23)</span>
