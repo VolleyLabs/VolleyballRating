@@ -9,6 +9,7 @@ import {
   getGameLocations,
   updateGameLocation,
 } from "../lib/supabase-queries";
+import LocationsSkeleton from "./locations-skeleton";
 
 export default function GameLocations() {
   const { theme, isAdmin } = useTelegram();
@@ -150,9 +151,7 @@ export default function GameLocations() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-300"></div>
-          </div>
+          <LocationsSkeleton />
         ) : locations.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-gray-500 dark:text-gray-400">

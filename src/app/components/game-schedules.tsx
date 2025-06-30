@@ -13,6 +13,7 @@ import {
   updateGameSchedule,
   deleteGameSchedule,
 } from "@/app/lib/supabase-queries";
+import SchedulesSkeleton from "./schedules-skeleton";
 
 export default function GameSchedules() {
   const { theme, isAdmin } = useTelegram();
@@ -150,11 +151,7 @@ export default function GameSchedules() {
 
   // Render loading state
   if (isLoading) {
-    return (
-      <div className="p-4 flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <SchedulesSkeleton />;
   }
 
   // Render edit form

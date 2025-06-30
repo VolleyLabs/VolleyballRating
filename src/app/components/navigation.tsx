@@ -35,12 +35,12 @@ export default function Navigation({
   }, [webApp]);
 
   const iconMap: Record<ScreenName, string> = {
-    leaderboard: "/leaderboard.svg",
-    history: "/history.svg",
-    start: "/volleyball.svg",
     settings: "/settings.svg",
-    locations: "/location.svg",
-    schedules: "/calendar.svg",
+    score: "/volleyball.svg",
+    leaderboard: "/leaderboard.svg",
+    // history: "/history.svg",
+    // locations: "/location.svg",
+    // schedules: "/calendar.svg",
   };
 
   const handleAvatarClick = () => {

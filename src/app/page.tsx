@@ -1,34 +1,35 @@
 "use client";
 
-import History from "@components/history";
 import Leaderboard from "@components/leaderboard";
 import { JSX, useState } from "react";
 import { useTelegram } from "@context/telegram-context";
-import Start from "@components/start";
+import Score from "@components/score";
 import Settings from "@components/settings";
-import Navigation from "./components/navigation";
-import GameSchedules from "./components/game-schedules";
-import GameLocations from "./components/game-locations";
+import Navigation from "@components/navigation";
+// import GameSchedules from "@components/game-schedules";
+// import GameLocations from "@components/game-locations";
+// import History from "@components/history";
+
 export type ScreenName =
+  | "score"
   | "leaderboard"
-  | "history"
-  | "start"
-  | "settings"
-  | "locations"
-  | "schedules";
+  // | "history"
+  | "settings";
+// | "locations"
+// | "schedules"
 
 export default function Home() {
   const { theme } = useTelegram();
 
-  const [activeScreen, setActiveScreen] = useState<ScreenName>("start");
+  const [activeScreen, setActiveScreen] = useState<ScreenName>("score");
 
   const screens: Record<ScreenName, JSX.Element> = {
-    start: <Start />,
-    leaderboard: <Leaderboard />,
-    history: <History />,
     settings: <Settings />,
-    locations: <GameLocations />,
-    schedules: <GameSchedules />,
+    score: <Score />,
+    leaderboard: <Leaderboard />,
+    // history: <History />,
+    // locations: <GameLocations />,
+    // schedules: <GameSchedules />,
   };
 
   // Get visible navigation items (settings is accessed via avatar)

@@ -9,9 +9,9 @@ import {
 } from "@lib/supabase-queries";
 import ScoreDisplay from "./score-display";
 import NoDataDisplay from "./no-data-display";
-import LoadingDisplay from "./loading-display";
+import ScoreSkeleton from "./score-skeleton";
 
-export default function Start() {
+export default function Score() {
   const { theme, isAnonymous } = useTelegram();
   const [scoreData, setScoreData] = useState<DailyScoreData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +74,7 @@ export default function Start() {
       className={`flex flex-auto flex-col ${theme.bg} items-center min-h-screen`}
     >
       {isLoading ? (
-        <LoadingDisplay />
+        <ScoreSkeleton />
       ) : hasData ? (
         <ScoreDisplay
           scoreData={scoreData}
