@@ -8,9 +8,8 @@ import {
   AudioPlaylist,
   initializeAudio,
   announceScoreVolleyball,
-  announceCurrentScore,
-  VOICE_OPTIONS,
 } from "../services/audio";
+import AudioSettingsModal from "./audio-settings-modal";
 
 // Global audio instances
 const audioCache = new AudioCache();
@@ -36,6 +35,7 @@ export default function ScoreDisplay({
   const [audioReady, setAudioReady] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState<string>("default");
   const [volume, setVolume] = useState<number>(0.7); // 70% default volume
+  const [showAudioModal, setShowAudioModal] = useState(false);
 
   const currentSets = scoreData.sets;
   const dailyTotals = scoreData.totals;
@@ -296,107 +296,28 @@ export default function ScoreDisplay({
           </p>
         </div>
         <div className="flex space-x-2">
-          {/* Voice Selection Dropdown */}
-          <select
-            value={selectedVoice}
-            onChange={(e) => {
-              setSelectedVoice(e.target.value);
-              audioCache.changeVoice(e.target.value);
-            }}
-            className="text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1"
-            title="Select voice"
+          {/* Audio Settings Button */}
+          <button
+            onClick={() => setShowAudioModal(true)}
+            className="text-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-2 rounded transition-colors flex items-center space-x-1 relative"
+            title={`Audio settings - ${audioReady ? "Ready" : "Tap to enable"}`}
           >
-            {VOICE_OPTIONS.map((option: { value: string; name: string }) => (
-              <option key={option.value} value={option.value}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Volume Control */}
-          <div
-            className="flex items-center space-x-1"
-            title={`Volume: ${Math.round(volume * 100)}%`}
-          >
-            <button
-              onClick={() => handleVolumeChange(Math.max(0, volume - 0.2))}
-              className="text-xs px-1 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-              title="Decrease volume"
-              disabled={volume <= 0}
-            >
-              🔉
-            </button>
-            <span className="text-sm">🔈</span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={volume}
-              onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-              className="w-16 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-              style={{
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                  volume * 100
-                }%, #d1d5db ${volume * 100}%, #d1d5db 100%)`,
-              }}
-            />
-            <button
-              onClick={() => handleVolumeChange(Math.min(1, volume + 0.2))}
-              className="text-xs px-1 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-              title="Increase volume"
-              disabled={volume >= 1}
-            >
-              🔊
-            </button>
-            <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[2rem]">
+            <span>🔊</span>
+            <span className="text-sm hidden sm:inline">
               {Math.round(volume * 100)}%
             </span>
-          </div>
-
-          <button
-            onClick={async () => {
-              const success = await initializeAudio();
-              setAudioReady(success);
-              // Test volleyball score announcement (left team scored: 15-12) - stops previous audio
-              console.log(
-                `Testing volleyball audio at ${Math.round(
-                  volume * 100
-                )}% volume`
-              );
-              announceScoreVolleyball(15, 12, true, false, audioPlaylist);
-            }}
-            className="text-lg bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 px-3 py-2 rounded transition-colors"
-            title={`Test volleyball score audio - left team scored (15-12) - Volume: ${Math.round(
-              volume * 100
-            )}%`}
-          >
-            🔊
+            {/* Audio status indicator */}
+            <div
+              className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
+                audioReady ? "bg-green-500" : "bg-yellow-500"
+              }`}
+            ></div>
           </button>
 
-          <button
-            onClick={async () => {
-              const success = await initializeAudio();
-              setAudioReady(success);
-              // Test current score announcement (24-23) - stops previous audio
-              console.log(
-                `Testing current score audio at ${Math.round(
-                  volume * 100
-                )}% volume`
-              );
-              announceCurrentScore(24, 23, audioPlaylist);
-            }}
-            className="text-lg bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 px-3 py-2 rounded transition-colors"
-            title={`Test current score audio (24-23) - Volume: ${Math.round(
-              volume * 100
-            )}%`}
-          >
-            🎯
-          </button>
-
+          {/* Fullscreen Button */}
           <button
             onClick={onToggleFullscreen}
-            className="text-3xl bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-4 py-3 rounded transition-colors"
+            className="text-2xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-2 rounded transition-colors"
             title="Fullscreen mode"
           >
             ⛶
@@ -520,7 +441,7 @@ export default function ScoreDisplay({
         </div>
 
         {/* Status Indicators */}
-        <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700 mt-auto">
+        <div className="flex items-center justify-center pt-6 border-t border-gray-200 dark:border-gray-700 mt-auto">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             <span
@@ -530,21 +451,22 @@ export default function ScoreDisplay({
               Live tracking
             </span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div
-              className={`w-3 h-3 rounded-full ${
-                audioReady ? "bg-green-500" : "bg-yellow-500"
-              }`}
-            ></div>
-            <span
-              className={`text-sm ${theme.secondaryText} font-medium`}
-              style={theme.secondaryTextStyle}
-            >
-              {audioReady ? "Audio ready" : "Tap to enable audio"}
-            </span>
-          </div>
         </div>
       </div>
+
+      {/* Audio Settings Modal */}
+      <AudioSettingsModal
+        isOpen={showAudioModal}
+        onClose={() => setShowAudioModal(false)}
+        selectedVoice={selectedVoice}
+        onVoiceChange={setSelectedVoice}
+        volume={volume}
+        onVolumeChange={handleVolumeChange}
+        audioReady={audioReady}
+        onAudioReadyChange={setAudioReady}
+        audioCache={audioCache}
+        audioPlaylist={audioPlaylist}
+      />
     </div>
   );
 }
