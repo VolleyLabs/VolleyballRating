@@ -143,18 +143,26 @@ export async function getRandomVotePair(voterId: number): Promise<VotePair[]> {
     data?.map((pair: DB_RandomVotePair) => ({
       playerA: {
         id: pair.player_a_id,
-        firstName: pair.player_a_first_name,
-        lastName: pair.player_a_last_name,
-        photoUrl: pair.player_a_photo_url,
+        first_name: pair.player_a_first_name,
+        last_name: pair.player_a_last_name,
+        photo_url: pair.player_a_photo_url,
         username: pair.player_a_username,
-      },
+        admin: null,
+        chat_id: null,
+        created_at: null,
+        pickup_height: null,
+      } as User,
       playerB: {
         id: pair.player_b_id,
-        firstName: pair.player_b_first_name,
-        lastName: pair.player_b_last_name,
-        photoUrl: pair.player_b_photo_url,
+        first_name: pair.player_b_first_name,
+        last_name: pair.player_b_last_name,
+        photo_url: pair.player_b_photo_url,
         username: pair.player_b_username,
-      },
+        admin: null,
+        chat_id: null,
+        created_at: null,
+        pickup_height: null,
+      } as User,
     })) ?? []
   );
 }
