@@ -91,7 +91,7 @@ export default function Score() {
       </div>
 
       {/* Footer with Live tracking status */}
-      {!isLoading && hasData && (
+      {!isLoading && hasData && !isFullscreen && (
         <div
           className={`fixed bottom-0 left-0 right-0 ${theme.bg} border-t border-gray-200 dark:border-gray-700 py-2 px-4 z-50`}
           style={theme.bgStyle}

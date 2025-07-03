@@ -243,7 +243,20 @@ export default function ScoreDisplay({
 
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 bg-black z-50 flex flex-col">
+      <div
+        className="fixed inset-0 bg-black z-50 flex flex-col"
+        onClick={async () => {
+          // Try to initialize audio when user taps the fullscreen area
+          if (audioEnabled && !audioReady) {
+            const success = await initializeAudio();
+            setAudioReady(success);
+            if (success) {
+              console.log("Audio initialized via fullscreen tap");
+            }
+          }
+        }}
+        title={!audioReady && audioEnabled ? "Tap to enable audio" : ""}
+      >
         {/* Flash overlays */}
         <div
           className={`absolute inset-0 pointer-events-none ${
