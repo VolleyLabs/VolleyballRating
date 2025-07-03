@@ -169,6 +169,38 @@ export type Database = {
         }
         Relationships: []
       }
+      points: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: number | null
+          type: Database["public"]["Enums"]["point_type"]
+          winner: Database["public"]["Enums"]["point_winner"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id?: number | null
+          type?: Database["public"]["Enums"]["point_type"]
+          winner: Database["public"]["Enums"]["point_winner"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: number | null
+          type?: Database["public"]["Enums"]["point_type"]
+          winner?: Database["public"]["Enums"]["point_winner"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           admin: boolean | null
@@ -314,7 +346,61 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      daily_point_summaries: {
+        Row: {
+          ace_points: number | null
+          attack_points: number | null
+          block_points: number | null
+          day: string | null
+          error_points: number | null
+          first_rally_at: string | null
+          last_rally_at: string | null
+          left_points: number | null
+          right_points: number | null
+          total_points: number | null
+        }
+        Relationships: []
+      }
+      match_summaries: {
+        Row: {
+          day: string | null
+          left_sets: number | null
+          match_end: string | null
+          match_idx: number | null
+          match_start: string | null
+          match_winner: string | null
+          right_sets: number | null
+        }
+        Relationships: []
+      }
+      point_history: {
+        Row: {
+          created_at: string | null
+          day: string | null
+          id: string | null
+          left_score: number | null
+          player_id: number | null
+          right_score: number | null
+          score_string: string | null
+          set_idx: number | null
+          type: Database["public"]["Enums"]["point_type"] | null
+          winner: Database["public"]["Enums"]["point_winner"] | null
+        }
+        Relationships: []
+      }
+      set_summaries: {
+        Row: {
+          day: string | null
+          is_finished: boolean | null
+          left_score: number | null
+          right_score: number | null
+          set_end: string | null
+          set_idx: number | null
+          set_start: string | null
+          set_winner: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_player_ratings: {
@@ -351,7 +437,8 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      point_type: "ace" | "attack" | "block" | "error" | "unspecified"
+      point_winner: "left" | "right"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -469,7 +556,10 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      point_type: ["ace", "attack", "block", "error", "unspecified"],
+      point_winner: ["left", "right"],
+    },
   },
 } as const
 

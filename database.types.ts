@@ -22,6 +22,18 @@ export type { Json } from "./database.types.gen";
 
 export type Database = DatabaseGenerated;
 
+// Enums
+export type PointType = Database["public"]["Enums"]["point_type"];
+export type PointWinner = Database["public"]["Enums"]["point_winner"];
+
+// Views
+export type PointHistory = Database["public"]["Views"]["point_history"]["Row"];
+export type DailyPointSummary =
+  Database["public"]["Views"]["daily_point_summaries"]["Row"];
+export type MatchSummary =
+  Database["public"]["Views"]["match_summaries"]["Row"];
+export type SetSummary = Database["public"]["Views"]["set_summaries"]["Row"];
+
 // User
 export type User = Database["public"]["Tables"]["users"]["Row"];
 export type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
@@ -65,3 +77,8 @@ export type VotingPlayerUpdate =
 export type Game = Database["public"]["Tables"]["games"]["Row"];
 export type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
 export type GameUpdate = Database["public"]["Tables"]["games"]["Update"];
+
+// Points
+export type Point = Database["public"]["Tables"]["points"]["Row"];
+export type PointInsert = Database["public"]["Tables"]["points"]["Insert"];
+export type PointUpdate = Database["public"]["Tables"]["points"]["Update"];

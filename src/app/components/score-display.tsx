@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTelegram } from "@context/telegram-context";
-import { DailyScoreData } from "@lib/supabase-queries";
+import { DailyScoreData, addPoint } from "@lib/supabase-queries";
 import {
   AudioCache,
   AudioPlaylist,
@@ -10,6 +10,7 @@ import {
   announceScoreVolleyball,
 } from "../services/audio";
 import AudioSettingsModal from "./audio-settings-modal";
+import PointsHistory from "./points-history";
 
 // Global audio instances
 const audioCache = new AudioCache();
@@ -26,7 +27,7 @@ export default function ScoreDisplay({
   isFullscreen,
   onToggleFullscreen,
 }: ScoreDisplayProps) {
-  const { theme } = useTelegram();
+  const { theme, isAdmin } = useTelegram();
   const [leftFlash, setLeftFlash] = useState(false);
   const [rightFlash, setRightFlash] = useState(false);
   const [previousScoreData, setPreviousScoreData] =
@@ -176,8 +177,8 @@ export default function ScoreDisplay({
         // Announce the current score (both scores) if audio is enabled
         if (audioEnabled && audioReady) {
           announceScoreVolleyball(
-            currentSets.left_score,
-            currentSets.right_score,
+            currentSets.left_score || 0,
+            currentSets.right_score || 0,
             leftChanged,
             rightChanged,
             audioPlaylist
@@ -271,8 +272,8 @@ export default function ScoreDisplay({
             className="absolute top-1 left-1/2 transform -translate-x-1/2 text-white font-medium z-10 px-4 py-1"
             style={{ fontSize: "6.4rem" }}
           >
-            <span className="mr-6">{dailyTotals.left_wins}</span>
-            <span className="ml-6">{dailyTotals.right_wins}</span>
+            <span className="mr-6">{dailyTotals.left_sets}</span>
+            <span className="ml-6">{dailyTotals.right_sets}</span>
           </div>
         )}
 
@@ -334,7 +335,7 @@ export default function ScoreDisplay({
 
   return (
     <div
-      className={`w-full max-w-md mx-auto p-3 sm:p-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden flex-1`}
+      className={`w-full max-w-md mx-auto p-3 sm:p-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col`}
       style={theme.cardBgStyle}
     >
       {/* Flash overlays for normal mode */}
@@ -433,18 +434,18 @@ export default function ScoreDisplay({
             className={`text-lg font-semibold ${theme.text} mb-3 text-center`}
             style={theme.textStyle}
           >
-            📊 Daily Results
+            📊 Match Results
           </h2>
           <div className="flex justify-between items-center">
             <div className="flex flex-col items-center">
               <div className="text-blue-500 font-bold text-3xl mb-1">
-                {dailyTotals.left_wins}
+                {dailyTotals.left_sets}
               </div>
               <div
                 className={`text-sm ${theme.secondaryText} font-medium`}
                 style={theme.secondaryTextStyle}
               >
-                LEFT WINS
+                LEFT SETS
               </div>
             </div>
             <div
@@ -455,13 +456,13 @@ export default function ScoreDisplay({
             </div>
             <div className="flex flex-col items-center">
               <div className="text-red-500 font-bold text-3xl mb-1">
-                {dailyTotals.right_wins}
+                {dailyTotals.right_sets}
               </div>
               <div
                 className={`text-sm ${theme.secondaryText} font-medium`}
                 style={theme.secondaryTextStyle}
               >
-                RIGHT WINS
+                RIGHT SETS
               </div>
             </div>
           </div>
@@ -469,7 +470,7 @@ export default function ScoreDisplay({
       )}
 
       {/* Current Set Score Display - Expanded */}
-      <div className="relative z-10 flex-1 flex flex-col">
+      <div className="relative z-10 flex-shrink-0">
         <h2
           className={`text-xl font-semibold ${theme.text} mb-6 text-center`}
           style={theme.textStyle}
@@ -477,7 +478,7 @@ export default function ScoreDisplay({
           🔥 Current Set
         </h2>
         <div
-          className="flex justify-between items-center flex-1 mb-8 cursor-pointer"
+          className="flex justify-between items-center mb-4 cursor-pointer"
           onClick={async () => {
             // Try to initialize audio when user taps the score area
             if (audioEnabled && !audioReady) {
@@ -550,33 +551,33 @@ export default function ScoreDisplay({
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Status Indicators */}
-        <div className="flex items-center justify-center pt-6 border-t border-gray-200 dark:border-gray-700 mt-auto">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span
-                className={`text-sm ${theme.secondaryText} font-medium`}
-                style={theme.secondaryTextStyle}
-              >
-                Live tracking
-              </span>
-            </div>
-            {audioEnabled && !audioReady && (
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
-                <span
-                  className={`text-xs ${theme.secondaryText} font-medium opacity-75`}
-                  style={theme.secondaryTextStyle}
-                >
-                  Tap anywhere to enable audio
-                </span>
-              </div>
-            )}
+      {/* Points History Section */}
+      <PointsHistory />
+
+      {/* Admin Test Controls */}
+      {isAdmin && (
+        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+          <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+            🔧 Admin Test Controls
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => addPoint({ winner: "left" })}
+              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded"
+            >
+              +1 Left
+            </button>
+            <button
+              onClick={() => addPoint({ winner: "right" })}
+              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded"
+            >
+              +1 Right
+            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Audio Settings Modal */}
       <AudioSettingsModal

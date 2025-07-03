@@ -31,17 +31,17 @@ export default function ScoreSkeleton() {
         className={`${theme.border} border rounded-lg p-4 mb-6`}
         style={theme.borderStyle}
       >
-        {/* Daily Results title */}
+        {/* Match Results title */}
         <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-32 mx-auto mb-3"></div>
         <div className="flex justify-between items-center">
-          {/* Left wins */}
+          {/* Left sets */}
           <div className="flex flex-col items-center">
             <div className="h-12 w-8 bg-gray-300 dark:bg-gray-700 rounded mb-1"></div>
             <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-16"></div>
           </div>
           {/* Separator */}
           <div className="h-6 w-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
-          {/* Right wins */}
+          {/* Right sets */}
           <div className="flex flex-col items-center">
             <div className="h-12 w-8 bg-gray-300 dark:bg-gray-700 rounded mb-1"></div>
             <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-16"></div>

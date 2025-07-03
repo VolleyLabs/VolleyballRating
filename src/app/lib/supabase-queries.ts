@@ -1,5 +1,10 @@
 import { createClient } from "@/app/utils/supabase/client";
-import { User } from "../../../database.types";
+import {
+  MatchSummary,
+  PointInsert,
+  SetSummary,
+  User,
+} from "../../../database.types";
 import { lazyAsyncSupplier } from "../utils/suppliers";
 
 export const supabase = createClient();
@@ -541,24 +546,9 @@ export const deleteGameSchedule = async (id: string) => {
   return true;
 };
 
-// Daily scores tracking
-export type DailySet = {
-  day: string;
-  left_score: number;
-  right_score: number;
-  updated_at: string;
-};
-
-export type DailyTotal = {
-  day: string;
-  left_wins: number;
-  right_wins: number;
-  updated_at: string;
-};
-
 export type DailyScoreData = {
-  sets: DailySet | null;
-  totals: DailyTotal | null;
+  sets: SetSummary | null;
+  totals: MatchSummary | null;
 };
 
 export type DailyScoreSubscriptionCallback = (
@@ -568,13 +558,41 @@ export type DailyScoreSubscriptionCallback = (
 export const getTodaysScores = async (): Promise<DailyScoreData> => {
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
 
-  const [setsResult, totalsResult] = await Promise.all([
-    supabase.from("daily_sets").select("*").eq("day", today).single(),
-    supabase.from("daily_totals").select("*").eq("day", today).single(),
-  ]);
+  // Get current set - prioritize unfinished sets, then fall back to latest finished set
+  const unfinishedSetResult = await supabase
+    .from("set_summaries")
+    .select("*")
+    .eq("day", today)
+    .eq("is_finished", false)
+    .order("set_idx", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let currentSetResult;
+  if (unfinishedSetResult.data) {
+    currentSetResult = unfinishedSetResult;
+  } else {
+    // If no unfinished sets, get the latest finished set
+    currentSetResult = await supabase
+      .from("set_summaries")
+      .select("*")
+      .eq("day", today)
+      .order("set_idx", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  }
+
+  // Get daily match totals (aggregate of all finished sets)
+  const totalsResult = await supabase
+    .from("match_summaries")
+    .select("*")
+    .eq("day", today)
+    .order("match_idx", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   return {
-    sets: setsResult.data || null,
+    sets: currentSetResult.data || null,
     totals: totalsResult.data || null,
   };
 };
@@ -584,39 +602,97 @@ export const subscribeToDailyScores = (
 ) => {
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
 
+  console.log("Creating real-time subscription for points table...");
+
+  // Check if we have authentication
+  const session = supabase.auth.getSession();
+  console.log("Current auth session:", session);
+
   const channel = supabase
-    .channel("daily-scores")
+    .channel(`daily-scores-${Math.random()}`) // Use unique channel name to avoid conflicts
     .on(
       "postgres_changes",
       {
         event: "*",
         schema: "public",
-        table: "daily_sets",
-        filter: `day=eq.${today}`,
+        table: "points",
       },
       async (payload) => {
-        console.log("sets change", payload.new);
-        // Fetch both sets and totals when sets change
-        const scoreData = await getTodaysScores();
-        callback(scoreData);
+        console.log("Real-time points change received:", payload);
+        // Check if the change is for today's points
+        const pointData = payload.new as { created_at?: string };
+        const changeDate = pointData?.created_at
+          ? new Date(pointData.created_at).toISOString().split("T")[0]
+          : null;
+
+        console.log(`Point change date: ${changeDate}, today: ${today}`);
+
+        if (changeDate === today) {
+          console.log("Fetching updated scores for today...");
+          try {
+            const scoreData = await getTodaysScores();
+            console.log("Updated score data:", scoreData);
+            callback(scoreData);
+          } catch (error) {
+            console.error("Error fetching updated scores:", error);
+          }
+        } else {
+          console.log("Point change is not for today, ignoring");
+        }
       }
     )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "daily_totals",
-        filter: `day=eq.${today}`,
-      },
-      async (payload) => {
-        console.log("totals change", payload.new);
-        // Fetch both sets and totals when totals change
-        const scoreData = await getTodaysScores();
-        callback(scoreData);
+    .subscribe((status) => {
+      console.log("Real-time subscription status:", status);
+      if (status === "SUBSCRIBED") {
+        console.log(
+          "✅ Successfully subscribed to daily scores real-time updates"
+        );
+      } else if (status === "CHANNEL_ERROR") {
+        console.error("❌ Error subscribing to daily scores");
+      } else if (status === "CLOSED") {
+        console.log("🔒 Real-time subscription closed");
+      } else if (status === "TIMED_OUT") {
+        console.warn("⏰ Real-time subscription timed out");
       }
-    )
-    .subscribe();
+    });
 
   return channel;
+};
+
+export const addPoint = async (point: PointInsert) => {
+  const { data, error } = await supabase
+    .from("points")
+    .insert([
+      {
+        winner: point.winner,
+        type: point.type || "unspecified",
+        player_id: point.player_id || null,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error adding point:", error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const getTodaysPoints = async () => {
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data, error } = await supabase
+    .from("point_history")
+    .select("*")
+    .eq("day", today)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching today's points:", error);
+    throw error;
+  }
+
+  return data || [];
 };

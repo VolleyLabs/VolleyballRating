@@ -51,6 +51,7 @@ max_client_conn = 100
 schema_paths = [
   "./schemas/users.sql",
   "./schemas/jwt_claim_admin.sql",
+  "./schemas/points.sql",
   "./schemas/*.sql",
 ]
 
