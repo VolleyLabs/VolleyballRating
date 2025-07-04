@@ -19,7 +19,8 @@
   }
 }
 
-html, body {
+html,
+body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
@@ -39,9 +40,20 @@ html, body {
   table {
     font-size: 0.875rem;
   }
-  
-  th, td {
+
+  th,
+  td {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
   }
+}
+
+/* Hide scrollbar for horizontal scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }

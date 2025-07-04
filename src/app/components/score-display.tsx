@@ -11,6 +11,14 @@ import {
 } from "../services/audio";
 import AudioSettingsModal from "./audio-settings-modal";
 import PointsHistory from "./points-history";
+import {
+  Plus,
+  Settings,
+  Crosshair,
+  Swords,
+  Shield,
+  AlertTriangle,
+} from "lucide-react";
 
 // Global audio instances
 const audioCache = new AudioCache();
@@ -20,12 +28,20 @@ interface ScoreDisplayProps {
   scoreData: DailyScoreData;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  selectedDate: string;
+  isHistoricalView: boolean;
+  daySelector?: React.ReactNode;
+  onRefreshScores?: () => void;
 }
 
 export default function ScoreDisplay({
   scoreData,
   isFullscreen,
   onToggleFullscreen,
+  selectedDate,
+  isHistoricalView,
+  daySelector,
+  onRefreshScores,
 }: ScoreDisplayProps) {
   const { theme, isAdmin } = useTelegram();
   const [leftFlash, setLeftFlash] = useState(false);
@@ -41,6 +57,47 @@ export default function ScoreDisplay({
 
   const currentSets = scoreData.sets;
   const dailyTotals = scoreData.totals;
+
+  // Calculate day statistics from points
+  const calculateDayStatistics = () => {
+    if (!scoreData.points || scoreData.points.length === 0) {
+      return {
+        totalPoints: 0,
+        aces: 0,
+        attacks: 0,
+        blocks: 0,
+        errors: 0,
+        unspecified: 0,
+        acePercentage: 0,
+        attackPercentage: 0,
+        blockPercentage: 0,
+        errorPercentage: 0,
+      };
+    }
+
+    const points = scoreData.points;
+    const totalPoints = points.length;
+    const aces = points.filter((p) => p.type === "ace").length;
+    const attacks = points.filter((p) => p.type === "attack").length;
+    const blocks = points.filter((p) => p.type === "block").length;
+    const errors = points.filter((p) => p.type === "error").length;
+    const unspecified = points.filter((p) => p.type === "unspecified").length;
+
+    return {
+      totalPoints,
+      aces,
+      attacks,
+      blocks,
+      errors,
+      unspecified,
+      acePercentage: totalPoints > 0 ? (aces / totalPoints) * 100 : 0,
+      attackPercentage: totalPoints > 0 ? (attacks / totalPoints) * 100 : 0,
+      blockPercentage: totalPoints > 0 ? (blocks / totalPoints) * 100 : 0,
+      errorPercentage: totalPoints > 0 ? (errors / totalPoints) * 100 : 0,
+    };
+  };
+
+  const dayStats = calculateDayStatistics();
 
   // Calculate optimal font size based on viewport dimensions
   const calculateOptimalFontSize = () => {
@@ -297,6 +354,8 @@ export default function ScoreDisplay({
             <div
               className={`font-light transition-all duration-200 ${
                 leftFlash ? "scale-125" : ""
+              } ${
+                currentSets?.serving_team === "left" ? "brightness-110" : ""
               }`}
               style={{
                 fontSize: dynamicFontSize,
@@ -305,6 +364,8 @@ export default function ScoreDisplay({
                 color: leftFlash ? "#60a5fa" : "#60a5fa", // Always bright blue
                 textShadow: leftFlash
                   ? "0 0 40px rgba(96, 165, 250, 1), 0 0 80px rgba(96, 165, 250, 0.5)"
+                  : currentSets?.serving_team === "left"
+                  ? "0 0 20px rgba(96, 165, 250, 0.6)"
                   : "0 0 10px rgba(96, 165, 250, 0.3)",
               }}
             >
@@ -317,6 +378,8 @@ export default function ScoreDisplay({
             <div
               className={`font-light transition-all duration-200 ${
                 rightFlash ? "scale-125" : ""
+              } ${
+                currentSets?.serving_team === "right" ? "brightness-110" : ""
               }`}
               style={{
                 fontSize: dynamicFontSize,
@@ -325,6 +388,8 @@ export default function ScoreDisplay({
                 color: rightFlash ? "#f87171" : "#f87171", // Always bright red
                 textShadow: rightFlash
                   ? "0 0 40px rgba(248, 113, 113, 1), 0 0 80px rgba(248, 113, 113, 0.5)"
+                  : currentSets?.serving_team === "right"
+                  ? "0 0 20px rgba(248, 113, 113, 0.6)"
                   : "0 0 10px rgba(248, 113, 113, 0.3)",
               }}
             >
@@ -371,22 +436,9 @@ export default function ScoreDisplay({
         }}
       />
 
-      {/* Header with title and controls */}
+      {/* Header with day selector and controls */}
       <div className="flex justify-between items-center mb-6 relative z-10">
-        <div className="flex-1">
-          <h1
-            className={`text-2xl font-bold ${theme.text} mb-1`}
-            style={theme.textStyle}
-          >
-            🏐 Live Score
-          </h1>
-          <p
-            className={`text-sm ${theme.secondaryText}`}
-            style={theme.secondaryTextStyle}
-          >
-            Real-time volleyball tracking
-          </p>
-        </div>
+        <div className="flex-1">{daySelector}</div>
         <div className="flex space-x-2">
           {/* Audio Settings Button */}
           <button
@@ -449,7 +501,7 @@ export default function ScoreDisplay({
           >
             📊 Match Results
           </h2>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-4">
             <div className="flex flex-col items-center">
               <div className="text-blue-500 font-bold text-3xl mb-1">
                 {dailyTotals.left_sets}
@@ -479,114 +531,308 @@ export default function ScoreDisplay({
               </div>
             </div>
           </div>
+
+          {/* Day Statistics */}
+          {dayStats.totalPoints > 0 && (
+            <div className="border-t pt-4" style={theme.borderStyle}>
+              <h3
+                className={`text-sm font-semibold ${theme.text} mb-3 text-center`}
+                style={theme.textStyle}
+              >
+                Day Statistics
+              </h3>
+
+              {/* Total Points */}
+              <div className="flex justify-center mb-3">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`text-2xl font-bold ${theme.text}`}
+                    style={theme.textStyle}
+                  >
+                    {dayStats.totalPoints}
+                  </div>
+                  <div
+                    className={`text-xs ${theme.secondaryText} font-medium`}
+                    style={theme.secondaryTextStyle}
+                  >
+                    TOTAL POINTS
+                  </div>
+                </div>
+              </div>
+
+              {/* Point Type Statistics */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Aces */}
+                {dayStats.aces > 0 && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Crosshair
+                        size={16}
+                        className={`${theme.text}`}
+                        style={theme.textStyle}
+                      />
+                      <span
+                        className={`text-sm ${theme.text}`}
+                        style={theme.textStyle}
+                      >
+                        Aces
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={`text-sm font-semibold ${theme.text}`}
+                        style={theme.textStyle}
+                      >
+                        {dayStats.aces}
+                      </div>
+                      <div
+                        className={`text-xs ${theme.secondaryText}`}
+                        style={theme.secondaryTextStyle}
+                      >
+                        {dayStats.acePercentage.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Attacks */}
+                {dayStats.attacks > 0 && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Swords
+                        size={16}
+                        className={`${theme.text}`}
+                        style={theme.textStyle}
+                      />
+                      <span
+                        className={`text-sm ${theme.text}`}
+                        style={theme.textStyle}
+                      >
+                        Attacks
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={`text-sm font-semibold ${theme.text}`}
+                        style={theme.textStyle}
+                      >
+                        {dayStats.attacks}
+                      </div>
+                      <div
+                        className={`text-xs ${theme.secondaryText}`}
+                        style={theme.secondaryTextStyle}
+                      >
+                        {dayStats.attackPercentage.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Blocks */}
+                {dayStats.blocks > 0 && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Shield
+                        size={16}
+                        className={`${theme.text}`}
+                        style={theme.textStyle}
+                      />
+                      <span
+                        className={`text-sm ${theme.text}`}
+                        style={theme.textStyle}
+                      >
+                        Blocks
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={`text-sm font-semibold ${theme.text}`}
+                        style={theme.textStyle}
+                      >
+                        {dayStats.blocks}
+                      </div>
+                      <div
+                        className={`text-xs ${theme.secondaryText}`}
+                        style={theme.secondaryTextStyle}
+                      >
+                        {dayStats.blockPercentage.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Errors */}
+                {dayStats.errors > 0 && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <AlertTriangle
+                        size={16}
+                        className={`${theme.text}`}
+                        style={theme.textStyle}
+                      />
+                      <span
+                        className={`text-sm ${theme.text}`}
+                        style={theme.textStyle}
+                      >
+                        Errors
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={`text-sm font-semibold ${theme.text}`}
+                        style={theme.textStyle}
+                      >
+                        {dayStats.errors}
+                      </div>
+                      <div
+                        className={`text-xs ${theme.secondaryText}`}
+                        style={theme.secondaryTextStyle}
+                      >
+                        {dayStats.errorPercentage.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Current Set Score Display - Expanded */}
-      <div className="relative z-10 flex-shrink-0">
-        <h2
-          className={`text-xl font-semibold ${theme.text} mb-6 text-center`}
-          style={theme.textStyle}
-        >
-          🔥 Current Set
-        </h2>
-        <div
-          className="flex justify-between items-center mb-4 cursor-pointer"
-          onClick={async () => {
-            // Try to initialize audio when user taps the score area
-            if (audioEnabled && !audioReady) {
-              const success = await initializeAudio();
-              setAudioReady(success);
-              if (success) {
-                console.log("Audio initialized via score tap");
+      {!isHistoricalView && currentSets && !currentSets.is_finished && (
+        <div className="relative z-10 flex-shrink-0">
+          <h2
+            className={`text-xl font-semibold ${theme.text} mb-6 text-center`}
+            style={theme.textStyle}
+          >
+            🔥 Current Set
+          </h2>
+          <div
+            className="flex justify-between items-center mb-4 cursor-pointer"
+            onClick={async () => {
+              // Try to initialize audio when user taps the score area
+              if (audioEnabled && !audioReady) {
+                const success = await initializeAudio();
+                setAudioReady(success);
+                if (success) {
+                  console.log("Audio initialized via score tap");
+                }
               }
-            }
-          }}
-          title={!audioReady && audioEnabled ? "Tap to enable audio" : ""}
-        >
-          {/* Left Team */}
-          <div className="flex flex-col items-center flex-1 justify-center">
-            <div
-              className={`text-sm ${theme.secondaryText} font-semibold mb-4 tracking-wide`}
-              style={theme.secondaryTextStyle}
-            >
-              LEFT
+            }}
+            title={!audioReady && audioEnabled ? "Tap to enable audio" : ""}
+          >
+            {/* Left Team */}
+            <div className="flex flex-col items-center flex-1 justify-center">
+              <div
+                className={`text-sm ${
+                  theme.secondaryText
+                } font-semibold mb-4 tracking-wide transition-all duration-1000 ${
+                  currentSets?.serving_team === "left"
+                    ? "text-blue-400 brightness-125"
+                    : ""
+                }`}
+                style={theme.secondaryTextStyle}
+              >
+                LEFT
+              </div>
+              <div
+                className={`font-light text-blue-500 transition-all duration-300 ${
+                  leftFlash ? "scale-110 brightness-150" : ""
+                } ${
+                  currentSets?.serving_team === "left" ? "brightness-110" : ""
+                }`}
+                style={{
+                  fontSize: "8rem",
+                  lineHeight: "0.8",
+                  fontFamily: "system-ui, -apple-system",
+                  textShadow: leftFlash
+                    ? "0 0 40px rgba(59, 130, 246, 0.9)"
+                    : currentSets?.serving_team === "left"
+                    ? "0 0 15px rgba(59, 130, 246, 0.5)"
+                    : "0 0 5px rgba(59, 130, 246, 0.3)",
+                }}
+              >
+                {currentSets?.left_score || 0}
+              </div>
             </div>
-            <div
-              className={`font-light text-blue-500 transition-all duration-300 ${
-                leftFlash ? "scale-110 brightness-150" : ""
-              }`}
-              style={{
-                fontSize: "8rem",
-                lineHeight: "0.8",
-                fontFamily: "system-ui, -apple-system",
-                textShadow: leftFlash
-                  ? "0 0 40px rgba(59, 130, 246, 0.9)"
-                  : "0 0 5px rgba(59, 130, 246, 0.3)",
-              }}
-            >
-              {currentSets?.left_score || 0}
-            </div>
-          </div>
 
-          {/* VS Separator */}
-          <div className="px-4">
-            <div
-              className={`text-xl ${theme.secondaryText} font-medium`}
-              style={theme.secondaryTextStyle}
-            >
-              VS
+            {/* VS Separator */}
+            <div className="px-4">
+              <div
+                className={`text-xl ${theme.secondaryText} font-medium`}
+                style={theme.secondaryTextStyle}
+              >
+                VS
+              </div>
             </div>
-          </div>
 
-          {/* Right Team */}
-          <div className="flex flex-col items-center flex-1 justify-center">
-            <div
-              className={`text-sm ${theme.secondaryText} font-semibold mb-4 tracking-wide`}
-              style={theme.secondaryTextStyle}
-            >
-              RIGHT
-            </div>
-            <div
-              className={`font-light text-red-500 transition-all duration-300 ${
-                rightFlash ? "scale-110 brightness-150" : ""
-              }`}
-              style={{
-                fontSize: "8rem",
-                lineHeight: "0.8",
-                fontFamily: "system-ui, -apple-system",
-                textShadow: rightFlash
-                  ? "0 0 40px rgba(239, 68, 68, 0.9)"
-                  : "0 0 5px rgba(239, 68, 68, 0.3)",
-              }}
-            >
-              {currentSets?.right_score || 0}
+            {/* Right Team */}
+            <div className="flex flex-col items-center flex-1 justify-center">
+              <div
+                className={`text-sm ${
+                  theme.secondaryText
+                } font-semibold mb-4 tracking-wide transition-all duration-1000 ${
+                  currentSets?.serving_team === "right"
+                    ? "text-red-400 brightness-125"
+                    : ""
+                }`}
+                style={theme.secondaryTextStyle}
+              >
+                RIGHT
+              </div>
+              <div
+                className={`font-light text-red-500 transition-all duration-300 ${
+                  rightFlash ? "scale-110 brightness-150" : ""
+                } ${
+                  currentSets?.serving_team === "right" ? "brightness-110" : ""
+                }`}
+                style={{
+                  fontSize: "8rem",
+                  lineHeight: "0.8",
+                  fontFamily: "system-ui, -apple-system",
+                  textShadow: rightFlash
+                    ? "0 0 40px rgba(239, 68, 68, 0.9)"
+                    : currentSets?.serving_team === "right"
+                    ? "0 0 15px rgba(239, 68, 68, 0.5)"
+                    : "0 0 5px rgba(239, 68, 68, 0.3)",
+                }}
+              >
+                {currentSets?.right_score || 0}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Points History Section */}
-      <PointsHistory />
+      <PointsHistory
+        selectedDate={selectedDate}
+        onScoreUpdate={onRefreshScores}
+        points={scoreData.points}
+      />
 
       {/* Admin Test Controls */}
       {isAdmin && (
         <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-          <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-            🔧 Admin Test Controls
+          <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-2 flex items-center">
+            <Settings size={16} className="mr-2" />
+            Admin Test Controls
           </h3>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => addPoint({ winner: "left" })}
-              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded"
+              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded flex items-center gap-1"
             >
-              +1 Left
+              <Plus size={12} />
+              Left
             </button>
             <button
               onClick={() => addPoint({ winner: "right" })}
-              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded"
+              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded flex items-center gap-1"
             >
-              +1 Right
+              <Plus size={12} />
+              Right
             </button>
           </div>
         </div>

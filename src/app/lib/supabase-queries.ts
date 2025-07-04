@@ -1,10 +1,5 @@
 import { createClient } from "@/app/utils/supabase/client";
-import {
-  MatchSummary,
-  PointInsert,
-  SetSummary,
-  User,
-} from "../../../database.types";
+import { PointInsert, User } from "../../../database.types";
 import { lazyAsyncSupplier } from "../utils/suppliers";
 
 export const supabase = createClient();
@@ -546,67 +541,313 @@ export const deleteGameSchedule = async (id: string) => {
   return true;
 };
 
+export type Point = {
+  id: string;
+  created_at: string;
+  winner: "left" | "right";
+  type: "ace" | "attack" | "block" | "error" | "unspecified";
+  player_id: number | null;
+};
+
+export type SetSummary = {
+  set_idx: number;
+  left_score: number;
+  right_score: number;
+  is_finished: boolean;
+  set_winner: "left" | "right" | null;
+  set_start: string;
+  set_end: string;
+  serving_team: "left" | "right";
+};
+
+export type MatchSummary = {
+  match_idx: number;
+  left_sets: number;
+  right_sets: number;
+  match_winner: "left" | "right" | null;
+  match_start: string;
+  match_end: string;
+};
+
 export type DailyScoreData = {
   sets: SetSummary | null;
   totals: MatchSummary | null;
+  points: Point[];
 };
 
 export type DailyScoreSubscriptionCallback = (
   scoreData: DailyScoreData
 ) => void;
 
-export const getTodaysScores = async (): Promise<DailyScoreData> => {
-  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+export type DailyScoreSubscription = {
+  unsubscribe: () => void;
+  cleanup?: () => void;
+};
 
-  // Get current set - prioritize unfinished sets, then fall back to latest finished set
-  const unfinishedSetResult = await supabase
-    .from("set_summaries")
-    .select("*")
-    .eq("day", today)
-    .eq("is_finished", false)
-    .order("set_idx", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  let currentSetResult;
-  if (unfinishedSetResult.data) {
-    currentSetResult = unfinishedSetResult;
-  } else {
-    // If no unfinished sets, get the latest finished set
-    currentSetResult = await supabase
-      .from("set_summaries")
-      .select("*")
-      .eq("day", today)
-      .order("set_idx", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+// Client-side calculation functions
+export const calculateScoresFromPoints = (points: Point[]): DailyScoreData => {
+  if (points.length === 0) {
+    // Return initial state ready for the first game
+    const now = new Date().toISOString();
+    return {
+      sets: {
+        set_idx: 1,
+        left_score: 0,
+        right_score: 0,
+        is_finished: false,
+        set_winner: null,
+        set_start: now,
+        set_end: now,
+        serving_team: "left", // Left team serves first by default
+      },
+      totals: {
+        match_idx: 1,
+        left_sets: 0,
+        right_sets: 0,
+        match_winner: null,
+        match_start: now,
+        match_end: now,
+      },
+      points: [],
+    };
   }
 
-  // Get daily match totals (aggregate of all finished sets)
-  const totalsResult = await supabase
-    .from("match_summaries")
-    .select("*")
-    .eq("day", today)
-    .order("match_idx", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Sort points by creation time
+  const sortedPoints = [...points].sort(
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+
+  // Calculate running scores and sets
+  let leftScore = 0;
+  let rightScore = 0;
+  let setIndex = 1;
+  let leftSets = 0;
+  let rightSets = 0;
+  let currentSetStart = sortedPoints[0].created_at;
+  let currentSetEnd = sortedPoints[0].created_at;
+  const matchStart = sortedPoints[0].created_at;
+  const matchEnd = sortedPoints[sortedPoints.length - 1].created_at;
+
+  // Track serving - left team serves first in each set
+  let servingTeam: "left" | "right" = "left";
+
+  for (const point of sortedPoints) {
+    // Add point to current set score
+    if (point.winner === "left") {
+      leftScore += 1;
+    } else {
+      rightScore += 1;
+    }
+
+    // Update serving team based on volleyball rules:
+    // The serving team continues to serve until they lose a point
+    // When the receiving team wins a point, they become the serving team
+    if (point.winner !== servingTeam) {
+      servingTeam = point.winner;
+    }
+
+    currentSetEnd = point.created_at;
+
+    // Check if set is complete (25+ points with 2+ point lead)
+    const isSetComplete =
+      (leftScore >= 25 || rightScore >= 25) &&
+      Math.abs(leftScore - rightScore) >= 2;
+
+    if (isSetComplete) {
+      // Determine set winner
+      if (leftScore > rightScore) {
+        leftSets += 1;
+      } else {
+        rightSets += 1;
+      }
+
+      // Reset for next set
+      leftScore = 0;
+      rightScore = 0;
+      setIndex += 1;
+      currentSetStart = point.created_at;
+      // Reset serving to left team for new set
+      servingTeam = "left";
+    }
+  }
+
+  // Create current set summary
+  const currentSet: SetSummary = {
+    set_idx: setIndex,
+    left_score: leftScore,
+    right_score: rightScore,
+    is_finished:
+      (leftScore >= 25 || rightScore >= 25) &&
+      Math.abs(leftScore - rightScore) >= 2,
+    set_winner:
+      (leftScore >= 25 || rightScore >= 25) &&
+      Math.abs(leftScore - rightScore) >= 2
+        ? leftScore > rightScore
+          ? "left"
+          : "right"
+        : null,
+    set_start: currentSetStart,
+    set_end: currentSetEnd,
+    serving_team: servingTeam,
+  };
+
+  // Create match summary
+  const matchSummary: MatchSummary = {
+    match_idx: 1,
+    left_sets: leftSets,
+    right_sets: rightSets,
+    match_winner: leftSets >= 3 ? "left" : rightSets >= 3 ? "right" : null,
+    match_start: matchStart,
+    match_end: matchEnd,
+  };
 
   return {
-    sets: currentSetResult.data || null,
-    totals: totalsResult.data || null,
+    sets: currentSet,
+    totals: matchSummary,
+    points: sortedPoints,
   };
+};
+
+// Helper function to get local date string in YYYY-MM-DD format
+const getLocalDateString = (date: Date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// Helper function to get UTC date range for a local date
+const getUTCDateRange = (localDateString: string) => {
+  // Parse the local date string (YYYY-MM-DD)
+  const [year, month, day] = localDateString.split("-").map(Number);
+
+  // Create start of day in local time (00:00:00)
+  const startOfLocalDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+
+  // Create end of day in local time (23:59:59.999)
+  const endOfLocalDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+  return {
+    start: startOfLocalDay.toISOString(),
+    end: endOfLocalDay.toISOString(),
+  };
+};
+
+export const getTodaysScores = async (): Promise<DailyScoreData> => {
+  // Get today's date in local time
+  const todayLocal = getLocalDateString();
+
+  const { start, end } = getUTCDateRange(todayLocal);
+
+  // Get all points for today (local time)
+  const { data: points, error } = await supabase
+    .from("points")
+    .select("*")
+    .gte("created_at", start)
+    .lt("created_at", end)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching today's points:", error);
+    throw error;
+  }
+
+  // Calculate scores from points on client side
+  return calculateScoresFromPoints(points || []);
+};
+
+export const getScoresForDate = async (
+  date: string
+): Promise<DailyScoreData> => {
+  const { start, end } = getUTCDateRange(date);
+
+  // Get all points for the specified date (local time)
+  const { data: points, error } = await supabase
+    .from("points")
+    .select("*")
+    .gte("created_at", start)
+    .lt("created_at", end)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error(`Error fetching points for date ${date}:`, error);
+    throw error;
+  }
+
+  // Calculate scores from points on client side
+  return calculateScoresFromPoints(points || []);
+};
+
+export const getAvailableDates = async (): Promise<string[]> => {
+  const { data, error } = await supabase
+    .from("points")
+    .select("created_at")
+    .order("created_at", { ascending: false })
+    .limit(1000); // Get recent points
+
+  if (error) {
+    console.error("Error fetching available dates:", error);
+    return [];
+  }
+
+  // Extract unique dates from points (using local time)
+  const dbDates = data
+    ? Array.from(
+        new Set(
+          data.map((point) => {
+            const date = new Date(point.created_at);
+            return getLocalDateString(date);
+          })
+        )
+      )
+    : [];
+
+  // Always include today (local time) even if no data yet
+  const todayLocal = getLocalDateString();
+
+  // Use Set to ensure uniqueness, then convert back to array
+  const uniqueDates = Array.from(new Set([todayLocal, ...dbDates]));
+
+  // Sort by date descending (most recent first)
+  return uniqueDates.sort((a, b) => b.localeCompare(a));
 };
 
 export const subscribeToDailyScores = (
   callback: DailyScoreSubscriptionCallback
-) => {
-  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+): DailyScoreSubscription => {
+  // Get today's date in local time
+  const today = getLocalDateString();
 
   console.log("Creating real-time subscription for points table...");
 
   // Check if we have authentication
-  const session = supabase.auth.getSession();
-  console.log("Current auth session:", session);
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log("Current auth session:", session?.user?.id || "No session");
+  });
+
+  // Set up periodic fallback check every 10 seconds
+  // This ensures we catch changes even if real-time subscription misses them
+  let fallbackInterval: NodeJS.Timeout | null = null;
+  let lastScoreData: DailyScoreData | null = null;
+
+  const checkForUpdates = async () => {
+    try {
+      const currentScoreData = await getTodaysScores();
+
+      // Only trigger callback if data actually changed
+      if (JSON.stringify(currentScoreData) !== JSON.stringify(lastScoreData)) {
+        console.log("Periodic check detected score changes:", currentScoreData);
+        lastScoreData = currentScoreData;
+        callback(currentScoreData);
+      }
+    } catch (error) {
+      console.error("Error in periodic score check:", error);
+    }
+  };
+
+  // Start periodic checking (less frequent since we're using direct point queries)
+  fallbackInterval = setInterval(checkForUpdates, 30000); // Check every 30 seconds
 
   const channel = supabase
     .channel(`daily-scores-${Math.random()}`) // Use unique channel name to avoid conflicts
@@ -616,28 +857,54 @@ export const subscribeToDailyScores = (
         event: "*",
         schema: "public",
         table: "points",
+        filter: undefined, // No filter needed
       },
       async (payload) => {
         console.log("Real-time points change received:", payload);
-        // Check if the change is for today's points
-        const pointData = payload.new as { created_at?: string };
-        const changeDate = pointData?.created_at
-          ? new Date(pointData.created_at).toISOString().split("T")[0]
-          : null;
 
-        console.log(`Point change date: ${changeDate}, today: ${today}`);
-
-        if (changeDate === today) {
-          console.log("Fetching updated scores for today...");
+        // For DELETE events, we can't reliably get the date from payload.old
+        // since it only contains the primary key. So we refresh for all DELETE events.
+        // For INSERT/UPDATE events, check if the change is for today
+        if (payload.eventType === "DELETE") {
+          console.log("DELETE event detected, refreshing scores for today...");
           try {
             const scoreData = await getTodaysScores();
-            console.log("Updated score data:", scoreData);
+            console.log("Updated score data after DELETE:", scoreData);
+
+            // Update our cached data
+            lastScoreData = scoreData;
             callback(scoreData);
           } catch (error) {
-            console.error("Error fetching updated scores:", error);
+            console.error("Error fetching updated scores after DELETE:", error);
           }
         } else {
-          console.log("Point change is not for today, ignoring");
+          // For INSERT/UPDATE events, check the date
+          const pointData = payload.new as {
+            created_at?: string;
+          };
+          const changeDate = pointData?.created_at
+            ? getLocalDateString(new Date(pointData.created_at))
+            : null;
+
+          console.log(
+            `Point change date: ${changeDate}, today: ${today}, event: ${payload.eventType}`
+          );
+
+          if (changeDate === today) {
+            console.log("Fetching updated scores for today...");
+            try {
+              const scoreData = await getTodaysScores();
+              console.log("Updated score data:", scoreData);
+
+              // Update our cached data
+              lastScoreData = scoreData;
+              callback(scoreData);
+            } catch (error) {
+              console.error("Error fetching updated scores:", error);
+            }
+          } else {
+            console.log("Point change is not for today, ignoring");
+          }
         }
       }
     )
@@ -649,14 +916,36 @@ export const subscribeToDailyScores = (
         );
       } else if (status === "CHANNEL_ERROR") {
         console.error("❌ Error subscribing to daily scores");
+        // If real-time fails, the periodic check will still work
       } else if (status === "CLOSED") {
         console.log("🔒 Real-time subscription closed");
+        // Clean up the periodic check when subscription is closed
+        if (fallbackInterval) {
+          clearInterval(fallbackInterval);
+          fallbackInterval = null;
+        }
       } else if (status === "TIMED_OUT") {
         console.warn("⏰ Real-time subscription timed out");
       }
     });
 
-  return channel;
+  // Return a proper subscription object
+  return {
+    unsubscribe: () => {
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+        fallbackInterval = null;
+      }
+      channel.unsubscribe();
+    },
+    cleanup: () => {
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+        fallbackInterval = null;
+      }
+      channel.unsubscribe();
+    },
+  };
 };
 
 export const addPoint = async (point: PointInsert) => {
@@ -681,12 +970,16 @@ export const addPoint = async (point: PointInsert) => {
 };
 
 export const getTodaysPoints = async () => {
-  const today = new Date().toISOString().split("T")[0];
+  // Get today's date in local time
+  const today = getLocalDateString();
+
+  const { start, end } = getUTCDateRange(today);
 
   const { data, error } = await supabase
-    .from("point_history")
+    .from("points")
     .select("*")
-    .eq("day", today)
+    .gte("created_at", start)
+    .lt("created_at", end)
     .order("created_at", { ascending: false });
 
   if (error) {

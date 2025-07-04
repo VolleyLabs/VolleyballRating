@@ -4,49 +4,63 @@ import { useCallback, useEffect, useState } from "react";
 import { useTelegram } from "@context/telegram-context";
 import {
   getTodaysScores,
+  getScoresForDate,
   subscribeToDailyScores,
   DailyScoreData,
 } from "@lib/supabase-queries";
+import { isToday, getTodayLocal } from "@utils/date";
 import ScoreDisplay from "./score-display";
 import NoDataDisplay from "./no-data-display";
 import ScoreSkeleton from "./score-skeleton";
+import DaySelector from "./day-selector";
 
 export default function Score() {
   const { theme, isAnonymous } = useTelegram();
   const [scoreData, setScoreData] = useState<DailyScoreData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    getTodayLocal() // Initialize with today's local date
+  );
 
-  const initTodaysScores = useCallback(async () => {
+  const initScoresForDate = useCallback(async (date: string) => {
+    setIsLoading(true);
     try {
-      const data = await getTodaysScores();
+      const data = isToday(date)
+        ? await getTodaysScores()
+        : await getScoresForDate(date);
       setScoreData(data);
     } catch (error) {
-      console.error("Error fetching today's scores:", error);
+      console.error("Error fetching scores for date:", error);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Set up real-time subscription
+  // Set up real-time subscription only for today
   useEffect(() => {
+    if (!isToday(selectedDate)) {
+      return; // Don't subscribe to real-time updates for historical dates
+    }
+
     console.log("Setting up real-time subscription for daily scores");
-    const channel = subscribeToDailyScores((newScoreData) => {
+    const subscription = subscribeToDailyScores((newScoreData) => {
       console.log("Received updated score data via real-time:", newScoreData);
       setScoreData(newScoreData);
     });
 
     return () => {
-      if (channel) {
+      if (subscription) {
         console.log("Cleaning up real-time subscription");
-        channel.unsubscribe();
+        subscription.unsubscribe();
       }
     };
-  }, []);
+  }, [selectedDate]);
 
+  // Load scores when selected date changes
   useEffect(() => {
-    initTodaysScores();
-  }, [initTodaysScores]);
+    initScoresForDate(selectedDate);
+  }, [selectedDate, initScoresForDate]);
 
   // Handle escape key to exit fullscreen
   useEffect(() => {
@@ -66,11 +80,20 @@ export default function Score() {
     setIsFullscreen(!isFullscreen);
   };
 
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+  };
+
   if (isAnonymous) {
     return null;
   }
 
-  const hasData = scoreData && (scoreData.sets || scoreData.totals);
+  const showLiveTracking = isToday(selectedDate) && scoreData;
+
+  // Create day selector component
+  const daySelector = !isFullscreen ? (
+    <DaySelector selectedDate={selectedDate} onDateChange={handleDateChange} />
+  ) : null;
 
   return (
     <div
@@ -79,19 +102,23 @@ export default function Score() {
       <div className="flex-1 w-full flex flex-col pb-0">
         {isLoading ? (
           <ScoreSkeleton />
-        ) : hasData ? (
+        ) : scoreData ? (
           <ScoreDisplay
             scoreData={scoreData}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
+            selectedDate={selectedDate}
+            isHistoricalView={!isToday(selectedDate)}
+            daySelector={daySelector}
+            onRefreshScores={() => initScoresForDate(selectedDate)}
           />
         ) : (
           <NoDataDisplay />
         )}
       </div>
 
-      {/* Footer with Live tracking status */}
-      {!isLoading && hasData && !isFullscreen && (
+      {/* Footer with Live tracking status - only for today */}
+      {!isLoading && showLiveTracking && !isFullscreen && (
         <div
           className={`fixed bottom-0 left-0 right-0 ${theme.bg} border-t border-gray-200 dark:border-gray-700 py-2 px-4 z-50`}
           style={theme.bgStyle}
