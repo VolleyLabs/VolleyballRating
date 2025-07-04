@@ -54,6 +54,7 @@ export default function ScoreDisplay({
   const [volume, setVolume] = useState<number>(0.7); // 70% default volume
   const [showAudioModal, setShowAudioModal] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true); // Audio enabled by default
+  const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
 
   const currentSets = scoreData.sets;
   const dailyTotals = scoreData.totals;
@@ -195,6 +196,52 @@ export default function ScoreDisplay({
       console.log("Audio disabled by user preference");
     }
   }, [audioEnabled]);
+
+  // Wake Lock management for fullscreen mode
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ("wakeLock" in navigator && isFullscreen) {
+          const wakeLockSentinel = await navigator.wakeLock.request("screen");
+          setWakeLock(wakeLockSentinel);
+          console.log("Screen wake lock activated for fullscreen mode");
+
+          // Listen for wake lock release
+          wakeLockSentinel.addEventListener("release", () => {
+            console.log("Screen wake lock released");
+            setWakeLock(null);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to request wake lock:", err);
+      }
+    };
+
+    const releaseWakeLock = async () => {
+      if (wakeLock) {
+        try {
+          await wakeLock.release();
+          setWakeLock(null);
+          console.log("Screen wake lock released manually");
+        } catch (err) {
+          console.error("Failed to release wake lock:", err);
+        }
+      }
+    };
+
+    if (isFullscreen) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    // Cleanup function
+    return () => {
+      if (wakeLock) {
+        wakeLock.release().catch(console.error);
+      }
+    };
+  }, [isFullscreen, wakeLock]);
 
   // Update font size on mount and resize
   useEffect(() => {
