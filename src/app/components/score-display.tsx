@@ -48,7 +48,7 @@ export default function ScoreDisplay({
   const [rightFlash, setRightFlash] = useState(false);
   const [previousScoreData, setPreviousScoreData] =
     useState<DailyScoreData | null>(null);
-  const [dynamicFontSize, setDynamicFontSize] = useState("80vh");
+  const [dynamicFontSize, setDynamicFontSize] = useState("110vh");
   const [audioReady, setAudioReady] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState<string>("default");
   const [volume, setVolume] = useState<number>(0.7); // 70% default volume
@@ -108,9 +108,9 @@ export default function ScoreDisplay({
     const height = window.innerHeight;
 
     // For each side (half width), calculate max font size
-    // Account for 2-digit numbers and some padding
-    const maxWidthBasedSize = width * 0.5 * 0.7; // 70% of half width for 2-digit numbers
-    const maxHeightBasedSize = height * 0.8; // 80% of height accounting for top/bottom elements
+    // Account for up to 2-digit numbers and minimal side padding. Increase multipliers to utilize more space.
+    const maxWidthBasedSize = width * 0.5 * 1.0; // 90% of half width for 2-digit numbers
+    const maxHeightBasedSize = height * 1.0; // 90% of height accounting for top/bottom elements
 
     return `${Math.min(maxWidthBasedSize, maxHeightBasedSize)}px`;
   };
@@ -202,15 +202,18 @@ export default function ScoreDisplay({
     const requestWakeLock = async () => {
       try {
         if ("wakeLock" in navigator && isFullscreen) {
-          const wakeLockSentinel = await navigator.wakeLock.request("screen");
-          setWakeLock(wakeLockSentinel);
-          console.log("Screen wake lock activated for fullscreen mode");
+          // Only request if we don't already have one
+          if (!wakeLock) {
+            const wakeLockSentinel = await navigator.wakeLock.request("screen");
+            setWakeLock(wakeLockSentinel);
+            console.log("Screen wake lock activated for fullscreen mode");
 
-          // Listen for wake lock release
-          wakeLockSentinel.addEventListener("release", () => {
-            console.log("Screen wake lock released");
-            setWakeLock(null);
-          });
+            // Listen for wake lock release
+            wakeLockSentinel.addEventListener("release", () => {
+              console.log("Screen wake lock released");
+              setWakeLock(null);
+            });
+          }
         }
       } catch (err) {
         console.error("Failed to request wake lock:", err);
@@ -221,11 +224,22 @@ export default function ScoreDisplay({
       if (wakeLock) {
         try {
           await wakeLock.release();
-          setWakeLock(null);
           console.log("Screen wake lock released manually");
+          setWakeLock(null);
         } catch (err) {
           console.error("Failed to release wake lock:", err);
         }
+      }
+    };
+
+    const exitBrowserFullscreen = async () => {
+      try {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen();
+          console.log("Browser fullscreen exited");
+        }
+      } catch (err) {
+        console.error("Failed to exit browser fullscreen:", err);
       }
     };
 
@@ -233,15 +247,16 @@ export default function ScoreDisplay({
       requestWakeLock();
     } else {
       releaseWakeLock();
+      exitBrowserFullscreen();
     }
 
-    // Cleanup function
+    // Cleanup function - only release wake lock, don't exit fullscreen
     return () => {
       if (wakeLock) {
         wakeLock.release().catch(console.error);
       }
     };
-  }, [isFullscreen, wakeLock]);
+  }, [isFullscreen]); // Removed wakeLock from dependencies to prevent loops
 
   // Update font size on mount and resize
   useEffect(() => {

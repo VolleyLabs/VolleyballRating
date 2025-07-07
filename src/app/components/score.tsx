@@ -62,7 +62,7 @@ export default function Score() {
     initScoresForDate(selectedDate);
   }, [selectedDate, initScoresForDate]);
 
-  // Handle escape key to exit fullscreen
+  // Handle escape key and fullscreen changes
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && isFullscreen) {
@@ -70,14 +70,43 @@ export default function Score() {
       }
     };
 
+    const handleFullscreenChange = () => {
+      // If user exits browser fullscreen (e.g., via ESC or browser controls),
+      // sync our component state
+      if (!document.fullscreenElement && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
     document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, [isFullscreen]);
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+  const toggleFullscreen = async () => {
+    const newFullscreenState = !isFullscreen;
+
+    if (newFullscreenState) {
+      // Entering fullscreen - request browser fullscreen
+      try {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+          console.log("Browser fullscreen activated");
+        }
+        setIsFullscreen(true);
+      } catch (err) {
+        console.error("Failed to request browser fullscreen:", err);
+        // Still set fullscreen state even if browser fullscreen fails
+        setIsFullscreen(true);
+      }
+    } else {
+      // Exiting fullscreen
+      setIsFullscreen(false);
+    }
   };
 
   const handleDateChange = (date: string) => {
