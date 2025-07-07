@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useTelegram } from "@context/telegram-context";
-import { DailyScoreData, addPoint } from "@lib/supabase-queries";
+import { DailyScoreData, addPoint, supabase } from "@lib/supabase-queries";
+import { User } from "@/../database.types";
 import {
   AudioCache,
   AudioPlaylist,
@@ -55,6 +57,8 @@ export default function ScoreDisplay({
   const [showAudioModal, setShowAudioModal] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true); // Audio enabled by default
   const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
+  const [allUsers, setAllUsers] = useState<Map<number, User>>(new Map());
+  const [loadingUsers, setLoadingUsers] = useState<boolean>(false);
 
   const currentSets = scoreData.sets;
   const dailyTotals = scoreData.totals;
@@ -99,6 +103,71 @@ export default function ScoreDisplay({
   };
 
   const dayStats = calculateDayStatistics();
+
+  // Calculate top players by category
+  const calculateTopPlayers = () => {
+    if (!scoreData.points || scoreData.points.length === 0) {
+      return {
+        topAttackers: [],
+        topBlockers: [],
+        topAceServers: [],
+      };
+    }
+
+    const points = scoreData.points;
+    const playerStats = new Map<
+      number,
+      { attacks: number; blocks: number; aces: number }
+    >();
+
+    // Count points by player and type
+    points.forEach((point) => {
+      if (point.player_id) {
+        const stats = playerStats.get(point.player_id) || {
+          attacks: 0,
+          blocks: 0,
+          aces: 0,
+        };
+
+        if (point.type === "attack") stats.attacks++;
+        else if (point.type === "block") stats.blocks++;
+        else if (point.type === "ace") stats.aces++;
+
+        playerStats.set(point.player_id, stats);
+      }
+    });
+
+    // Convert to arrays and sort
+    const playersArray = Array.from(playerStats.entries()).map(
+      ([playerId, stats]) => ({
+        playerId,
+        ...stats,
+      })
+    );
+
+    const topAttackers = playersArray
+      .filter((p) => p.attacks > 0)
+      .sort((a, b) => b.attacks - a.attacks)
+      .slice(0, 5);
+
+    const topBlockers = playersArray
+      .filter((p) => p.blocks > 0)
+      .sort((a, b) => b.blocks - a.blocks)
+      .slice(0, 5);
+
+    const topAceServers = playersArray
+      .filter((p) => p.aces > 0)
+      .sort((a, b) => b.aces - a.aces)
+      .slice(0, 5);
+
+    return {
+      topAttackers,
+      topBlockers,
+      topAceServers,
+    };
+  };
+
+  const topPlayers = calculateTopPlayers();
 
   // Calculate optimal font size based on viewport dimensions
   const calculateOptimalFontSize = () => {
@@ -359,6 +428,59 @@ export default function ScoreDisplay({
       }
     }
   }, []);
+
+  // Fetch user data for all players (both top players and points history)
+  useEffect(() => {
+    if (!supabase || !scoreData.points || scoreData.points.length === 0) {
+      return;
+    }
+
+    const fetchAllPlayersUsers = async () => {
+      // Extract unique player_ids from points (for points history)
+      const pointsPlayerIds = scoreData.points
+        .map((point) => point.player_id)
+        .filter((id): id is number => id !== null);
+
+      // Extract unique player_ids from top players
+      const topPlayersIds = [
+        ...topPlayers.topAttackers.map((p) => p.playerId),
+        ...topPlayers.topBlockers.map((p) => p.playerId),
+        ...topPlayers.topAceServers.map((p) => p.playerId),
+      ];
+
+      // Combine all unique player IDs
+      const allPlayerIds = [...new Set([...pointsPlayerIds, ...topPlayersIds])];
+
+      if (allPlayerIds.length === 0) {
+        return;
+      }
+
+      setLoadingUsers(true);
+      try {
+        const { data: userData, error } = await supabase
+          .from("users")
+          .select("id, first_name, last_name, username, photo_url")
+          .in("id", allPlayerIds);
+
+        if (error) {
+          console.error("Error fetching users:", error);
+        } else if (userData) {
+          // Create a map for efficient lookup
+          const userMap = new Map<number, User>();
+          userData.forEach((user) => {
+            userMap.set(user.id, user as User);
+          });
+          setAllUsers(userMap);
+        }
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    fetchAllPlayersUsers();
+  }, [scoreData.points, topPlayers, supabase]);
 
   if (isFullscreen) {
     return (
@@ -761,6 +883,271 @@ export default function ScoreDisplay({
         </div>
       )}
 
+      {/* Top Players Section */}
+      {(topPlayers.topAttackers.length > 0 ||
+        topPlayers.topBlockers.length > 0 ||
+        topPlayers.topAceServers.length > 0) && (
+        <div
+          className={`${theme.border} border rounded-lg p-4 mb-6 relative z-10`}
+          style={theme.borderStyle}
+        >
+          <h2
+            className={`text-lg font-semibold ${theme.text} mb-4 text-center`}
+            style={theme.textStyle}
+          >
+            🏆 Top Performers
+          </h2>
+
+          <div className="space-y-4">
+            {/* Top Attackers */}
+            {topPlayers.topAttackers.length > 0 && (
+              <div>
+                <h3
+                  className={`text-sm font-semibold ${theme.text} mb-2 flex items-center`}
+                  style={theme.textStyle}
+                >
+                  <Swords size={16} className="mr-2" />
+                  Top Attackers
+                </h3>
+                <div className="space-y-2">
+                  {topPlayers.topAttackers.slice(0, 3).map((player, index) => {
+                    const userInfo = allUsers.get(player.playerId);
+                    return (
+                      <div
+                        key={player.playerId}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`text-xs font-bold ${theme.secondaryText} w-4`}
+                            style={theme.secondaryTextStyle}
+                          >
+                            #{index + 1}
+                          </span>
+                          {loadingUsers && !userInfo ? (
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                              <div className="h-3 w-16 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                            </div>
+                          ) : userInfo ? (
+                            <>
+                              <div className="w-6 h-6 relative">
+                                <Image
+                                  src={
+                                    userInfo.photo_url || "/default-avatar.svg"
+                                  }
+                                  alt={userInfo.first_name}
+                                  fill
+                                  className="rounded-full object-cover"
+                                />
+                              </div>
+                              <div className="flex flex-col">
+                                <span
+                                  className={`text-sm font-medium ${theme.text}`}
+                                  style={theme.textStyle}
+                                >
+                                  {userInfo.first_name}{" "}
+                                  {userInfo.last_name || ""}
+                                </span>
+                                {userInfo.username && (
+                                  <span
+                                    className={`text-xs ${theme.secondaryText}`}
+                                    style={theme.secondaryTextStyle}
+                                  >
+                                    @{userInfo.username}
+                                  </span>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <span
+                              className={`text-sm ${theme.secondaryText}`}
+                              style={theme.secondaryTextStyle}
+                            >
+                              Player #{player.playerId}
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={`text-sm font-bold ${theme.text} bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded`}
+                          style={theme.textStyle}
+                        >
+                          {player.attacks}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Top Blockers */}
+            {topPlayers.topBlockers.length > 0 && (
+              <div>
+                <h3
+                  className={`text-sm font-semibold ${theme.text} mb-2 flex items-center`}
+                  style={theme.textStyle}
+                >
+                  <Shield size={16} className="mr-2" />
+                  Top Blockers
+                </h3>
+                <div className="space-y-2">
+                  {topPlayers.topBlockers.slice(0, 3).map((player, index) => {
+                    const userInfo = allUsers.get(player.playerId);
+                    return (
+                      <div
+                        key={player.playerId}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`text-xs font-bold ${theme.secondaryText} w-4`}
+                            style={theme.secondaryTextStyle}
+                          >
+                            #{index + 1}
+                          </span>
+                          {loadingUsers && !userInfo ? (
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                              <div className="h-3 w-16 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                            </div>
+                          ) : userInfo ? (
+                            <>
+                              <div className="w-6 h-6 relative">
+                                <Image
+                                  src={
+                                    userInfo.photo_url || "/default-avatar.svg"
+                                  }
+                                  alt={userInfo.first_name}
+                                  fill
+                                  className="rounded-full object-cover"
+                                />
+                              </div>
+                              <div className="flex flex-col">
+                                <span
+                                  className={`text-sm font-medium ${theme.text}`}
+                                  style={theme.textStyle}
+                                >
+                                  {userInfo.first_name}{" "}
+                                  {userInfo.last_name || ""}
+                                </span>
+                                {userInfo.username && (
+                                  <span
+                                    className={`text-xs ${theme.secondaryText}`}
+                                    style={theme.secondaryTextStyle}
+                                  >
+                                    @{userInfo.username}
+                                  </span>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <span
+                              className={`text-sm ${theme.secondaryText}`}
+                              style={theme.secondaryTextStyle}
+                            >
+                              Player #{player.playerId}
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={`text-sm font-bold ${theme.text} bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded`}
+                          style={theme.textStyle}
+                        >
+                          {player.blocks}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Top Ace Servers */}
+            {topPlayers.topAceServers.length > 0 && (
+              <div>
+                <h3
+                  className={`text-sm font-semibold ${theme.text} mb-2 flex items-center`}
+                  style={theme.textStyle}
+                >
+                  <Crosshair size={16} className="mr-2" />
+                  Top Ace Servers
+                </h3>
+                <div className="space-y-2">
+                  {topPlayers.topAceServers.slice(0, 3).map((player, index) => {
+                    const userInfo = allUsers.get(player.playerId);
+                    return (
+                      <div
+                        key={player.playerId}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`text-xs font-bold ${theme.secondaryText} w-4`}
+                            style={theme.secondaryTextStyle}
+                          >
+                            #{index + 1}
+                          </span>
+                          {loadingUsers && !userInfo ? (
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                              <div className="h-3 w-16 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                            </div>
+                          ) : userInfo ? (
+                            <>
+                              <div className="w-6 h-6 relative">
+                                <Image
+                                  src={
+                                    userInfo.photo_url || "/default-avatar.svg"
+                                  }
+                                  alt={userInfo.first_name}
+                                  fill
+                                  className="rounded-full object-cover"
+                                />
+                              </div>
+                              <div className="flex flex-col">
+                                <span
+                                  className={`text-sm font-medium ${theme.text}`}
+                                  style={theme.textStyle}
+                                >
+                                  {userInfo.first_name}{" "}
+                                  {userInfo.last_name || ""}
+                                </span>
+                                {userInfo.username && (
+                                  <span
+                                    className={`text-xs ${theme.secondaryText}`}
+                                    style={theme.secondaryTextStyle}
+                                  >
+                                    @{userInfo.username}
+                                  </span>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <span
+                              className={`text-sm ${theme.secondaryText}`}
+                              style={theme.secondaryTextStyle}
+                            >
+                              Player #{player.playerId}
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={`text-sm font-bold ${theme.text} bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded`}
+                          style={theme.textStyle}
+                        >
+                          {player.aces}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Current Set Score Display - Expanded */}
       {!isHistoricalView && currentSets && !currentSets.is_finished && (
         <div className="relative z-10 flex-shrink-0">
@@ -872,6 +1259,8 @@ export default function ScoreDisplay({
         selectedDate={selectedDate}
         onScoreUpdate={onRefreshScores}
         points={scoreData.points}
+        users={allUsers}
+        loadingUsers={loadingUsers}
       />
 
       {/* Admin Test Controls */}

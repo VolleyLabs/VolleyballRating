@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useTelegram } from "@context/telegram-context";
 import { supabase } from "@lib/supabase-queries";
-import { PointType } from "@/../database.types";
+import { PointType, User } from "@/../database.types";
 import { Crosshair, Swords, Shield, AlertTriangle, Circle } from "lucide-react";
 
 interface PointWithScore {
@@ -15,6 +16,8 @@ interface PointsHistoryProps {
   selectedDate?: string;
   onScoreUpdate?: () => void;
   points?: Point[];
+  users?: Map<number, User>;
+  loadingUsers?: boolean;
 }
 
 type Point = {
@@ -39,6 +42,8 @@ const POINT_TYPE_ICONS: Record<
 export default function PointsHistory({
   onScoreUpdate,
   points: propPoints = [],
+  users = new Map(),
+  loadingUsers = false,
 }: PointsHistoryProps) {
   const { theme, isAdmin } = useTelegram();
   const [points, setPoints] = useState<Point[]>(propPoints);
@@ -156,6 +161,12 @@ export default function PointsHistory({
     }
   };
 
+  // Get player information by player_id
+  const getPlayerInfo = (playerId: number | null) => {
+    if (!playerId) return null;
+    return users.get(playerId) || null;
+  };
+
   // Since we're fetching points for the specific date, we can use them directly
   const pointsWithScores = calculateRunningScores(points);
   const reversedPoints = [...pointsWithScores].reverse(); // Show all points for the day
@@ -202,10 +213,12 @@ export default function PointsHistory({
 
               // Handle regular point
               const { point, scoreString } = item as PointWithScore;
+              const playerInfo = getPlayerInfo(point.player_id);
+
               return (
                 <div
                   key={`${point.id}-${index}`}
-                  className={`relative group p-2 rounded-lg ${
+                  className={`relative group p-3 rounded-lg ${
                     point.winner === "left"
                       ? "bg-blue-500 bg-opacity-70"
                       : "bg-red-500 bg-opacity-70"
@@ -225,6 +238,44 @@ export default function PointsHistory({
                             size: 16,
                             className: "text-white",
                           })}
+                        </div>
+                      )}
+
+                      {/* Player info */}
+                      {playerInfo && (
+                        <div className="flex items-center space-x-2">
+                          {/* Player avatar */}
+                          <div className="w-6 h-6 relative">
+                            <Image
+                              src={
+                                playerInfo.photo_url || "/default-avatar.svg"
+                              }
+                              alt={playerInfo.first_name}
+                              fill
+                              className="rounded-full object-cover"
+                            />
+                          </div>
+
+                          {/* Player name/username */}
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium">
+                              {playerInfo.first_name}{" "}
+                              {playerInfo.last_name || ""}
+                            </span>
+                            {playerInfo.username && (
+                              <span className="text-xs opacity-80">
+                                @{playerInfo.username}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Loading indicator for user data */}
+                      {loadingUsers && point.player_id && !playerInfo && (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full animate-pulse"></div>
+                          <div className="h-3 w-16 bg-white bg-opacity-20 rounded animate-pulse"></div>
                         </div>
                       )}
                     </div>
