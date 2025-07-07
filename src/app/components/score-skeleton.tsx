@@ -7,16 +7,21 @@ export default function ScoreSkeleton() {
 
   return (
     <div
-      className={`w-full max-w-md mx-auto p-3 sm:p-4 ${theme.cardBg} rounded-lg shadow-sm overflow-hidden flex-1 animate-pulse`}
+      className={`w-full max-w-3xl mx-auto p-3 sm:p-4 ${theme.cardBg} rounded-2xl shadow-sm overflow-hidden flex-1 animate-pulse`}
       style={theme.cardBgStyle}
     >
-      {/* Header Skeleton */}
+      {/* Header Skeleton (Day Selector + Controls) */}
       <div className="flex justify-between items-center mb-6">
+        {/* Day Selector Skeleton */}
         <div className="flex-1">
-          {/* Title skeleton */}
-          <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded-md w-32 mb-2"></div>
-          {/* Subtitle skeleton */}
-          <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-48"></div>
+          <div className="flex space-x-3 overflow-x-auto">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="flex-shrink-0 w-20 h-12 bg-gray-300 dark:bg-gray-700 rounded-lg"
+              ></div>
+            ))}
+          </div>
         </div>
         <div className="flex space-x-2">
           {/* Audio button skeleton */}

@@ -46,11 +46,11 @@ export default function DaySelector({
 
   if (isLoading) {
     return (
-      <div className="flex space-x-2 overflow-x-auto py-2 px-1">
-        {[...Array(7)].map((_, i) => (
+      <div className="flex space-x-3 overflow-x-auto py-2 px-1">
+        {[...Array(3)].map((_, i) => (
           <div
             key={i}
-            className="flex-shrink-0 w-20 h-16 bg-gray-300 dark:bg-gray-700 rounded-lg animate-pulse"
+            className="flex-shrink-0 w-20 h-12 bg-gray-300 dark:bg-gray-700 rounded-lg animate-pulse"
           />
         ))}
       </div>
