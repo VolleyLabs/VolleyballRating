@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getRandomVotePair, submitVote, VotePair } from "@lib/supabase-queries";
-import { User } from "../../../database.types";
+import { User } from "../../../../database.types";
 import Image from "next/image";
 import { PostgrestError } from "@supabase/supabase-js";
 import { useTelegram } from "@context/telegram-context";

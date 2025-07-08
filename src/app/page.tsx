@@ -1,6 +1,6 @@
 "use client";
 
-import Leaderboard from "@components/leaderboard";
+import Leaderboard from "@/app/components/leaderboard/leaderboard";
 import { JSX, useState } from "react";
 import { useTelegram } from "@context/telegram-context";
 import Score from "@/app/components/score/score";
