@@ -13,6 +13,7 @@ import {
   upsertUser,
 } from "../lib/supabase-queries";
 import { useTelegramTheme } from "../utils/telegram-theme";
+import ConsoleLoggerScript from "../components/ConsoleLoggerScript";
 
 interface TelegramContextType {
   webApp: WebApp | null; // Make webApp nullable for SSR
@@ -343,6 +344,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      {isAdmin && <ConsoleLoggerScript />}
     </TelegramContext.Provider>
   );
 }
