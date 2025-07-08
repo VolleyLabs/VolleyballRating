@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useTelegram } from "@context/telegram-context";
 import { DailyScoreData } from "@lib/supabase-queries";
 import { User } from "@/../database.types";
-import { Plus, Crosshair, Swords, Shield, AlertTriangle } from "lucide-react";
+import { Crosshair, Swords, Shield } from "lucide-react";
 
 interface PlayerStatisticsProps {
   scoreData: DailyScoreData;
@@ -109,9 +109,9 @@ export default function PlayerStatistics({
       >
         <button
           onClick={() => setActiveStatsTab("total")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors flex items-center space-x-2 ${
             activeStatsTab === "total"
-              ? `${theme.text} border-b-2 border-blue-500`
+              ? `${theme.text} border-b-2 border-gray-500`
               : `${theme.secondaryText} hover:${theme.text}`
           }`}
           style={
@@ -120,11 +120,12 @@ export default function PlayerStatistics({
               : theme.secondaryTextStyle
           }
         >
-          📊 Total
+          <div className="w-3 h-3 bg-gray-400 rounded border"></div>
+          <span>Total</span>
         </button>
         <button
           onClick={() => setActiveStatsTab("attacks")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors flex items-center justify-center ${
             activeStatsTab === "attacks"
               ? `${theme.text} border-b-2 border-red-500`
               : `${theme.secondaryText} hover:${theme.text}`
@@ -135,11 +136,11 @@ export default function PlayerStatistics({
               : theme.secondaryTextStyle
           }
         >
-          🗡️ Attacks
+          <Swords size={16} className="text-red-600" />
         </button>
         <button
           onClick={() => setActiveStatsTab("blocks")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors flex items-center justify-center ${
             activeStatsTab === "blocks"
               ? `${theme.text} border-b-2 border-blue-500`
               : `${theme.secondaryText} hover:${theme.text}`
@@ -150,11 +151,11 @@ export default function PlayerStatistics({
               : theme.secondaryTextStyle
           }
         >
-          🛡️ Blocks
+          <Shield size={16} className="text-blue-600" />
         </button>
         <button
           onClick={() => setActiveStatsTab("serves")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors flex items-center justify-center ${
             activeStatsTab === "serves"
               ? `${theme.text} border-b-2 border-green-500`
               : `${theme.secondaryText} hover:${theme.text}`
@@ -165,7 +166,7 @@ export default function PlayerStatistics({
               : theme.secondaryTextStyle
           }
         >
-          🎯 Serves
+          <Crosshair size={16} className="text-green-600" />
         </button>
       </div>
 
@@ -217,10 +218,17 @@ export default function PlayerStatistics({
               });
             }
 
-            // Convert to array and sort by total points
+            // Convert to array and sort by total points, then by attack points as tiebreaker
             const sortedPlayers = Array.from(allPlayersStats.entries())
               .map(([playerId, stats]) => ({ playerId, ...stats }))
-              .sort((a, b) => b.total - a.total);
+              .sort((a, b) => {
+                // Primary sort: total points (descending)
+                if (b.total !== a.total) {
+                  return b.total - a.total;
+                }
+                // Tiebreaker: attack points (descending)
+                return b.attacks - a.attacks;
+              });
 
             return sortedPlayers.map((player, index) => {
               const userInfo = allUsers.get(player.playerId);
@@ -282,7 +290,6 @@ export default function PlayerStatistics({
                     {/* Attacks */}
                     {player.attacks > 0 && (
                       <div className="flex items-center space-x-1">
-                        <Swords size={14} className="text-red-600" />
                         <span
                           className={`text-sm font-semibold ${theme.text} bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded`}
                           style={theme.textStyle}
@@ -295,7 +302,6 @@ export default function PlayerStatistics({
                     {/* Blocks */}
                     {player.blocks > 0 && (
                       <div className="flex items-center space-x-1">
-                        <Shield size={14} className="text-blue-600" />
                         <span
                           className={`text-sm font-semibold ${theme.text} bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded`}
                           style={theme.textStyle}
@@ -308,7 +314,6 @@ export default function PlayerStatistics({
                     {/* Aces */}
                     {player.aces > 0 && (
                       <div className="flex items-center space-x-1">
-                        <Crosshair size={14} className="text-green-600" />
                         <span
                           className={`text-sm font-semibold ${theme.text} bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded`}
                           style={theme.textStyle}
@@ -321,7 +326,6 @@ export default function PlayerStatistics({
                     {/* Errors */}
                     {player.errors > 0 && (
                       <div className="flex items-center space-x-1">
-                        <AlertTriangle size={14} className="text-orange-600" />
                         <span
                           className={`text-sm font-semibold ${theme.text} bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded`}
                           style={theme.textStyle}
@@ -334,7 +338,6 @@ export default function PlayerStatistics({
                     {/* Unspecified */}
                     {player.unspecified > 0 && (
                       <div className="flex items-center space-x-1">
-                        <Plus size={14} className="text-gray-600" />
                         <span
                           className={`text-sm font-semibold ${theme.text} bg-gray-100 dark:bg-gray-900/30 px-2 py-1 rounded`}
                           style={theme.textStyle}
@@ -346,7 +349,6 @@ export default function PlayerStatistics({
 
                     {/* Total */}
                     <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded border"></div>
                       <span
                         className={`text-sm font-bold ${theme.text} bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded`}
                         style={theme.textStyle}
@@ -567,68 +569,6 @@ export default function PlayerStatistics({
             );
           })}
       </div>
-
-      {/* Legend for Total tab */}
-      {activeStatsTab === "total" && (
-        <div className="mt-4 pt-3 border-t" style={theme.borderStyle}>
-          <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
-            <div className="flex items-center space-x-1">
-              <Swords size={12} className="text-red-600" />
-              <span
-                className={theme.secondaryText}
-                style={theme.secondaryTextStyle}
-              >
-                Attacks
-              </span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Shield size={12} className="text-blue-600" />
-              <span
-                className={theme.secondaryText}
-                style={theme.secondaryTextStyle}
-              >
-                Blocks
-              </span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Crosshair size={12} className="text-green-600" />
-              <span
-                className={theme.secondaryText}
-                style={theme.secondaryTextStyle}
-              >
-                Aces
-              </span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <AlertTriangle size={12} className="text-orange-600" />
-              <span
-                className={theme.secondaryText}
-                style={theme.secondaryTextStyle}
-              >
-                Errors
-              </span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Plus size={12} className="text-gray-600" />
-              <span
-                className={theme.secondaryText}
-                style={theme.secondaryTextStyle}
-              >
-                Other
-              </span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded border"></div>
-              <span
-                className={theme.secondaryText}
-                style={theme.secondaryTextStyle}
-              >
-                Total
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
