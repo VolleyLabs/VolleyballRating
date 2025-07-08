@@ -218,11 +218,13 @@ export async function upsertUser(
         string | number | boolean | null | undefined
       > = {};
 
-      // Only include fields that are being updated
-      if (first_name !== undefined) updates.first_name = first_name;
-      if (last_name !== undefined) updates.last_name = last_name;
-      if (username !== undefined) updates.username = username;
-      if (photo_url !== undefined) updates.photo_url = photo_url;
+      // Always update Telegram fields to reflect current state
+      updates.first_name = first_name;
+      updates.last_name = last_name || null;
+      updates.username = username || null;
+      updates.photo_url = photo_url || null;
+
+      // Only update app-specific fields when explicitly provided
       if (pickup_height !== undefined) updates.pickup_height = pickup_height;
 
       // Only perform update if we have fields to update
