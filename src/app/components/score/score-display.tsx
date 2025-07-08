@@ -9,6 +9,7 @@ import {
   AudioPlaylist,
   initializeAudio,
   announceScoreVolleyball,
+  enableAllAudio,
 } from "../../services/audio";
 import AudioSettingsModal from "./audio-settings-modal";
 import PointsHistory from "./points-history";
@@ -20,6 +21,7 @@ import {
   Swords,
   Shield,
   AlertTriangle,
+  Volume2,
 } from "lucide-react";
 
 // Global audio instances
@@ -123,11 +125,27 @@ export default function ScoreDisplay({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Load audio enabled preference from localStorage (default: true)
-    const savedAudioEnabled = localStorage.getItem("volleyball-audio-enabled");
-    const isAudioEnabled =
-      savedAudioEnabled === null ? true : savedAudioEnabled === "true";
-    setAudioEnabled(isAudioEnabled);
+    // Load audio enabled preference from localStorage (default: false for TTS)
+    const savedTtsEnabled = localStorage.getItem("volleyball-tts-enabled");
+    const isTtsEnabled = savedTtsEnabled === "true";
+    setAudioEnabled(isTtsEnabled);
+
+    // Load and apply Russian voice selection if TTS is enabled
+    if (isTtsEnabled) {
+      const savedRussianVoice = localStorage.getItem(
+        "volleyball-tts-russian-voice"
+      );
+      if (savedRussianVoice) {
+        // Import and apply the voice setting
+        import("../../services/audio").then(({ getTextToSpeech }) => {
+          const tts = getTextToSpeech();
+          if (tts.isSupported()) {
+            tts.setVoice(savedRussianVoice);
+            console.log("Applied saved Russian voice:", savedRussianVoice);
+          }
+        });
+      }
+    }
   }, []);
 
   // Initialize audio when enabled state changes
@@ -138,10 +156,11 @@ export default function ScoreDisplay({
     if (audioEnabled) {
       const initAudioAutomatically = async () => {
         try {
-          const success = await initializeAudio();
+          const results = await enableAllAudio();
+          const success = results.audioContext || results.tts;
           setAudioReady(success);
           if (success) {
-            console.log("Audio initialized automatically");
+            console.log("Audio systems initialized automatically:", results);
           } else {
             console.log(
               "Audio initialization failed - may need user interaction"
@@ -159,10 +178,14 @@ export default function ScoreDisplay({
       // Fallback: Add listeners for user interaction if auto-init fails
       const initAudioOnInteraction = async () => {
         if (audioEnabled && !audioReady) {
-          const success = await initializeAudio();
+          const results = await enableAllAudio();
+          const success = results.audioContext || results.tts;
           setAudioReady(success);
           if (success) {
-            console.log("Audio initialized via user interaction");
+            console.log(
+              "Audio systems initialized via user interaction:",
+              results
+            );
           }
         }
       };
@@ -332,9 +355,9 @@ export default function ScoreDisplay({
   const handleAudioEnabledChange = (enabled: boolean) => {
     setAudioEnabled(enabled);
 
-    // Save to localStorage
+    // Save to localStorage using TTS settings key
     if (typeof window !== "undefined") {
-      localStorage.setItem("volleyball-audio-enabled", enabled.toString());
+      localStorage.setItem("volleyball-tts-enabled", enabled.toString());
     }
 
     // If disabling audio, reset audio ready state
@@ -343,8 +366,27 @@ export default function ScoreDisplay({
     } else {
       // If enabling audio, try to initialize it
       const initAudio = async () => {
-        const success = await initializeAudio();
+        const results = await enableAllAudio();
+        const success = results.audioContext || results.tts;
         setAudioReady(success);
+
+        // Apply Russian voice setting if available
+        if (success && typeof window !== "undefined") {
+          const savedRussianVoice = localStorage.getItem(
+            "volleyball-tts-russian-voice"
+          );
+          if (savedRussianVoice) {
+            const { getTextToSpeech } = await import("../../services/audio");
+            const tts = getTextToSpeech();
+            if (tts.isSupported()) {
+              tts.setVoice(savedRussianVoice);
+              console.log(
+                "Applied Russian voice in score component:",
+                savedRussianVoice
+              );
+            }
+          }
+        }
       };
       initAudio();
     }
@@ -417,10 +459,14 @@ export default function ScoreDisplay({
         onClick={async () => {
           // Try to initialize audio when user taps the fullscreen area
           if (audioEnabled && !audioReady) {
-            const success = await initializeAudio();
+            const results = await enableAllAudio();
+            const success = results.audioContext || results.tts;
             setAudioReady(success);
             if (success) {
-              console.log("Audio initialized via fullscreen tap");
+              console.log(
+                "Audio systems initialized via fullscreen tap:",
+                results
+              );
             }
           }
         }}
@@ -574,7 +620,7 @@ export default function ScoreDisplay({
                 : "Tap to enable"
             }`}
           >
-            <span>🔊</span>
+            <Volume2 size={18} />
             <span className="text-sm hidden sm:inline">
               {Math.round(volume * 100)}%
             </span>
@@ -968,7 +1014,7 @@ export default function ScoreDisplay({
         volume={volume}
         onVolumeChange={handleVolumeChange}
         audioReady={audioReady}
-        onAudioReadyChange={setAudioReady}
+        _onAudioReadyChange={setAudioReady}
         audioEnabled={audioEnabled}
         onAudioEnabledChange={handleAudioEnabledChange}
         audioCache={audioCache}

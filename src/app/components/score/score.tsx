@@ -9,6 +9,7 @@ import {
   DailyScoreData,
 } from "@lib/supabase-queries";
 import { isToday, getTodayLocal } from "@utils/date";
+
 import ScoreDisplay from "./score-display";
 import NoDataDisplay from "./no-data-display";
 import ScoreSkeleton from "./score-skeleton";
