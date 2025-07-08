@@ -9,7 +9,7 @@ import {
   AudioPlaylist,
   initializeAudio,
   announceScoreVolleyball,
-} from "../services/audio";
+} from "../../services/audio";
 import AudioSettingsModal from "./audio-settings-modal";
 import PointsHistory from "./points-history";
 import PlayerStatistics from "./player-statistics";

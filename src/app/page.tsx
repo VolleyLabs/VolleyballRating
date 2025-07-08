@@ -3,7 +3,7 @@
 import Leaderboard from "@components/leaderboard";
 import { JSX, useState } from "react";
 import { useTelegram } from "@context/telegram-context";
-import Score from "@components/score";
+import Score from "@/app/components/score/score";
 import Settings from "@components/settings";
 import Navigation from "@components/navigation";
 // import GameSchedules from "@components/game-schedules";

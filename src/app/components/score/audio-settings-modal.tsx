@@ -8,7 +8,7 @@ import {
   announceScoreVolleyball,
   announceCurrentScore,
   VOICE_OPTIONS,
-} from "../services/audio";
+} from "../../services/audio";
 
 interface AudioSettingsModalProps {
   isOpen: boolean;
