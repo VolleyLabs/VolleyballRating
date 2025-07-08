@@ -69,6 +69,7 @@ export default function Navigation({
                 alt="User Photo"
                 width={40}
                 height={40}
+                priority
                 className={`rounded-full transition-all duration-200 ${
                   activeScreen === "settings"
                     ? "ring-2 ring-offset-1 ring-[#4CD964]"
@@ -121,6 +122,7 @@ export default function Navigation({
               alt={screen}
               width={24}
               height={24}
+              priority={screen === "score" || screen === "leaderboard"}
               className={activeScreen === screen ? "brightness-0 invert" : ""}
             />
           </button>
