@@ -323,7 +323,7 @@ function PlayerCard({
           }`}
         >
           <Image
-            src={player?.photo_url ?? "/default-avatar.svg"}
+            src={player?.photo_url || "/default-avatar.svg"}
             alt={player?.first_name ?? "Player"}
             width={120}
             height={120}
