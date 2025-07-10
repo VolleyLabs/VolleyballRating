@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useTelegram } from "@context/telegram-context";
 import { DailyScoreData } from "@lib/supabase-queries";
 import { User } from "@/../database.types";
-import { Crosshair, Swords, Shield } from "lucide-react";
+import { Crosshair, Swords, Shield, Trophy } from "lucide-react";
 
 interface PlayerStatisticsProps {
   scoreData: DailyScoreData;
@@ -96,10 +96,11 @@ export default function PlayerStatistics({
       style={theme.borderStyle}
     >
       <h2
-        className={`text-lg font-semibold ${theme.text} mb-4 text-center`}
+        className={`text-lg font-semibold ${theme.text} mb-4 text-center flex items-center justify-center gap-2`}
         style={theme.textStyle}
       >
-        📊 Player Statistics
+        <Trophy size={20} className="text-yellow-500" />
+        Player Statistics
       </h2>
 
       {/* Tab Navigation */}
