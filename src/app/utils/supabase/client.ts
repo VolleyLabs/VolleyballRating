@@ -6,15 +6,42 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 export const setAuthToken = (jwt: string | undefined) => {
-  if (jwt) {
-    const client = supabase as unknown as {
-      _headers: Record<string, string>;
-    };
-    client._headers = {
-      ...client._headers,
-      Authorization: `Bearer ${jwt}`,
-    };
+  if (!jwt) return;
+
+  // Try the official APIs first (vary between v1/v2)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const auth: any = (supabase as any).auth;
+
+    if (auth) {
+      // Supabase-js v2 prefers setSession. It expects both access & refresh tokens.
+      if (typeof auth.setSession === "function") {
+        void auth.setSession({
+          access_token: jwt,
+          refresh_token: jwt, // dummy value – required param but unused for our flow
+        });
+        return;
+      }
+
+      // Supabase-js v1 exposes setAuth which is simpler.
+      if (typeof auth.setAuth === "function") {
+        auth.setAuth(jwt);
+        return;
+      }
+    }
+  } catch (err) {
+    console.error(
+      "setAuthToken: failed to set via auth API, falling back to header hack",
+      err
+    );
   }
+
+  // Fallback: mutate internal headers (works but may be overwritten later).
+  const client = supabase as unknown as { _headers: Record<string, string> };
+  client._headers = {
+    ...client._headers,
+    Authorization: `Bearer ${jwt}`,
+  };
 };
 
 export const createClient = () => supabase;
