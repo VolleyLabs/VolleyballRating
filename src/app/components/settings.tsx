@@ -3,6 +3,7 @@
 import { useTelegram } from "@context/telegram-context";
 import { useState, useEffect, useCallback } from "react";
 import { getUser, upsertUser } from "@/app/lib/supabase-queries";
+import { supabase } from "@/app/lib/supabase-queries";
 
 export default function Settings() {
   const { theme, webApp } = useTelegram();
@@ -50,6 +51,9 @@ export default function Settings() {
 
   const handleSave = async () => {
     if (!userId) return;
+
+    const { data: sess } = await supabase.auth.getSession();
+    console.log("Settings: current session user id", sess.session?.user?.id);
 
     setIsSaving(true);
     setSaveMessage("");
