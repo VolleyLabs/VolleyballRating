@@ -52,10 +52,22 @@ export default function ScoreHeader({
           </div>
         </div>
         <div className="flex space-x-2 flex-shrink-0">
-          {/* Audio button skeleton */}
-          <div className="h-10 w-16 bg-gray-300 dark:bg-gray-700 rounded"></div>
-          {/* Fullscreen button skeleton */}
-          <div className="h-10 w-10 bg-gray-300 dark:bg-gray-700 rounded"></div>
+          {/* Audio Settings Button (disabled) */}
+          <button
+            disabled
+            className="text-lg bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded flex items-center space-x-1 opacity-50 cursor-default"
+          >
+            <Volume2 size={18} />
+            <span className="text-sm hidden sm:inline">--</span>
+          </button>
+
+          {/* Fullscreen Button (disabled) */}
+          <button
+            disabled
+            className="text-2xl bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded opacity-50 cursor-default"
+          >
+            ⛶
+          </button>
         </div>
       </div>
     );
