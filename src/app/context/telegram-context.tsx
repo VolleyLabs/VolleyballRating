@@ -45,17 +45,9 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   // Function to initialize Supabase with the token
   const initializeSupabase = (accessToken: string) => {
     supabase.auth
-      .setSession({
-        access_token: accessToken,
-        refresh_token: accessToken, // use same token to satisfy library
-      })
-      .then(() => {
-        supabase.auth.getSession().then(({ data }) => {
-          console.log(
-            "TelegramProvider: session after setSession",
-            data.session?.user?.id
-          );
-        });
+      .setSession({ access_token: accessToken, refresh_token: "" })
+      .then(({ data, error }) => {
+        console.log("TelegramProvider: setSession result", data, error);
       });
   };
 
