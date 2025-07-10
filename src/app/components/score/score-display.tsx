@@ -547,9 +547,9 @@ export default function ScoreDisplay({
       />
 
       {/* Header with day selector and controls */}
-      <div className="flex justify-between items-center mb-6 relative z-10">
-        <div className="flex-1">{daySelector}</div>
-        <div className="flex space-x-2">
+      <div className="flex items-center gap-3 mb-6 relative z-10">
+        <div className="flex-1 min-w-0">{daySelector}</div>
+        <div className="flex space-x-2 flex-shrink-0">
           {/* Audio Settings Button */}
           <button
             onClick={async () => {
