@@ -16,11 +16,21 @@ export const setAuthToken = (jwt: string | undefined) => {
     if (auth) {
       // Supabase-js v2 prefers setSession. It expects both access & refresh tokens.
       if (typeof auth.setSession === "function") {
-        void auth.setSession({
-          access_token: jwt,
-          refresh_token: jwt, // dummy value – required param but unused for our flow
-        });
-        return;
+        return (
+          auth
+            .setSession({ access_token: jwt, refresh_token: "" })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .then(({ data, error }: { data: any; error: any }) => {
+              if (error) {
+                console.error("setAuthToken: setSession error", error);
+              } else {
+                console.log(
+                  "setAuthToken: session set for user",
+                  data.session?.user?.id
+                );
+              }
+            })
+        );
       }
 
       // Supabase-js v1 exposes setAuth which is simpler.
