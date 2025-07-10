@@ -199,11 +199,11 @@ export async function upsertUser(
   username: string | undefined,
   photo_url: string | undefined,
   pickup_height?: number,
-  share_stats?: boolean,
   language_code?: string,
   is_premium?: boolean,
   allows_write_to_pm?: boolean,
-  is_bot?: boolean
+  is_bot?: boolean,
+  share_stats?: boolean
 ) {
   try {
     // Check if user exists
@@ -267,11 +267,11 @@ export async function upsertUser(
           username,
           photo_url,
           pickup_height,
-          share_stats,
           language_code,
           is_premium,
           allows_write_to_pm,
           is_bot,
+          share_stats,
           last_auth: new Date().toISOString(),
         },
       ]);

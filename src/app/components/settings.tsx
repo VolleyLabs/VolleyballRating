@@ -65,6 +65,10 @@ export default function Settings() {
         user.username || undefined,
         user.photo_url || undefined,
         pickupHeight,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
         shareStats
       );
 
