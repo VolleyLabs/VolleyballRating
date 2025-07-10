@@ -42,7 +42,7 @@ export default function ScoreHeader({
       <div className="flex items-center gap-3 mb-6 relative z-10 animate-pulse">
         <div className="flex-1 min-w-0">
           {/* Day Selector Skeleton */}
-          <div className="flex space-x-3 overflow-x-auto py-2 px-1">
+          <div className="flex space-x-3 overflow-x-auto py-2 px-1 scrollbar-hide">
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}

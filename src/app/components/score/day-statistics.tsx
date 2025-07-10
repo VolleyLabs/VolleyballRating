@@ -168,7 +168,7 @@ export default function DayStatistics({
         {dayStats.errors > 0 && (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <AlertTriangle size={16} className="text-yellow-900" />
+              <AlertTriangle size={16} className="text-yellow-400" />
               <span className={`text-sm ${theme.text}`} style={theme.textStyle}>
                 Errors
               </span>
