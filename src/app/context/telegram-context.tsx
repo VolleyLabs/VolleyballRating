@@ -7,13 +7,10 @@ import {
   useState,
   ReactNode,
 } from "react";
-import {
-  isAdmin as checkIsAdmin,
-  supabase,
-  upsertUser,
-} from "../lib/supabase-queries";
+import { isAdmin as checkIsAdmin, upsertUser } from "../lib/supabase-queries";
 import { useTelegramTheme } from "../utils/telegram-theme";
 import ConsoleLoggerScript from "../components/ConsoleLoggerScript";
+import { recreateSupabaseClient } from "../utils/supabase/client";
 
 interface TelegramContextType {
   webApp: WebApp | null; // Make webApp nullable for SSR
@@ -44,11 +41,11 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
 
   // Function to initialize Supabase with the token
   const initializeSupabase = (accessToken: string) => {
-    supabase.auth
-      .setSession({ access_token: accessToken, refresh_token: "" })
-      .then(({ data, error }) => {
-        console.log("TelegramProvider: setSession result", data, error);
-      });
+    recreateSupabaseClient(accessToken);
+    console.log(
+      "TelegramProvider: recreated Supabase client with JWT",
+      accessToken.substring(0, 10) + "…"
+    );
   };
 
   // Function to check if token is expired or will expire soon
