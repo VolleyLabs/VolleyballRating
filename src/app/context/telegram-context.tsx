@@ -10,7 +10,7 @@ import {
 import { isAdmin as checkIsAdmin, upsertUser } from "../lib/supabase-queries";
 import { useTelegramTheme } from "../utils/telegram-theme";
 import ConsoleLoggerScript from "../components/ConsoleLoggerScript";
-import { recreateSupabaseClient } from "../utils/supabase/client";
+import { setAuthToken } from "../utils/supabase/client";
 
 interface TelegramContextType {
   webApp: WebApp | null; // Make webApp nullable for SSR
@@ -41,9 +41,9 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
 
   // Function to initialize Supabase with the token
   const initializeSupabase = (accessToken: string) => {
-    recreateSupabaseClient(accessToken);
+    setAuthToken(accessToken);
     console.log(
-      "TelegramProvider: recreated Supabase client with JWT",
+      "TelegramProvider: set Authorization header with JWT",
       accessToken.substring(0, 10) + "…"
     );
   };
