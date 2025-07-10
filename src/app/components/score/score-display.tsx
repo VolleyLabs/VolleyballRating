@@ -575,6 +575,7 @@ export default function ScoreDisplay({
             }}
             theme={theme}
             loading={true}
+            isHistoricalView={isHistoricalView}
           />
 
           {/* Current Set Skeleton */}
@@ -597,6 +598,7 @@ export default function ScoreDisplay({
             dailyTotals={dailyTotals ?? null}
             scoreData={scoreData}
             theme={theme}
+            isHistoricalView={isHistoricalView}
           />
 
           {/* Player Statistics */}

@@ -13,6 +13,7 @@ interface DailyTotalsDisplayProps {
   scoreData: DailyScoreData;
   theme: TelegramTheme;
   loading?: boolean;
+  isHistoricalView?: boolean;
 }
 
 export default function DailyTotalsDisplay({
@@ -20,14 +21,15 @@ export default function DailyTotalsDisplay({
   scoreData,
   theme,
   loading = false,
+  isHistoricalView = false,
 }: DailyTotalsDisplayProps) {
   // Don't render if no daily totals and not loading
   if (!loading && !dailyTotals) {
     return null;
   }
 
-  // Show skeleton while loading
-  if (loading) {
+  // Show skeleton only for historical view; skip for today (no results yet)
+  if (loading && isHistoricalView) {
     return (
       <div
         className={`${theme.border} border rounded-lg p-4 mb-6 relative z-10 animate-pulse`}
@@ -57,15 +59,21 @@ export default function DailyTotalsDisplay({
         {/* Day Statistics skeleton */}
         <div className="space-y-3">
           <div className="h-5 bg-gray-300 dark:bg-gray-700 rounded w-24 mx-auto"></div>
-          <div className="grid grid-cols-2 gap-4">
+          <div
+            className={`grid ${
+              isHistoricalView ? "grid-cols-2" : "grid-cols-1"
+            } gap-4`}
+          >
             <div className="text-center">
               <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-16 mx-auto mb-1"></div>
               <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-12 mx-auto"></div>
             </div>
-            <div className="text-center">
-              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-16 mx-auto mb-1"></div>
-              <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-12 mx-auto"></div>
-            </div>
+            {isHistoricalView && (
+              <div className="text-center">
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-16 mx-auto mb-1"></div>
+                <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-12 mx-auto"></div>
+              </div>
+            )}
           </div>
         </div>
       </div>
