@@ -271,6 +271,16 @@ export default function PointsHistory({
                         </div>
                       )}
 
+                      {/* Generic message for error with no player */}
+                      {!playerInfo && point.type === "error" && (
+                        <span
+                          className={`text-xs italic ${theme.secondaryText}`}
+                          style={theme.secondaryTextStyle}
+                        >
+                          Mistake by the opposing team
+                        </span>
+                      )}
+
                       {/* Loading indicator for user data */}
                       {loadingUsers && point.player_id && !playerInfo && (
                         <div className="flex items-center space-x-2">
