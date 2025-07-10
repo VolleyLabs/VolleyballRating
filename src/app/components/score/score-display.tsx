@@ -550,6 +550,12 @@ export default function ScoreDisplay({
       />
 
       {/* Header with day selector and controls */}
+      {/*
+       * Show the header skeleton only when we are performing the very first
+       * load (i.e. there is no score data yet). When switching between days
+       * we keep the existing header visible because it does not depend on
+       * the score data that is being fetched.
+       */}
       <ScoreHeader
         daySelector={daySelector}
         onAudioSettingsClick={() => setShowAudioModal(true)}
@@ -558,7 +564,7 @@ export default function ScoreDisplay({
         audioReady={audioReady}
         onAudioReadyChange={setAudioReady}
         volume={volume}
-        loading={loading}
+        loading={loading && !scoreData}
       />
 
       {/* Daily Totals Section */}
