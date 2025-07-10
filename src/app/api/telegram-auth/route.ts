@@ -117,14 +117,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user is admin
-    const { data: adminData, error: adminError } = await supabaseAdmin
-      .from("admins")
-      .select("id")
-      .eq("user_id", userData.id)
+    // Check if user has admin flag in users table
+    const { data: adminRow, error: adminErr } = await supabaseAdmin
+      .from("users")
+      .select("admin")
+      .eq("id", userData.id)
       .single();
 
-    const isAdmin = !!adminData && !adminError;
+    if (adminErr) {
+      console.error("Error fetching admin status:", adminErr);
+    }
+
+    const isAdmin = adminRow?.admin === true;
 
     // Generate JWT with Supabase JWT secret
     const supabaseJwtSecret = process.env.SUPABASE_JWT_SECRET;
