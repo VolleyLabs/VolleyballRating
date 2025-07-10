@@ -139,12 +139,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const now = Math.floor(Date.now() / 1000);
+    const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
     const payload = {
+      iss: `${supaUrl}/auth/v1`,
+      iat: now,
       aud: "authenticated",
       role: "authenticated",
+      user_role: "user",
       sub: userData.id.toString(),
       email: `${userData.id}@telegram.user`, // Using fake email for compatibility
-      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+      exp: now + 24 * 60 * 60, // 24 hours
+      aal: "aal1",
+      amr: [
+        {
+          method: "telegram",
+          timestamp: now,
+        },
+      ],
       user_metadata: {
         telegram_id: userData.id,
         telegram_username: userData.username,
@@ -153,7 +165,8 @@ export async function POST(request: NextRequest) {
         is_admin: isAdmin, // Add admin status to user_metadata
       },
       app_metadata: {
-        role: isAdmin ? "admin" : "user", // Add role to app_metadata for RLS
+        provider: "telegram",
+        providers: ["telegram"],
       },
     };
 
