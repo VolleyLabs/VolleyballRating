@@ -3,6 +3,7 @@
 import { useTelegram } from "@context/telegram-context";
 import CurrentSetDisplay from "./current-set-display";
 import ScoreHeader from "./score-header";
+import DailyTotalsDisplay from "./daily-totals-display";
 
 export default function ScoreSkeleton() {
   const { theme } = useTelegram();
@@ -24,27 +25,16 @@ export default function ScoreSkeleton() {
       />
 
       {/* Daily Totals Skeleton */}
-      <div
-        className={`${theme.border} border rounded-lg p-4 mb-6`}
-        style={theme.borderStyle}
-      >
-        {/* Match Results title */}
-        <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-32 mx-auto mb-3"></div>
-        <div className="flex justify-between items-center">
-          {/* Left sets */}
-          <div className="flex flex-col items-center">
-            <div className="h-12 w-8 bg-gray-300 dark:bg-gray-700 rounded mb-1"></div>
-            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-16"></div>
-          </div>
-          {/* Separator */}
-          <div className="h-6 w-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
-          {/* Right sets */}
-          <div className="flex flex-col items-center">
-            <div className="h-12 w-8 bg-gray-300 dark:bg-gray-700 rounded mb-1"></div>
-            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-16"></div>
-          </div>
-        </div>
-      </div>
+      <DailyTotalsDisplay
+        dailyTotals={null}
+        scoreData={{
+          sets: null,
+          totals: null,
+          points: [],
+        }}
+        theme={theme}
+        loading={true}
+      />
 
       {/* Current Set Skeleton - Now handled by CurrentSetDisplay component */}
       <CurrentSetDisplay

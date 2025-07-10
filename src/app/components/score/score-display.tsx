@@ -13,10 +13,10 @@ import {
 import AudioSettingsModal from "./audio-settings-modal";
 import PointsHistory from "./points-history";
 import PlayerStatistics from "./player-statistics";
-import DayStatistics from "./day-statistics";
 import CurrentSetDisplay from "./current-set-display";
 import ScoreHeader from "./score-header";
-import { Plus, Settings, Award } from "lucide-react";
+import DailyTotalsDisplay from "./daily-totals-display";
+import { Plus, Settings } from "lucide-react";
 
 // Global audio instances
 const audioCache = new AudioCache();
@@ -559,53 +559,11 @@ export default function ScoreDisplay({
       />
 
       {/* Daily Totals Section */}
-      {dailyTotals && (
-        <div
-          className={`${theme.border} border rounded-lg p-4 mb-6 relative z-10`}
-          style={theme.borderStyle}
-        >
-          <h2
-            className={`text-lg font-semibold ${theme.text} mb-3 text-center flex items-center justify-center gap-2`}
-            style={theme.textStyle}
-          >
-            <Award size={20} className="text-purple-500" />
-            Match Results
-          </h2>
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex flex-col items-center">
-              <div className="text-blue-500 font-bold text-3xl mb-1">
-                {dailyTotals.left_sets}
-              </div>
-              <div
-                className={`text-sm ${theme.secondaryText} font-medium`}
-                style={theme.secondaryTextStyle}
-              >
-                LEFT SETS
-              </div>
-            </div>
-            <div
-              className={`text-2xl ${theme.text} font-light`}
-              style={theme.textStyle}
-            >
-              —
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-red-500 font-bold text-3xl mb-1">
-                {dailyTotals.right_sets}
-              </div>
-              <div
-                className={`text-sm ${theme.secondaryText} font-medium`}
-                style={theme.secondaryTextStyle}
-              >
-                RIGHT SETS
-              </div>
-            </div>
-          </div>
-
-          {/* Day Statistics */}
-          <DayStatistics scoreData={scoreData} theme={theme} />
-        </div>
-      )}
+      <DailyTotalsDisplay
+        dailyTotals={dailyTotals}
+        scoreData={scoreData}
+        theme={theme}
+      />
 
       {/* Player Statistics */}
       <PlayerStatistics
