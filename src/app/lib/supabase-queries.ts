@@ -249,11 +249,13 @@ export async function upsertUser(
       if (Object.keys(updates).length > 0) {
         console.log("upsertUser: prepared updates", updates);
 
-        const { data: updateData, error: updateError } = await supabase
-          .from("users")
-          .update(updates)
-          .eq("id", id)
-          .select();
+        const {
+          data: updateData,
+          error: updateError,
+          status,
+        } = await supabase.from("users").update(updates).match({ id });
+
+        console.log("upsertUser: update status", status);
 
         if (updateError) {
           console.error("upsertUser: update error", updateError);
