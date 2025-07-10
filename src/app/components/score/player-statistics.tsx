@@ -90,14 +90,8 @@ export default function PlayerStatistics({
     list.findIndex((p) => p.playerId === playerId) + 1;
 
   // Component to show rank badge conditionally
-  const RankBadge = ({
-    rank,
-    playerId,
-  }: {
-    rank: number;
-    playerId: number;
-  }) => {
-    if (rank <= 3 || (userId && playerId === userId)) {
+  const RankBadge = ({ rank }: { rank: number; playerId: number }) => {
+    if (rank <= 3) {
       return (
         <span
           className={`text-sm font-bold ${theme.secondaryText} w-6 text-center`}
