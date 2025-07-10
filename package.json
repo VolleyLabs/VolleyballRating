@@ -20,7 +20,7 @@
     "supabase:push": "npx supabase db push",
     "supabase:types": "supabase gen types typescript --local > database.types.gen.ts",
     "supabase:types:remote": "supabase gen types typescript --linked > database.types.gen.ts",
-    "migration:new": "npx supabase stop --all && npx supabase db diff -f $1",
+    "migration:new": "npx supabase db diff -f $1",
     "migration:from-diff": "npx supabase db diff --use-migra -f $1",
     "migration:up": "npx supabase migration up"
   },

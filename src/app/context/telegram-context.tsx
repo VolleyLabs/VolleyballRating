@@ -231,14 +231,44 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           webApp.onEvent("themeChanged", handleThemeChange);
 
           if (initData?.user) {
-            const { id, first_name, last_name, username, photo_url } =
-              initData.user;
+            const {
+              id,
+              first_name,
+              last_name,
+              username,
+              photo_url,
+              language_code,
+              is_premium,
+              allows_write_to_pm,
+              is_bot,
+            } = initData.user as unknown as {
+              id: number;
+              first_name: string;
+              last_name?: string;
+              username?: string;
+              photo_url?: string;
+              language_code?: string;
+              is_premium?: boolean;
+              allows_write_to_pm?: boolean;
+              is_bot?: boolean;
+            };
 
             // Save user ID to state and localStorage
             setUserId(id);
             localStorage.setItem("telegram_user_id", id.toString());
 
-            await upsertUser(id, first_name, last_name, username, photo_url);
+            await upsertUser(
+              id,
+              first_name,
+              last_name,
+              username,
+              photo_url,
+              undefined,
+              language_code,
+              is_premium,
+              allows_write_to_pm,
+              is_bot
+            );
 
             // User has Telegram ID, not anonymous
             setIsAnonymous(false);

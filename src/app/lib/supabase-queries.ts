@@ -196,7 +196,11 @@ export async function upsertUser(
   last_name: string | undefined,
   username: string | undefined,
   photo_url: string | undefined,
-  pickup_height?: number
+  pickup_height?: number,
+  language_code?: string,
+  is_premium?: boolean,
+  allows_write_to_pm?: boolean,
+  is_bot?: boolean
 ) {
   try {
     // Check if user exists
@@ -227,6 +231,16 @@ export async function upsertUser(
       // Only update app-specific fields when explicitly provided
       if (pickup_height !== undefined) updates.pickup_height = pickup_height;
 
+      // Telegram metadata (update if provided)
+      if (language_code !== undefined) updates.language_code = language_code;
+      if (is_premium !== undefined) updates.is_premium = is_premium;
+      if (allows_write_to_pm !== undefined)
+        updates.allows_write_to_pm = allows_write_to_pm;
+      if (is_bot !== undefined) updates.is_bot = is_bot;
+
+      // Always bump last_auth timestamp to now
+      updates.last_auth = new Date().toISOString();
+
       // Only perform update if we have fields to update
       if (Object.keys(updates).length > 0) {
         const { error: updateError } = await supabase
@@ -249,6 +263,11 @@ export async function upsertUser(
           username,
           photo_url,
           pickup_height,
+          language_code,
+          is_premium,
+          allows_write_to_pm,
+          is_bot,
+          last_auth: new Date().toISOString(),
         },
       ]);
 

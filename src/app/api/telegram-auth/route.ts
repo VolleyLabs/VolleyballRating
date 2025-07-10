@@ -70,7 +70,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User data missing" }, { status: 400 });
     }
 
-    const userData = JSON.parse(userString);
+    interface TelegramUserData {
+      id: number;
+      first_name: string;
+      last_name?: string;
+      username?: string;
+      photo_url?: string;
+      language_code?: string;
+      is_premium?: boolean;
+      allows_write_to_pm?: boolean;
+      is_bot?: boolean;
+    }
+
+    const userData = JSON.parse(userString) as TelegramUserData;
 
     // Create Supabase admin client to interact with database
     const supabaseAdmin = createClient(
@@ -78,38 +90,31 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY || ""
     );
 
-    // Check if user exists or create them
-    const { data: existingUser, error: userQueryError } = await supabaseAdmin
-      .from("users")
-      .select()
-      .eq("id", userData.id)
-      .single();
+    // Check if user exists or create/update them
+    // Prepare user record for upsert (insert or update)
+    const userRecord = {
+      id: userData.id,
+      first_name: userData.first_name,
+      last_name: userData.last_name || null,
+      username: userData.username || null,
+      photo_url: userData.photo_url || null,
+      language_code: userData.language_code || null,
+      is_premium: userData.is_premium ?? null,
+      allows_write_to_pm: userData.allows_write_to_pm ?? null,
+      is_bot: userData.is_bot ?? false,
+      last_auth: new Date().toISOString(),
+    };
 
-    if (userQueryError && userQueryError.code !== "PGRST116") {
-      console.error("Error checking user:", userQueryError);
+    const { error: upsertError } = await supabaseAdmin
+      .from("users")
+      .upsert(userRecord, { onConflict: "id" });
+
+    if (upsertError) {
+      console.error("Error upserting user:", upsertError);
       return NextResponse.json(
-        { error: "Database query failed" },
+        { error: "Failed to upsert user" },
         { status: 500 }
       );
-    }
-
-    if (!existingUser) {
-      // Insert user into database
-      const { error: insertError } = await supabaseAdmin.from("users").insert({
-        id: userData.id,
-        first_name: userData.first_name,
-        last_name: userData.last_name || null,
-        username: userData.username || null,
-        photo_url: userData.photo_url || null,
-      });
-
-      if (insertError) {
-        console.error("Error creating user:", insertError);
-        return NextResponse.json(
-          { error: "Failed to create user" },
-          { status: 500 }
-        );
-      }
     }
 
     // Check if user is admin
