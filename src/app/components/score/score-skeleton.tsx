@@ -1,6 +1,7 @@
 "use client";
 
 import { useTelegram } from "@context/telegram-context";
+import CurrentSetDisplay from "./current-set-display";
 
 export default function ScoreSkeleton() {
   const { theme } = useTelegram();
@@ -54,49 +55,18 @@ export default function ScoreSkeleton() {
         </div>
       </div>
 
-      {/* Current Set Skeleton */}
-      <div className="relative z-10 flex-1 flex flex-col">
-        {/* Current Set title */}
-        <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-28 mx-auto mb-6"></div>
-
-        {/* Score Display */}
-        <div className="flex justify-between items-center flex-1 mb-8">
-          {/* Left Team */}
-          <div className="flex flex-col items-center flex-1 justify-center">
-            {/* LEFT label */}
-            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-8 mb-4"></div>
-            {/* Score skeleton - large circle */}
-            <div className="w-32 h-32 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
-              <div className="w-16 h-16 bg-gray-400 dark:bg-gray-600 rounded"></div>
-            </div>
-          </div>
-
-          {/* VS Separator */}
-          <div className="px-4">
-            <div className="h-6 w-6 bg-gray-300 dark:bg-gray-700 rounded"></div>
-          </div>
-
-          {/* Right Team */}
-          <div className="flex flex-col items-center flex-1 justify-center">
-            {/* RIGHT label */}
-            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-10 mb-4"></div>
-            {/* Score skeleton - large circle */}
-            <div className="w-32 h-32 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
-              <div className="w-16 h-16 bg-gray-400 dark:bg-gray-600 rounded"></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Status Indicators Skeleton */}
-        <div className="flex items-center justify-center pt-6 border-t border-gray-200 dark:border-gray-700 mt-auto">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
-              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-20"></div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Current Set Skeleton - Now handled by CurrentSetDisplay component */}
+      <CurrentSetDisplay
+        currentSets={null}
+        leftFlash={false}
+        rightFlash={false}
+        theme={theme}
+        audioEnabled={false}
+        audioReady={false}
+        onAudioReadyChange={() => {}}
+        isHistoricalView={false}
+        loading={true}
+      />
     </div>
   );
 }

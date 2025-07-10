@@ -15,6 +15,7 @@ import AudioSettingsModal from "./audio-settings-modal";
 import PointsHistory from "./points-history";
 import PlayerStatistics from "./player-statistics";
 import DayStatistics from "./day-statistics";
+import CurrentSetDisplay from "./current-set-display";
 import { Plus, Settings, Volume2, Award } from "lucide-react";
 
 // Global audio instances
@@ -655,111 +656,17 @@ export default function ScoreDisplay({
         loadingUsers={loadingUsers}
       />
 
-      {/* Current Set Score Display - Expanded */}
-      {!isHistoricalView && currentSets && !currentSets.is_finished && (
-        <div className="relative z-10 flex-shrink-0">
-          <h2
-            className={`text-xl font-semibold ${theme.text} mb-6 text-center`}
-            style={theme.textStyle}
-          >
-            🔥 Current Set
-          </h2>
-          <div
-            className="flex justify-between items-center mb-4 cursor-pointer"
-            onClick={async () => {
-              // Try to initialize audio when user taps the score area
-              if (audioEnabled && !audioReady) {
-                const success = await initializeAudio();
-                setAudioReady(success);
-                if (success) {
-                  console.log("Audio initialized via score tap");
-                }
-              }
-            }}
-            title={!audioReady && audioEnabled ? "Tap to enable audio" : ""}
-          >
-            {/* Left Team */}
-            <div className="flex flex-col items-center flex-1 justify-center">
-              <div
-                className={`text-sm ${
-                  theme.secondaryText
-                } font-semibold mb-4 tracking-wide transition-all duration-1000 ${
-                  currentSets?.serving_team === "left"
-                    ? "text-blue-400 brightness-125"
-                    : ""
-                }`}
-                style={theme.secondaryTextStyle}
-              >
-                LEFT
-              </div>
-              <div
-                className={`font-light text-blue-500 transition-all duration-300 ${
-                  leftFlash ? "scale-110 brightness-150" : ""
-                } ${
-                  currentSets?.serving_team === "left" ? "brightness-110" : ""
-                }`}
-                style={{
-                  fontSize: "8rem",
-                  lineHeight: "0.8",
-                  fontFamily: "system-ui, -apple-system",
-                  textShadow: leftFlash
-                    ? "0 0 40px rgba(59, 130, 246, 0.9)"
-                    : currentSets?.serving_team === "left"
-                    ? "0 0 15px rgba(59, 130, 246, 0.5)"
-                    : "0 0 5px rgba(59, 130, 246, 0.3)",
-                }}
-              >
-                {currentSets?.left_score || 0}
-              </div>
-            </div>
-
-            {/* VS Separator */}
-            <div className="px-4">
-              <div
-                className={`text-xl ${theme.secondaryText} font-medium`}
-                style={theme.secondaryTextStyle}
-              >
-                VS
-              </div>
-            </div>
-
-            {/* Right Team */}
-            <div className="flex flex-col items-center flex-1 justify-center">
-              <div
-                className={`text-sm ${
-                  theme.secondaryText
-                } font-semibold mb-4 tracking-wide transition-all duration-1000 ${
-                  currentSets?.serving_team === "right"
-                    ? "text-red-400 brightness-125"
-                    : ""
-                }`}
-                style={theme.secondaryTextStyle}
-              >
-                RIGHT
-              </div>
-              <div
-                className={`font-light text-red-500 transition-all duration-300 ${
-                  rightFlash ? "scale-110 brightness-150" : ""
-                } ${
-                  currentSets?.serving_team === "right" ? "brightness-110" : ""
-                }`}
-                style={{
-                  fontSize: "8rem",
-                  lineHeight: "0.8",
-                  fontFamily: "system-ui, -apple-system",
-                  textShadow: rightFlash
-                    ? "0 0 40px rgba(239, 68, 68, 0.9)"
-                    : currentSets?.serving_team === "right"
-                    ? "0 0 15px rgba(239, 68, 68, 0.5)"
-                    : "0 0 5px rgba(239, 68, 68, 0.3)",
-                }}
-              >
-                {currentSets?.right_score || 0}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Current Set Score Display */}
+      <CurrentSetDisplay
+        currentSets={currentSets}
+        leftFlash={leftFlash}
+        rightFlash={rightFlash}
+        theme={theme}
+        audioEnabled={audioEnabled}
+        audioReady={audioReady}
+        onAudioReadyChange={setAudioReady}
+        isHistoricalView={isHistoricalView}
+      />
 
       {/* Points History Section */}
       <PointsHistory
