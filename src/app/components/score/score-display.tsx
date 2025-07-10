@@ -15,7 +15,7 @@ import AudioSettingsModal from "./audio-settings-modal";
 import PointsHistory from "./points-history";
 import PlayerStatistics from "./player-statistics";
 import DayStatistics from "./day-statistics";
-import { Plus, Settings, Volume2 } from "lucide-react";
+import { Plus, Settings, Volume2, Award } from "lucide-react";
 
 // Global audio instances
 const audioCache = new AudioCache();
@@ -606,10 +606,11 @@ export default function ScoreDisplay({
           style={theme.borderStyle}
         >
           <h2
-            className={`text-lg font-semibold ${theme.text} mb-3 text-center`}
+            className={`text-lg font-semibold ${theme.text} mb-3 text-center flex items-center justify-center gap-2`}
             style={theme.textStyle}
           >
-            📊 Match Results
+            <Award size={20} className="text-purple-500" />
+            Match Results
           </h2>
           <div className="flex justify-between items-center mb-4">
             <div className="flex flex-col items-center">
