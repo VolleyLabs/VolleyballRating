@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useTelegram } from "@context/telegram-context";
 import { DailyScoreData } from "@lib/supabase-queries";
-import { User } from "@/../database.types";
+import { User } from "../../../../database.types";
 import { Crosshair, Swords, Shield, Trophy } from "lucide-react";
 
 interface PlayerStatisticsProps {
@@ -18,7 +18,7 @@ export default function PlayerStatistics({
   allUsers,
   loadingUsers,
 }: PlayerStatisticsProps) {
-  const { theme } = useTelegram();
+  const { theme, userId } = useTelegram();
   const [activeStatsTab, setActiveStatsTab] = useState<
     "total" | "attacks" | "blocks" | "serves"
   >("total");
@@ -84,6 +84,47 @@ export default function PlayerStatistics({
   };
 
   const topPlayers = calculateTopPlayers();
+
+  // Utility: global rank in a sorted array
+  const getRank = (playerId: number, list: { playerId: number }[]): number =>
+    list.findIndex((p) => p.playerId === playerId) + 1;
+
+  // Component to show rank badge conditionally
+  const RankBadge = ({
+    rank,
+    playerId,
+  }: {
+    rank: number;
+    playerId: number;
+  }) => {
+    if (rank <= 3 || (userId && playerId === userId)) {
+      return (
+        <span
+          className={`text-sm font-bold ${theme.secondaryText} w-6 text-center`}
+          style={theme.secondaryTextStyle}
+        >
+          #{rank}
+        </span>
+      );
+    }
+    return null;
+  };
+
+  // Prepare list: always show top 3 players plus the current user (if not already included)
+  const prepareDisplayList = (
+    arr: { playerId: number; [key: string]: number }[]
+  ) => {
+    const topThree = arr.slice(0, 3);
+    const current = userId ? arr.find((p) => p.playerId === userId) : undefined;
+    if (current && !topThree.some((p) => p.playerId === current.playerId)) {
+      return [...topThree, current];
+    }
+    return topThree;
+  };
+
+  const topAttackersDisplay = prepareDisplayList(topPlayers.topAttackers);
+  const topBlockersDisplay = prepareDisplayList(topPlayers.topBlockers);
+  const topAceServersDisplay = prepareDisplayList(topPlayers.topAceServers);
 
   // Don't render if no points data
   if (!scoreData.points || scoreData.points.length === 0) {
@@ -175,7 +216,7 @@ export default function PlayerStatistics({
       <div className="space-y-3">
         {activeStatsTab === "total" &&
           (() => {
-            // Create a comprehensive list of all players with their stats directly from points data
+            // Compile stats for all players from points data
             const allPlayersStats = new Map<
               number,
               {
@@ -188,7 +229,6 @@ export default function PlayerStatistics({
               }
             >();
 
-            // Calculate stats for all players from the actual points data
             if (scoreData.points && scoreData.points.length > 0) {
               scoreData.points.forEach((point) => {
                 if (point.player_id) {
@@ -201,7 +241,6 @@ export default function PlayerStatistics({
                     total: 0,
                   };
 
-                  // Count points by type
                   if (point.type === "attack") stats.attacks++;
                   else if (point.type === "block") stats.blocks++;
                   else if (point.type === "ace") stats.aces++;
@@ -219,19 +258,25 @@ export default function PlayerStatistics({
               });
             }
 
-            // Convert to array and sort by total points, then by attack points as tiebreaker
             const sortedPlayers = Array.from(allPlayersStats.entries())
               .map(([playerId, stats]) => ({ playerId, ...stats }))
               .sort((a, b) => {
-                // Primary sort: total points (descending)
                 if (b.total !== a.total) {
                   return b.total - a.total;
                 }
-                // Tiebreaker: attack points (descending)
                 return b.attacks - a.attacks;
               });
 
-            return sortedPlayers.map((player, index) => {
+            const topThree = sortedPlayers.slice(0, 3);
+            const current = userId
+              ? sortedPlayers.find((p) => p.playerId === userId)
+              : undefined;
+            const displayPlayers =
+              current && !topThree.some((p) => p.playerId === current.playerId)
+                ? [...topThree, current]
+                : topThree;
+
+            return displayPlayers.map((player) => {
               const userInfo = allUsers.get(player.playerId);
               return (
                 <div
@@ -239,12 +284,10 @@ export default function PlayerStatistics({
                   className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
                 >
                   <div className="flex items-center space-x-3">
-                    <span
-                      className={`text-sm font-bold ${theme.secondaryText} w-6 text-center`}
-                      style={theme.secondaryTextStyle}
-                    >
-                      #{index + 1}
-                    </span>
+                    <RankBadge
+                      rank={getRank(player.playerId, sortedPlayers)}
+                      playerId={player.playerId}
+                    />
                     {loadingUsers && !userInfo ? (
                       <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse"></div>
@@ -364,7 +407,7 @@ export default function PlayerStatistics({
           })()}
 
         {activeStatsTab === "attacks" &&
-          topPlayers.topAttackers.map((player, index) => {
+          topAttackersDisplay.map((player) => {
             const userInfo = allUsers.get(player.playerId);
             return (
               <div
@@ -372,12 +415,10 @@ export default function PlayerStatistics({
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
-                  <span
-                    className={`text-sm font-bold ${theme.secondaryText} w-6 text-center`}
-                    style={theme.secondaryTextStyle}
-                  >
-                    #{index + 1}
-                  </span>
+                  <RankBadge
+                    rank={getRank(player.playerId, topPlayers.topAttackers)}
+                    playerId={player.playerId}
+                  />
                   {loadingUsers && !userInfo ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse"></div>
@@ -433,7 +474,7 @@ export default function PlayerStatistics({
           })}
 
         {activeStatsTab === "blocks" &&
-          topPlayers.topBlockers.map((player, index) => {
+          topBlockersDisplay.map((player) => {
             const userInfo = allUsers.get(player.playerId);
             return (
               <div
@@ -441,12 +482,10 @@ export default function PlayerStatistics({
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
-                  <span
-                    className={`text-sm font-bold ${theme.secondaryText} w-6 text-center`}
-                    style={theme.secondaryTextStyle}
-                  >
-                    #{index + 1}
-                  </span>
+                  <RankBadge
+                    rank={getRank(player.playerId, topPlayers.topBlockers)}
+                    playerId={player.playerId}
+                  />
                   {loadingUsers && !userInfo ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse"></div>
@@ -502,7 +541,7 @@ export default function PlayerStatistics({
           })}
 
         {activeStatsTab === "serves" &&
-          topPlayers.topAceServers.map((player, index) => {
+          topAceServersDisplay.map((player) => {
             const userInfo = allUsers.get(player.playerId);
             return (
               <div
@@ -510,12 +549,10 @@ export default function PlayerStatistics({
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
-                  <span
-                    className={`text-sm font-bold ${theme.secondaryText} w-6 text-center`}
-                    style={theme.secondaryTextStyle}
-                  >
-                    #{index + 1}
-                  </span>
+                  <RankBadge
+                    rank={getRank(player.playerId, topPlayers.topAceServers)}
+                    playerId={player.playerId}
+                  />
                   {loadingUsers && !userInfo ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse"></div>

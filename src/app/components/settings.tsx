@@ -2,13 +2,14 @@
 
 import { useTelegram } from "@context/telegram-context";
 import { useState, useEffect, useCallback } from "react";
-import { getUser, upsertUser } from "@/app/lib/supabase-queries";
+import { getUser, upsertUser, supabase } from "@/app/lib/supabase-queries";
 
 export default function Settings() {
   const { theme, webApp } = useTelegram();
   const [pickupHeight, setPickupHeight] = useState<number | undefined>(
     undefined
   );
+  const [shareStats, setShareStats] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [userId, setUserId] = useState<number | undefined>(undefined);
@@ -27,8 +28,13 @@ export default function Settings() {
     try {
       const user = await getUser(userId);
       console.log("Fetched user data:", user);
+
       if (user && user.pickup_height !== undefined) {
         setPickupHeight(user.pickup_height ?? undefined);
+      }
+
+      if (user && user.share_stats !== undefined) {
+        setShareStats(user.share_stats);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -60,6 +66,16 @@ export default function Settings() {
         user.photo_url || undefined,
         pickupHeight
       );
+
+      // Update share_stats consent
+      const { error: consentError } = await supabase
+        .from("users")
+        .update({ share_stats: shareStats })
+        .eq("id", user.id);
+
+      if (consentError) {
+        throw consentError;
+      }
 
       console.log("Updated with pickup_height:", pickupHeight);
 
@@ -102,9 +118,9 @@ export default function Settings() {
           />
           <button
             onClick={handleSave}
-            disabled={isSaving || pickupHeight === undefined}
+            disabled={isSaving}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              isSaving || pickupHeight === undefined
+              isSaving
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-blue-500 hover:bg-blue-600 text-white"
             }`}
@@ -124,6 +140,24 @@ export default function Settings() {
             {saveMessage}
           </p>
         )}
+      </div>
+
+      {/* Share Statistics Section */}
+      <div className="space-y-3">
+        <label className={`block text-sm font-medium ${theme.text}`}>
+          Share my statistics publicly
+        </label>
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={shareStats}
+            onChange={(e) => setShareStats(e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <span className={`text-sm ${theme.secondaryText || "text-gray-500"}`}>
+            Allow my statistics to be visible to others
+          </span>
+        </div>
       </div>
     </div>
   );

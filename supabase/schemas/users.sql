@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     pickup_height integer,
     is_female boolean DEFAULT false NOT NULL,
     power_group int2 DEFAULT 2 NOT NULL,
-    another_name text
+    another_name text,
+    share_stats boolean DEFAULT false NOT NULL
 );
 
 COMMENT ON TABLE public.users IS 'Main users table storing Telegram user information for the Telegram mini app.';
