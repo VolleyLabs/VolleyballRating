@@ -47,9 +47,14 @@ export const setAuthToken = (jwt: string | undefined) => {
   }
 
   // Fallback: mutate internal headers (works but may be overwritten later).
-  const client = supabase as unknown as { _headers: Record<string, string> };
-  client._headers = {
-    ...client._headers,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const client = supabase as any;
+  // Override accessToken resolver used by fetchWithAuth wrapper
+  client.accessToken = () => Promise.resolve(jwt);
+
+  // Also patch base headers so PostgREST client immediately includes it
+  client.headers = {
+    ...client.headers,
     Authorization: `Bearer ${jwt}`,
   };
 };
