@@ -2,7 +2,7 @@
 
 import { useTelegram } from "@context/telegram-context";
 import { useState, useEffect, useCallback } from "react";
-import { getUser, upsertUser, supabase } from "@/app/lib/supabase-queries";
+import { getUser, upsertUser } from "@/app/lib/supabase-queries";
 
 export default function Settings() {
   const { theme, webApp } = useTelegram();
@@ -64,18 +64,9 @@ export default function Settings() {
         user.last_name || undefined,
         user.username || undefined,
         user.photo_url || undefined,
-        pickupHeight
+        pickupHeight,
+        shareStats
       );
-
-      // Update share_stats consent
-      const { error: consentError } = await supabase
-        .from("users")
-        .update({ share_stats: shareStats })
-        .eq("id", user.id);
-
-      if (consentError) {
-        throw consentError;
-      }
 
       console.log("Updated with pickup_height:", pickupHeight);
 
@@ -116,17 +107,6 @@ export default function Settings() {
             min="140"
             max="220"
           />
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              isSaving
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600 text-white"
-            }`}
-          >
-            {isSaving ? "Saving..." : "Save"}
-          </button>
         </div>
         <p className={`text-xs ${theme.secondaryText || "text-gray-500"}`}>
           Your height for calculating pickup game compatibility
@@ -158,6 +138,21 @@ export default function Settings() {
             Allow my statistics to be visible to others
           </span>
         </div>
+      </div>
+
+      {/* Save Button */}
+      <div>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            isSaving
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600 text-white"
+          }`}
+        >
+          {isSaving ? "Saving..." : "Save"}
+        </button>
       </div>
     </div>
   );

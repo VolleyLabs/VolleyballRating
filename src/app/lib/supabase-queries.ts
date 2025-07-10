@@ -151,7 +151,8 @@ export async function getRandomVotePair(voterId: number): Promise<VotePair[]> {
         chat_id: null,
         created_at: null,
         pickup_height: null,
-      } as User,
+        share_stats: false,
+      } as unknown as User,
       playerB: {
         id: pair.player_b_id,
         first_name: pair.player_b_first_name,
@@ -162,7 +163,8 @@ export async function getRandomVotePair(voterId: number): Promise<VotePair[]> {
         chat_id: null,
         created_at: null,
         pickup_height: null,
-      } as User,
+        share_stats: false,
+      } as unknown as User,
     })) ?? []
   );
 }
@@ -197,6 +199,7 @@ export async function upsertUser(
   username: string | undefined,
   photo_url: string | undefined,
   pickup_height?: number,
+  share_stats?: boolean,
   language_code?: string,
   is_premium?: boolean,
   allows_write_to_pm?: boolean,
@@ -230,6 +233,7 @@ export async function upsertUser(
 
       // Only update app-specific fields when explicitly provided
       if (pickup_height !== undefined) updates.pickup_height = pickup_height;
+      if (share_stats !== undefined) updates.share_stats = share_stats;
 
       // Telegram metadata (update if provided)
       if (language_code !== undefined) updates.language_code = language_code;
@@ -263,6 +267,7 @@ export async function upsertUser(
           username,
           photo_url,
           pickup_height,
+          share_stats,
           language_code,
           is_premium,
           allows_write_to_pm,
