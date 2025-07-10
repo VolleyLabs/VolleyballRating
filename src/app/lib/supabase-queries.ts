@@ -247,39 +247,65 @@ export async function upsertUser(
 
       // Only perform update if we have fields to update
       if (Object.keys(updates).length > 0) {
-        const { error: updateError } = await supabase
+        console.log("upsertUser: prepared updates", updates);
+
+        const { data: updateData, error: updateError } = await supabase
           .from("users")
           .update(updates)
-          .eq("id", id);
+          .eq("id", id)
+          .select();
 
         if (updateError) {
-          console.error("Error updating user:", updateError);
+          console.error("upsertUser: update error", updateError);
           throw updateError;
         }
+
+        console.log("upsertUser: update response", updateData);
       }
     } else {
       // User doesn't exist, insert new user
-      const { error: insertError } = await supabase.from("users").insert([
-        {
-          id,
-          first_name,
-          last_name,
-          username,
-          photo_url,
-          pickup_height,
-          language_code,
-          is_premium,
-          allows_write_to_pm,
-          is_bot,
-          share_stats,
-          last_auth: new Date().toISOString(),
-        },
-      ]);
+      const userRecord = {
+        id,
+        first_name,
+        last_name,
+        username,
+        photo_url,
+        pickup_height,
+        language_code,
+        is_premium,
+        allows_write_to_pm,
+        is_bot,
+        share_stats,
+        last_auth: new Date().toISOString(),
+      };
+      console.log("upsertUser: inserting new user record", userRecord);
+
+      const { data: insertData, error: insertError } = await supabase
+        .from("users")
+        .insert([
+          {
+            id,
+            first_name,
+            last_name,
+            username,
+            photo_url,
+            pickup_height,
+            language_code,
+            is_premium,
+            allows_write_to_pm,
+            is_bot,
+            share_stats,
+            last_auth: new Date().toISOString(),
+          },
+        ])
+        .select();
 
       if (insertError) {
-        console.error("Error inserting new user:", insertError);
+        console.error("upsertUser: insert error", insertError);
         throw insertError;
       }
+
+      console.log("upsertUser: insert response", insertData);
     }
 
     return true;
