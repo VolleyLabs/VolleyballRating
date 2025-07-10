@@ -90,11 +90,7 @@ export default function DayStatistics({
         {dayStats.aces > 0 && (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Crosshair
-                size={16}
-                className={`${theme.text}`}
-                style={theme.textStyle}
-              />
+              <Crosshair size={16} className="text-green-600" />
               <span className={`text-sm ${theme.text}`} style={theme.textStyle}>
                 Aces
               </span>
@@ -120,11 +116,7 @@ export default function DayStatistics({
         {dayStats.attacks > 0 && (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Swords
-                size={16}
-                className={`${theme.text}`}
-                style={theme.textStyle}
-              />
+              <Swords size={16} className="text-red-600" />
               <span className={`text-sm ${theme.text}`} style={theme.textStyle}>
                 Attacks
               </span>
@@ -150,11 +142,7 @@ export default function DayStatistics({
         {dayStats.blocks > 0 && (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Shield
-                size={16}
-                className={`${theme.text}`}
-                style={theme.textStyle}
-              />
+              <Shield size={16} className="text-blue-600" />
               <span className={`text-sm ${theme.text}`} style={theme.textStyle}>
                 Blocks
               </span>
@@ -180,11 +168,7 @@ export default function DayStatistics({
         {dayStats.errors > 0 && (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <AlertTriangle
-                size={16}
-                className={`${theme.text}`}
-                style={theme.textStyle}
-              />
+              <AlertTriangle size={16} className="text-yellow-900" />
               <span className={`text-sm ${theme.text}`} style={theme.textStyle}>
                 Errors
               </span>
