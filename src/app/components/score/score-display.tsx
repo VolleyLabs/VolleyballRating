@@ -23,13 +23,14 @@ const audioCache = new AudioCache();
 const audioPlaylist = new AudioPlaylist(audioCache);
 
 interface ScoreDisplayProps {
-  scoreData: DailyScoreData;
+  scoreData: DailyScoreData | null;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   selectedDate: string;
   isHistoricalView: boolean;
   daySelector?: React.ReactNode;
   onRefreshScores?: () => void;
+  loading?: boolean;
 }
 
 export default function ScoreDisplay({
@@ -40,6 +41,7 @@ export default function ScoreDisplay({
   isHistoricalView,
   daySelector,
   onRefreshScores,
+  loading = false,
 }: ScoreDisplayProps) {
   const { theme, isAdmin } = useTelegram();
   const [leftFlash, setLeftFlash] = useState(false);
@@ -56,8 +58,8 @@ export default function ScoreDisplay({
   const [allUsers, setAllUsers] = useState<Map<number, User>>(new Map());
   const [loadingUsers, setLoadingUsers] = useState<boolean>(false);
 
-  const currentSets = scoreData.sets;
-  const dailyTotals = scoreData.totals;
+  const currentSets = scoreData?.sets;
+  const dailyTotals = scoreData?.totals;
 
   // Calculate optimal font size based on viewport dimensions
   const calculateOptimalFontSize = () => {
@@ -361,7 +363,7 @@ export default function ScoreDisplay({
 
   // Fetch user data for all players (both top players and points history)
   useEffect(() => {
-    if (!supabase || !scoreData.points || scoreData.points.length === 0) {
+    if (!supabase || !scoreData?.points || scoreData.points.length === 0) {
       return;
     }
 
@@ -403,7 +405,7 @@ export default function ScoreDisplay({
     };
 
     fetchAllPlayersUsers();
-  }, [scoreData.points, supabase]);
+  }, [scoreData?.points, supabase]);
 
   if (isFullscreen) {
     return (
@@ -556,42 +558,95 @@ export default function ScoreDisplay({
         audioReady={audioReady}
         onAudioReadyChange={setAudioReady}
         volume={volume}
+        loading={loading}
       />
 
       {/* Daily Totals Section */}
-      <DailyTotalsDisplay
-        dailyTotals={dailyTotals}
-        scoreData={scoreData}
-        theme={theme}
-      />
+      {/* Show skeleton components when loading */}
+      {loading ? (
+        <>
+          {/* Daily Totals Skeleton */}
+          <DailyTotalsDisplay
+            dailyTotals={null}
+            scoreData={{
+              sets: null,
+              totals: null,
+              points: [],
+            }}
+            theme={theme}
+            loading={true}
+          />
 
-      {/* Player Statistics */}
-      <PlayerStatistics
-        scoreData={scoreData}
-        allUsers={allUsers}
-        loadingUsers={loadingUsers}
-      />
+          {/* Current Set Skeleton */}
+          <CurrentSetDisplay
+            currentSets={null}
+            leftFlash={false}
+            rightFlash={false}
+            theme={theme}
+            audioEnabled={false}
+            audioReady={false}
+            onAudioReadyChange={() => {}}
+            isHistoricalView={false}
+            loading={true}
+          />
+        </>
+      ) : scoreData ? (
+        <>
+          {/* Daily Totals Section */}
+          <DailyTotalsDisplay
+            dailyTotals={dailyTotals ?? null}
+            scoreData={scoreData}
+            theme={theme}
+          />
 
-      {/* Current Set Score Display */}
-      <CurrentSetDisplay
-        currentSets={currentSets}
-        leftFlash={leftFlash}
-        rightFlash={rightFlash}
-        theme={theme}
-        audioEnabled={audioEnabled}
-        audioReady={audioReady}
-        onAudioReadyChange={setAudioReady}
-        isHistoricalView={isHistoricalView}
-      />
+          {/* Player Statistics */}
+          <PlayerStatistics
+            scoreData={scoreData}
+            allUsers={allUsers}
+            loadingUsers={loadingUsers}
+          />
 
-      {/* Points History Section */}
-      <PointsHistory
-        selectedDate={selectedDate}
-        onScoreUpdate={onRefreshScores}
-        points={scoreData.points}
-        users={allUsers}
-        loadingUsers={loadingUsers}
-      />
+          {/* Current Set Score Display */}
+          <CurrentSetDisplay
+            currentSets={currentSets ?? null}
+            leftFlash={leftFlash}
+            rightFlash={rightFlash}
+            theme={theme}
+            audioEnabled={audioEnabled}
+            audioReady={audioReady}
+            onAudioReadyChange={setAudioReady}
+            isHistoricalView={isHistoricalView}
+          />
+
+          {/* Points History Section */}
+          <PointsHistory
+            selectedDate={selectedDate}
+            onScoreUpdate={onRefreshScores}
+            points={scoreData.points}
+            users={allUsers}
+            loadingUsers={loadingUsers}
+          />
+        </>
+      ) : (
+        /* No Data Display */
+        <div
+          className={`${theme.cardBg} p-6 rounded-lg m-4`}
+          style={theme.cardBgStyle}
+        >
+          <h3
+            className={`text-lg font-medium ${theme.text} mb-4 text-center`}
+            style={theme.textStyle}
+          >
+            No games today
+          </h3>
+          <p
+            className={`text-sm ${theme.secondaryText} text-center`}
+            style={theme.secondaryTextStyle}
+          >
+            Waiting for today&apos;s first game to start...
+          </p>
+        </div>
+      )}
 
       {/* Admin Test Controls */}
       {isAdmin && (

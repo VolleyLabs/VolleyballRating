@@ -11,8 +11,6 @@ import {
 import { isToday, getTodayLocal } from "@utils/date";
 
 import ScoreDisplay from "./score-display";
-import NoDataDisplay from "./no-data-display";
-import ScoreSkeleton from "./score-skeleton";
 import DaySelector from "./day-selector";
 
 export default function Score() {
@@ -130,21 +128,16 @@ export default function Score() {
       className={`flex flex-auto flex-col ${theme.bg} items-center min-h-screen relative`}
     >
       <div className="flex-1 w-full flex flex-col pb-0">
-        {isLoading ? (
-          <ScoreSkeleton />
-        ) : scoreData ? (
-          <ScoreDisplay
-            scoreData={scoreData}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={toggleFullscreen}
-            selectedDate={selectedDate}
-            isHistoricalView={!isToday(selectedDate)}
-            daySelector={daySelector}
-            onRefreshScores={() => initScoresForDate(selectedDate)}
-          />
-        ) : (
-          <NoDataDisplay />
-        )}
+        <ScoreDisplay
+          scoreData={scoreData}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+          selectedDate={selectedDate}
+          isHistoricalView={!isToday(selectedDate)}
+          daySelector={daySelector}
+          onRefreshScores={() => initScoresForDate(selectedDate)}
+          loading={isLoading}
+        />
       </div>
 
       {/* Footer with Live tracking status - only for today */}
