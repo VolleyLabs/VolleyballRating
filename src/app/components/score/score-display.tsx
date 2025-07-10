@@ -7,7 +7,6 @@ import { User } from "@/../database.types";
 import {
   AudioCache,
   AudioPlaylist,
-  initializeAudio,
   announceScoreVolleyball,
   enableAllAudio,
 } from "../../services/audio";
@@ -16,7 +15,8 @@ import PointsHistory from "./points-history";
 import PlayerStatistics from "./player-statistics";
 import DayStatistics from "./day-statistics";
 import CurrentSetDisplay from "./current-set-display";
-import { Plus, Settings, Volume2, Award } from "lucide-react";
+import ScoreHeader from "./score-header";
+import { Plus, Settings, Award } from "lucide-react";
 
 // Global audio instances
 const audioCache = new AudioCache();
@@ -548,57 +548,15 @@ export default function ScoreDisplay({
       />
 
       {/* Header with day selector and controls */}
-      <div className="flex items-center gap-3 mb-6 relative z-10">
-        <div className="flex-1 min-w-0">{daySelector}</div>
-        <div className="flex space-x-2 flex-shrink-0">
-          {/* Audio Settings Button */}
-          <button
-            onClick={async () => {
-              // Try to initialize audio when user opens settings
-              if (audioEnabled && !audioReady) {
-                const success = await initializeAudio();
-                setAudioReady(success);
-                if (success) {
-                  console.log("Audio initialized via settings button");
-                }
-              }
-              setShowAudioModal(true);
-            }}
-            className="text-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-2 rounded transition-colors flex items-center space-x-1 relative"
-            title={`Audio settings - ${
-              !audioEnabled
-                ? "Disabled"
-                : audioReady
-                ? "Ready"
-                : "Tap to enable"
-            }`}
-          >
-            <Volume2 size={18} />
-            <span className="text-sm hidden sm:inline">
-              {Math.round(volume * 100)}%
-            </span>
-            {/* Audio status indicator */}
-            <div
-              className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
-                !audioEnabled
-                  ? "bg-red-500"
-                  : audioReady
-                  ? "bg-green-500"
-                  : "bg-yellow-500"
-              }`}
-            ></div>
-          </button>
-
-          {/* Fullscreen Button */}
-          <button
-            onClick={onToggleFullscreen}
-            className="text-2xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-2 rounded transition-colors"
-            title="Fullscreen mode"
-          >
-            ⛶
-          </button>
-        </div>
-      </div>
+      <ScoreHeader
+        daySelector={daySelector}
+        onAudioSettingsClick={() => setShowAudioModal(true)}
+        onFullscreenToggle={onToggleFullscreen}
+        audioEnabled={audioEnabled}
+        audioReady={audioReady}
+        onAudioReadyChange={setAudioReady}
+        volume={volume}
+      />
 
       {/* Daily Totals Section */}
       {dailyTotals && (

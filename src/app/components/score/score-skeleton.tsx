@@ -2,6 +2,7 @@
 
 import { useTelegram } from "@context/telegram-context";
 import CurrentSetDisplay from "./current-set-display";
+import ScoreHeader from "./score-header";
 
 export default function ScoreSkeleton() {
   const { theme } = useTelegram();
@@ -11,26 +12,16 @@ export default function ScoreSkeleton() {
       className={`w-full max-w-3xl mx-auto p-3 sm:p-4 ${theme.cardBg} rounded-2xl shadow-sm overflow-hidden flex-1 animate-pulse`}
       style={theme.cardBgStyle}
     >
-      {/* Header Skeleton (Day Selector + Controls) */}
-      <div className="flex justify-between items-center mb-6">
-        {/* Day Selector Skeleton */}
-        <div className="flex-1">
-          <div className="flex space-x-3 overflow-x-auto">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="flex-shrink-0 w-20 h-12 bg-gray-300 dark:bg-gray-700 rounded-lg"
-              ></div>
-            ))}
-          </div>
-        </div>
-        <div className="flex space-x-2">
-          {/* Audio button skeleton */}
-          <div className="h-10 w-16 bg-gray-300 dark:bg-gray-700 rounded"></div>
-          {/* Fullscreen button skeleton */}
-          <div className="h-10 w-10 bg-gray-300 dark:bg-gray-700 rounded"></div>
-        </div>
-      </div>
+      {/* Header Skeleton */}
+      <ScoreHeader
+        onAudioSettingsClick={() => {}}
+        onFullscreenToggle={() => {}}
+        audioEnabled={false}
+        audioReady={false}
+        onAudioReadyChange={() => {}}
+        volume={0.7}
+        loading={true}
+      />
 
       {/* Daily Totals Skeleton */}
       <div
