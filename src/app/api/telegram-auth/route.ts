@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
 
     const now = Math.floor(Date.now() / 1000);
     const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const sessionId = crypto.randomUUID();
     const payload = {
       iss: `${supaUrl}/auth/v1`,
       iat: now,
@@ -157,6 +158,8 @@ export async function POST(request: NextRequest) {
           timestamp: now,
         },
       ],
+      session_id: sessionId,
+      is_anonymous: false,
       user_metadata: {
         telegram_id: userData.id,
         telegram_username: userData.username,
