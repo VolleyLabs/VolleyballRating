@@ -113,7 +113,7 @@ export default function PlayerStatistics({
     if (isAdmin) {
       return arr;
     }
-    
+
     // Otherwise, show top 3 plus current user if not in top 3
     const topThree = arr.slice(0, 3);
     const current = userId ? arr.find((p) => p.playerId === userId) : undefined;
@@ -274,7 +274,8 @@ export default function PlayerStatistics({
               : undefined;
             const displayPlayers = isAdmin
               ? sortedPlayers // Show all players for admins
-              : current && !topThree.some((p) => p.playerId === current.playerId)
+              : current &&
+                !topThree.some((p) => p.playerId === current.playerId)
               ? [...topThree, current]
               : topThree;
 

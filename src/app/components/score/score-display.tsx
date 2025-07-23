@@ -177,7 +177,7 @@ export default function ScoreDisplay({
       setAudioReady(false);
       console.log("Audio disabled by user preference");
     }
-  }, [audioEnabled]);
+  }, [audioEnabled, audioReady]);
 
   // Wake Lock management for fullscreen mode
   useEffect(() => {
@@ -238,7 +238,7 @@ export default function ScoreDisplay({
         wakeLock.release().catch(console.error);
       }
     };
-  }, [isFullscreen]); // Removed wakeLock from dependencies to prevent loops
+  }, [isFullscreen, wakeLock]);
 
   // Update font size on mount and resize
   useEffect(() => {
@@ -405,7 +405,7 @@ export default function ScoreDisplay({
     };
 
     fetchAllPlayersUsers();
-  }, [scoreData?.points, supabase]);
+  }, [scoreData?.points]);
 
   if (isFullscreen) {
     return (
