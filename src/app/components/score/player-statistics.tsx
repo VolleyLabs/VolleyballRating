@@ -18,7 +18,7 @@ export default function PlayerStatistics({
   allUsers,
   loadingUsers,
 }: PlayerStatisticsProps) {
-  const { theme, userId } = useTelegram();
+  const { theme, userId, isAdmin } = useTelegram();
   const [activeStatsTab, setActiveStatsTab] = useState<
     "total" | "attacks" | "blocks" | "serves"
   >("total");
@@ -91,7 +91,8 @@ export default function PlayerStatistics({
 
   // Component to show rank badge conditionally
   const RankBadge = ({ rank }: { rank: number; playerId: number }) => {
-    if (rank <= 3) {
+    // For admins, show rank for all positions; for others, only top 3
+    if (isAdmin || rank <= 3) {
       return (
         <span
           className={`text-sm font-bold ${theme.secondaryText} w-6 text-center`}
@@ -104,10 +105,16 @@ export default function PlayerStatistics({
     return null;
   };
 
-  // Prepare list: always show top 3 players plus the current user (if not already included)
+  // Prepare list: for admins show all players, otherwise show top 3 players plus the current user (if not already included)
   const prepareDisplayList = (
     arr: { playerId: number; [key: string]: number }[]
   ) => {
+    // If user is admin, show all players
+    if (isAdmin) {
+      return arr;
+    }
+    
+    // Otherwise, show top 3 plus current user if not in top 3
     const topThree = arr.slice(0, 3);
     const current = userId ? arr.find((p) => p.playerId === userId) : undefined;
     if (current && !topThree.some((p) => p.playerId === current.playerId)) {
@@ -265,10 +272,11 @@ export default function PlayerStatistics({
             const current = userId
               ? sortedPlayers.find((p) => p.playerId === userId)
               : undefined;
-            const displayPlayers =
-              current && !topThree.some((p) => p.playerId === current.playerId)
-                ? [...topThree, current]
-                : topThree;
+            const displayPlayers = isAdmin
+              ? sortedPlayers // Show all players for admins
+              : current && !topThree.some((p) => p.playerId === current.playerId)
+              ? [...topThree, current]
+              : topThree;
 
             return displayPlayers.map((player) => {
               const userInfo = allUsers.get(player.playerId);
