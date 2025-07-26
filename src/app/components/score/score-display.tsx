@@ -16,7 +16,23 @@ import PlayerStatistics from "./player-statistics";
 import CurrentSetDisplay from "./current-set-display";
 import ScoreHeader from "./score-header";
 import DailyTotalsDisplay from "./daily-totals-display";
+import HistoryTimeline from "./history-timeline";
 import { Plus, Settings } from "lucide-react";
+
+// History state type
+interface HistoryState {
+  leftScore: number;
+  rightScore: number;
+  leftSets: number;
+  rightSets: number;
+  currentSet: number;
+  totalPoints: number;
+  timestamp: string;
+  lastPointIndex: number;
+  isComplete: boolean;
+  setWinner: "left" | "right" | null;
+  matchWinner: "left" | "right" | null;
+}
 
 // Global audio instances
 const audioCache = new AudioCache();
@@ -58,8 +74,42 @@ export default function ScoreDisplay({
   const [allUsers, setAllUsers] = useState<Map<number, User>>(new Map());
   const [loadingUsers, setLoadingUsers] = useState<boolean>(false);
 
-  const currentSets = scoreData?.sets;
-  const dailyTotals = scoreData?.totals;
+  // History timeline state
+  const [historyState, setHistoryState] = useState<HistoryState | null>(null);
+  const [isInHistoryMode, setIsInHistoryMode] = useState(false);
+
+  // Use either current or historical data
+  const displaySets = historyState
+    ? {
+        set_idx: historyState.currentSet,
+        left_score: historyState.leftScore,
+        right_score: historyState.rightScore,
+        is_finished: historyState.isComplete,
+        set_winner: historyState.setWinner,
+        set_start: historyState.timestamp,
+        set_end: historyState.timestamp,
+        serving_team: "left" as const,
+      }
+    : scoreData?.sets;
+
+  const displayTotals = historyState
+    ? {
+        match_idx: 1,
+        left_sets: historyState.leftSets,
+        right_sets: historyState.rightSets,
+        match_winner: historyState.matchWinner,
+        match_start: historyState.timestamp,
+        match_end: historyState.timestamp,
+      }
+    : scoreData?.totals;
+
+  const displayPoints =
+    historyState && scoreData?.points
+      ? scoreData.points.slice(0, historyState.lastPointIndex + 1)
+      : scoreData?.points;
+
+  const currentSets = displaySets;
+  const dailyTotals = displayTotals;
 
   // Calculate optimal font size based on viewport dimensions
   const calculateOptimalFontSize = () => {
@@ -407,6 +457,12 @@ export default function ScoreDisplay({
     fetchAllPlayersUsers();
   }, [scoreData?.points]);
 
+  // Handle history state changes from timeline
+  const handleHistoryStateChange = (state: HistoryState | null) => {
+    setHistoryState(state);
+    setIsInHistoryMode(state !== null);
+  };
+
   if (isFullscreen) {
     return (
       <div
@@ -602,14 +658,48 @@ export default function ScoreDisplay({
           {/* Daily Totals Section */}
           <DailyTotalsDisplay
             dailyTotals={dailyTotals ?? null}
-            scoreData={scoreData}
+            scoreData={{
+              sets: displaySets ?? null,
+              totals: displayTotals ?? null,
+              points: displayPoints || [],
+            }}
             theme={theme}
-            isHistoricalView={isHistoricalView}
+            isHistoricalView={isHistoricalView || isInHistoryMode}
           />
+
+          {/* History Timeline - show for any date that has points */}
+          {scoreData && scoreData.points.length > 0 && (
+            <HistoryTimeline
+              points={scoreData.points}
+              onHistoryStateChange={handleHistoryStateChange}
+              className="mb-4"
+            />
+          )}
+
+          {/* History Mode Indicator */}
+          {isInHistoryMode && (
+            <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                  Viewing History -{" "}
+                  {historyState
+                    ? `${historyState.totalPoints} of ${
+                        scoreData?.points.length || 0
+                      } points`
+                    : ""}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Player Statistics */}
           <PlayerStatistics
-            scoreData={scoreData}
+            scoreData={{
+              sets: displaySets ?? null,
+              totals: displayTotals ?? null,
+              points: displayPoints || [],
+            }}
             allUsers={allUsers}
             loadingUsers={loadingUsers}
           />
@@ -617,20 +707,20 @@ export default function ScoreDisplay({
           {/* Current Set Score Display */}
           <CurrentSetDisplay
             currentSets={currentSets ?? null}
-            leftFlash={leftFlash}
-            rightFlash={rightFlash}
+            leftFlash={leftFlash && !isInHistoryMode}
+            rightFlash={rightFlash && !isInHistoryMode}
             theme={theme}
             audioEnabled={audioEnabled}
             audioReady={audioReady}
             onAudioReadyChange={setAudioReady}
-            isHistoricalView={isHistoricalView}
+            isHistoricalView={isHistoricalView || isInHistoryMode}
           />
 
           {/* Points History Section */}
           <PointsHistory
             selectedDate={selectedDate}
             onScoreUpdate={onRefreshScores}
-            points={scoreData.points}
+            points={displayPoints || []}
             users={allUsers}
             loadingUsers={loadingUsers}
           />
