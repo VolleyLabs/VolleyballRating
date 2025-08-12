@@ -5,7 +5,10 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
-export const setAuthToken = (jwt: string | undefined) => {
+export const setAuthToken = (
+  jwt: string | undefined,
+  refreshToken?: string
+) => {
   if (!jwt) return;
 
   // Try the official APIs first (vary between v1/v2)
@@ -18,7 +21,10 @@ export const setAuthToken = (jwt: string | undefined) => {
       if (typeof auth.setSession === "function") {
         return (
           auth
-            .setSession({ access_token: jwt, refresh_token: "" })
+            .setSession({
+              access_token: jwt,
+              refresh_token: refreshToken ?? "",
+            })
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .then(({ data, error }: { data: any; error: any }) => {
               if (error) {

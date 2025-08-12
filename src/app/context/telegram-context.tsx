@@ -11,6 +11,10 @@ import { isAdmin as checkIsAdmin, upsertUser } from "../lib/supabase-queries";
 import { useTelegramTheme } from "../utils/telegram-theme";
 import ConsoleLoggerScript from "../components/ConsoleLoggerScript";
 import { setAuthToken } from "../utils/supabase/client";
+import type {
+  TelegramAuthResponse,
+  TelegramAuthErrorResponse,
+} from "../types/telegram-auth";
 
 interface TelegramContextType {
   webApp: WebApp | null; // Make webApp nullable for SSR
@@ -40,8 +44,8 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const theme = useTelegramTheme(themeParams);
 
   // Function to initialize Supabase with the token
-  const initializeSupabase = (accessToken: string) => {
-    setAuthToken(accessToken);
+  const initializeSupabase = (accessToken: string, refreshToken?: string) => {
+    setAuthToken(accessToken, refreshToken);
     console.log(
       "TelegramProvider: set Authorization header with JWT",
       accessToken.substring(0, 10) + "…"
@@ -67,14 +71,6 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       // If there's an error parsing the token, consider it expired
       return true;
     }
-  };
-
-  // Function to clear stored auth data
-  const clearStoredAuthData = () => {
-    localStorage.removeItem("telegram_auth_token");
-    localStorage.removeItem("telegram_is_admin");
-    setToken(null);
-    setIsAdmin(false);
   };
 
   // Function to refresh authentication periodically
@@ -125,7 +121,12 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
 
       // Try to load saved token from localStorage
       if (isBrowser) {
-        const savedToken = localStorage.getItem("telegram_auth_token");
+        const savedToken =
+          localStorage.getItem("telegram_access_token") ||
+          localStorage.getItem("telegram_auth_token"); // backward compatibility
+        const savedRefreshToken = localStorage.getItem(
+          "telegram_refresh_token"
+        );
         const savedUserId = localStorage.getItem("telegram_user_id");
         const savedIsAdmin =
           localStorage.getItem("telegram_is_admin") === "true";
@@ -139,7 +140,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
             // Token is valid, use it
             setToken(savedToken);
             setIsAdmin(savedIsAdmin);
-            initializeSupabase(savedToken);
+            initializeSupabase(savedToken, savedRefreshToken || undefined);
 
             if (savedUserId) {
               const userId = parseInt(savedUserId);
@@ -172,46 +173,40 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
 
         // Call our API to validate the data and get a Supabase token
         try {
-          const response = await fetch("/api/telegram-auth", {
+          const response = await fetch("/api/telegram/auth", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ initData: webApp.initData }),
+            body: JSON.stringify({ initDataRaw: webApp.initData }),
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
+            const errorData: TelegramAuthErrorResponse = await response.json();
             console.error("Authentication error:", errorData.error);
-
-            // If token expired, clear the stored token and refresh the page to force re-auth
-            if (errorData.error === "Authentication data expired") {
-              console.log(
-                "Authentication data expired, refreshing to get new data"
-              );
-              clearStoredAuthData();
-              // Refresh the page to get fresh authentication data from Telegram
-              window.location.reload();
-              return;
-            }
-
             throw new Error(errorData.error || "Authentication failed");
           }
 
-          const { token: newToken, isAdmin: newIsAdmin } =
-            await response.json();
+          const {
+            access_token,
+            refresh_token,
+            isAdmin: newIsAdmin,
+          }: TelegramAuthResponse = await response.json();
 
           // Set the token and admin status in state
-          setToken(newToken);
+          setToken(access_token);
           setIsAdmin(newIsAdmin);
 
           // Store token and admin status in localStorage for persistence
-          localStorage.setItem("telegram_auth_token", newToken);
+          localStorage.setItem("telegram_access_token", access_token);
+          if (refresh_token) {
+            localStorage.setItem("telegram_refresh_token", refresh_token);
+          }
           localStorage.setItem(
             "telegram_is_admin",
             newIsAdmin ? "true" : "false"
           );
 
           // Set the token in Supabase client
-          initializeSupabase(newToken);
+          initializeSupabase(access_token, refresh_token);
 
           setWebApp(webApp);
 

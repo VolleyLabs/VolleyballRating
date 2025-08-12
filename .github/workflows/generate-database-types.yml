@@ -1,0 +1,52 @@
+name: Update database types if required
+
+on:
+  pull_request:
+
+jobs:
+  generate-database-types:
+    permissions:
+      contents: write
+      pull-requests: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Setup Git user
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "github-actions[bot]"
+      - name: Start Supabase local development setup
+        run: supabase db start
+
+      - name: Generate database types
+        run: supabase gen types typescript --local > database.types.gen.ts
+
+      - name: Check for changes
+        id: changes
+        run: |
+          CHANGED=$(git diff --name-only database.types.gen.ts)
+          if [ -z "$CHANGED" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in database types"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in database types"
+          fi
+      - name: Commit and push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git add database.types.gen.ts
+          git commit -m "chore: update generated database types"
+          git push origin HEAD:${{ github.head_ref }}
