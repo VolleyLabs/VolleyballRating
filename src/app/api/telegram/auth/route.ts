@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
   // 2) Build deterministic synthetic email (RFC 2606 reserved TLD ".invalid")
   //    EN: never deliverable; used as unique identifier only.
-  const email = `tg-${tg.id}@telegram.invalid`;
+  const email = `${tg.id}@telegram.invalid`;
 
   // 3) Ensure user exists (Admin API, server-only service_role)
   const admin = createClient<Database>(
