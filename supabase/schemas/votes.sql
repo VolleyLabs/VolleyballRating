@@ -31,12 +31,28 @@ ALTER TABLE public.votes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can insert their own votes" 
 ON public.votes FOR INSERT 
 TO authenticated
-WITH CHECK (auth.uid()::text = voter_id::text);
+WITH CHECK (
+  voter_id = (
+    select case
+      when (auth.jwt() -> 'app_metadata' ->> 'tg_id') is not null then ((auth.jwt() -> 'app_metadata' ->> 'tg_id')::bigint)
+      when (auth.jwt() -> 'user_metadata' ->> 'tg_id') is not null then ((auth.jwt() -> 'user_metadata' ->> 'tg_id')::bigint)
+      else null
+    end
+  )
+);
 
 CREATE POLICY "Users can view their own votes" 
 ON public.votes FOR SELECT 
 TO authenticated
-USING (auth.uid()::text = voter_id::text);
+USING (
+  voter_id = (
+    select case
+      when (auth.jwt() -> 'app_metadata' ->> 'tg_id') is not null then ((auth.jwt() -> 'app_metadata' ->> 'tg_id')::bigint)
+      when (auth.jwt() -> 'user_metadata' ->> 'tg_id') is not null then ((auth.jwt() -> 'user_metadata' ->> 'tg_id')::bigint)
+      else null
+    end
+  )
+);
 
 CREATE POLICY "Admins can view all votes" 
 ON public.votes FOR SELECT 

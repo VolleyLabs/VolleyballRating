@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       email,
       email_confirm: true, // EN: mark as confirmed so no email flow is required
       user_metadata: { tg_id: tg.id, username: tg.username ?? null },
-      id: tg.id.toString(),
+      app_metadata: { tg_id: tg.id },
     })
     .catch(() => {
       // conflict -> ok
