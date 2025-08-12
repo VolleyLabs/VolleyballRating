@@ -91,7 +91,15 @@ export async function POST(req: NextRequest) {
     .createUser({
       email,
       email_confirm: true, // EN: mark as confirmed so no email flow is required
-      user_metadata: { tg_id: tg.id, username: tg.username ?? null },
+      user_metadata: {
+        tg_id: tg.id,
+        username: tg.username ?? null,
+        first_name: tg.first_name ?? null,
+        last_name: tg.last_name ?? null,
+        photo_url: tg.photo_url ?? null,
+        avatar_url: tg.photo_url ?? null,
+        picture: tg.photo_url ?? null,
+      },
       app_metadata: { tg_id: tg.id },
     })
     .catch(() => {
@@ -146,6 +154,31 @@ export async function POST(req: NextRequest) {
       { error: "missing-token-hash" },
       { status: 500 }
     );
+
+  // 4b) Ensure auth user's metadata is enriched with Telegram info
+  try {
+    type GenerateLinkUser = { id?: string } | null | undefined;
+    const authUser = (gen as unknown as { user?: GenerateLinkUser })?.user;
+    const authUserId = authUser?.id;
+    if (authUserId) {
+      await admin.auth.admin.updateUserById(authUserId, {
+        user_metadata: {
+          tg_id: tg.id,
+          username: tg.username ?? null,
+          first_name: tg.first_name ?? null,
+          last_name: tg.last_name ?? null,
+          photo_url: tg.photo_url ?? null,
+          avatar_url: tg.photo_url ?? null,
+          picture: tg.photo_url ?? null,
+        },
+      });
+    }
+  } catch (e) {
+    console.error(
+      "Failed to update auth user metadata with Telegram fields",
+      e
+    );
+  }
 
   // 5) Exchange token_hash -> Supabase session (public client)
   const pub = createClient<Database>(
