@@ -8,13 +8,14 @@ import {
   ReactNode,
 } from "react";
 import { isAdmin as checkIsAdmin, upsertUser } from "../lib/supabase-queries";
-import { useTelegramTheme } from "../utils/telegram-theme";
+import { useTelegramTheme } from "../hooks/useTelegramTheme";
 import ConsoleLoggerScript from "../components/ConsoleLoggerScript";
 import { setAuthToken } from "../utils/supabase/client";
 import type {
   TelegramAuthResponse,
   TelegramAuthErrorResponse,
 } from "../types/telegram-auth";
+import { WebApp, ThemeParams, WebAppInitData } from "telegram-web-app";
 
 interface TelegramContextType {
   webApp: WebApp | null; // Make webApp nullable for SSR

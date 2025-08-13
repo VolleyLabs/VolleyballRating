@@ -1,4 +1,5 @@
 import React from "react";
+import { ThemeParams } from "telegram-web-app";
 
 export interface TelegramTheme {
   // Backgrounds
