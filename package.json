@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.54.0",
+    "@supabase/supabase-js": "^2.55.0",
     "@types/telegram-web-app": "^9.0.0",
-    "grammy": "^1.37.0",
+    "grammy": "^1.38.1",
     "jose": "^6.0.12",
     "lucide-react": "^0.539.0",
     "next": "15.4.6",
