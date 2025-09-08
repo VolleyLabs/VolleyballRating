@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -22,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
+          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
-          extensions?: Json
         }
         Returns: Json
       }
@@ -402,27 +397,27 @@ export type Database = {
       calculate_player_ratings: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: number
           first_name: string
+          id: number
           last_name: string
-          username: string
           photo_url: string
           rating: number
+          username: string
         }[]
       }
       get_random_vote_pair: {
         Args: { voter_id_param: number }
         Returns: {
-          player_a_id: number
           player_a_first_name: string
+          player_a_id: number
           player_a_last_name: string
-          player_a_username: string
           player_a_photo_url: string
-          player_b_id: number
+          player_a_username: string
           player_b_first_name: string
+          player_b_id: number
           player_b_last_name: string
-          player_b_username: string
           player_b_photo_url: string
+          player_b_username: string
         }[]
       }
       jwt_claim_admin: {
@@ -570,3 +565,4 @@ export const Constants = {
     },
   },
 } as const
+
